@@ -26,6 +26,7 @@ export default function Sidebar() {
         .join(" ");
 
     const logout = () => {
+        localStorage.removeItem("authify-token");
         router.get(route("logout"));
     };
 

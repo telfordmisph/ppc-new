@@ -1,32 +1,35 @@
-import { useForm, usePage, Head } from "@inertiajs/react";
+import { useForm, usePage, Head, router } from "@inertiajs/react";
 
 import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
 import TextInput from "@/Components/TextInput";
+import { useEffect } from "react";
 
 export default function Login() {
-    const props = usePage();
+    const props = usePage().props;
 
     const { data, setData, post, processing, errors } = useForm({
         employeeID: "",
         password: "",
     });
 
+    useEffect(() => {
+        if (props.emp_data?.token) {
+            localStorage.setItem("authify-token", props.emp_data.token);
+            router.visit(route("dashboard"));
+        }
+    }, [props.emp_data]);
+
     const submit = (e) => {
         e.preventDefault();
 
-        post(route("login"), {
-            onError: (errors) => {
-                setData("employeeID", "");
-                setData("password", "");
-            },
-        });
+        post(route("login"));
     };
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <Head title="Login" />
-            {/* <pre>{JSON.stringify(props, null, 2)}</pre> */}
+            {/* <pre>{JSON.stringify(props.emp_data, null, 2)}</pre> */}
 
             <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
                 <h2 className="mb-6 text-2xl font-semibold text-center">
