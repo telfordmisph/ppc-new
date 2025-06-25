@@ -20,7 +20,7 @@ export default function NotFound() {
                     href={route("dashboard")}
                     className="inline-block px-6 py-2 mt-3 text-lg font-semibold text-blue-600"
                 >
-                    Go Back yes
+                    Go Back
                 </Link>
             </div>
         </div>
