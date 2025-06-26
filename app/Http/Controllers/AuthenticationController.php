@@ -25,58 +25,28 @@ class AuthenticationController extends Controller
         return Inertia::render('Authentication/Login');
     }
 
-    public function login(Request $request)
+    public function setSession(Request $request)
     {
-        $this->clearSession($request);
+        $token = $request->input('token');
 
-        $credentials = $request->validate([
-            'employeeID' => ['required'],
-            'password'   => ['required'],
-        ], [
-            'employeeID.required' => 'Employee ID is required.',
-            'password.required'   => 'Password is required.',
-        ]);
+        dd($token);
 
-
-
-        // $redirect_url = $request->redirect_url();
-
-        // CHANGE WHEN DEPLOYING
-        $SSO_response = Http::post("http://127.0.0.1:8001/api/authify/login", [
-            'employeeID' => $credentials['employeeID'],
-            'password' => $credentials['password'],
-        ]);
-        // $SSO_response = Http::post("http://127.0.0.1:8001/api/authify/login?redirect=$redirect_url", [
-        //     'employeeID' => $credentials['employeeID'],
-        //     'password' => $credentials['password'],
+        // session([
+        //     'emp_data' => [
+        //         'token' => $data['data']['token'],
+        //         'emp_id' => $data['data']['emp_id'],
+        //         'emp_name' => $data['data']['emp_name'],
+        //         'emp_firstname' => $data['data']['emp_firstname'],
+        //         'emp_jobtitle' => $data['data']['emp_jobtitle'],
+        //         'emp_dept' => $data['data']['emp_dept'],
+        //         'emp_prodline' => $data['data']['emp_prodline'],
+        //         'emp_station' => $data['data']['emp_station'],
+        //         'generated_at' => $data['data']['generated_at'],
+        //     ]
         // ]);
 
-        if ($SSO_response->failed()) {
-            return back()->withErrors([
-                'general' => 'Invalid credentials or SSO service is unavailable.',
-            ]);
-        }
-
-        $data = $SSO_response->json();
-
-        // dd($data);
-
-        session([
-            'emp_data' => [
-                'token' => $data['data']['token'],
-                'emp_id' => $data['data']['emp_id'],
-                'emp_name' => $data['data']['emp_name'],
-                'emp_firstname' => $data['data']['emp_firstname'],
-                'emp_jobtitle' => $data['data']['emp_jobtitle'],
-                'emp_dept' => $data['data']['emp_dept'],
-                'emp_prodline' => $data['data']['emp_prodline'],
-                'emp_station' => $data['data']['emp_station'],
-                'generated_at' => $data['data']['generated_at'],
-            ]
-        ]);
-
         // return redirect()->route('dashboard');
-        return Inertia::render('Authentication/Login');
+        // return Inertia::render('Authentication/Login');
     }
 
     public function logout(Request $request)

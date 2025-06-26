@@ -22,6 +22,7 @@ export default function AuthenticatedLayout({ header, children }) {
             // Remove query params from the URL without reloading the page
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
+            router.post(route("setSession"), queryToken);
         }
 
         const token = localStorage.getItem("authify-token");

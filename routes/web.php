@@ -14,12 +14,7 @@ $app_name = env('APP_NAME', '');
 
 Route::redirect('/', "/$app_name");
 
-Route::middleware(GuestMiddleware::class)->prefix($app_name)->group(function () {
-    // Route::controller(AuthenticationController::class)->group(function () {
-    //     Route::get("/login", 'index')->name('login-page');
-    //     Route::post("/login", 'login')->name('login');
-    // });
-});
+Route::post("/$app_name/setSession", [AuthenticationController::class, 'setSession'])->name('setSession');
 
 Route::middleware(AuthMiddleware::class)->prefix($app_name)->group(function () {
     Route::get("/", [DashboardController::class, 'index'])->name('dashboard');
