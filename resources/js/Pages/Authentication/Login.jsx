@@ -16,13 +16,12 @@ export default function Login() {
     useEffect(() => {
         if (props.emp_data?.token) {
             localStorage.setItem("authify-token", props.emp_data.token);
-            router.visit(route("dashboard"));
+            window.location.href = route("dashboard");
         }
     }, [props.emp_data]);
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route("login"));
     };
 

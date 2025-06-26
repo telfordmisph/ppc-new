@@ -15,9 +15,9 @@ class GuestMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (session('emp_data')) {
-            return redirect()->route('dashboard');
-        }
+        // if (session('emp_data')) {
+        //     return redirect()->route('dashboard');
+        // }
 
         return $next($request);
     }

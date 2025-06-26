@@ -15,9 +15,9 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!session('emp_data')) {
-            return redirect()->route('login');
-        }
+        // if (!session('emp_data')) {
+        //     return redirect()->route('login');
+        // }
 
         return $next($request);
     }

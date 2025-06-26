@@ -15,10 +15,10 @@ $app_name = env('APP_NAME', '');
 Route::redirect('/', "/$app_name");
 
 Route::middleware(GuestMiddleware::class)->prefix($app_name)->group(function () {
-    Route::controller(AuthenticationController::class)->group(function () {
-        Route::get("/login", 'index')->name('login-page');
-        Route::post("/login", 'login')->name('login');
-    });
+    // Route::controller(AuthenticationController::class)->group(function () {
+    //     Route::get("/login", 'index')->name('login-page');
+    //     Route::post("/login", 'login')->name('login');
+    // });
 });
 
 Route::middleware(AuthMiddleware::class)->prefix($app_name)->group(function () {

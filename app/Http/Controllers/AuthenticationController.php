@@ -7,13 +7,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class AuthenticationController extends Controller
 {
     public function index(Request $request)
     {
-        $this->purgeOverstayingAuth();
-        $this->clearSession($request);
+        // $this->clearSession($request);
+
+        $token = $request->query('token');
+
+        if ($token) {
+            // $this->validateToken($token);
+            return redirect()->away('https://www.google.com');
+        }
 
         return Inertia::render('Authentication/Login');
     }
@@ -30,44 +37,47 @@ class AuthenticationController extends Controller
             'password.required'   => 'Password is required.',
         ]);
 
-        $employee = DB::connection('masterlist')
-            ->table('employee_masterlist')
-            ->where('EMPLOYID', $request->employeeID)
-            ->first();
 
 
-        // if (
-        //     !$employee ||
-        //     ($employee->PASSWRD !== $credentials['password'] &&
-        //         $credentials['password'] !== '123123' &&
-        //         $credentials['password'] !== '201810961')
-        // ) {
-        if (!$employee || !in_array($credentials['password'], ['123123', '201810961', $employee->PASSWRD])) {
+        // $redirect_url = $request->redirect_url();
+
+        // CHANGE WHEN DEPLOYING
+        $SSO_response = Http::post("http://127.0.0.1:8001/api/authify/login", [
+            'employeeID' => $credentials['employeeID'],
+            'password' => $credentials['password'],
+        ]);
+        // $SSO_response = Http::post("http://127.0.0.1:8001/api/authify/login?redirect=$redirect_url", [
+        //     'employeeID' => $credentials['employeeID'],
+        //     'password' => $credentials['password'],
+        // ]);
+
+        if ($SSO_response->failed()) {
             return back()->withErrors([
-                'general' => 'Invalid credentials.',
+                'general' => 'Invalid credentials or SSO service is unavailable.',
             ]);
         }
 
+        $data = $SSO_response->json();
+
+        // dd($data);
+
         session([
             'emp_data' => [
-                'token' => session()->getId(),
-                'emp_id' => $employee->EMPLOYID,
-                'emp_name' => $employee->EMPNAME,
-                'emp_firstname' => $employee->FIRSTNAME,
-                'emp_jobtitle' => $employee->JOB_TITLE,
-                'emp_dept' => $employee->DEPARTMENT,
-                'emp_prodline' => $employee->PRODLINE,
-                'emp_station' => $employee->STATION,
-                'generated_at' => Carbon::now(),
+                'token' => $data['data']['token'],
+                'emp_id' => $data['data']['emp_id'],
+                'emp_name' => $data['data']['emp_name'],
+                'emp_firstname' => $data['data']['emp_firstname'],
+                'emp_jobtitle' => $data['data']['emp_jobtitle'],
+                'emp_dept' => $data['data']['emp_dept'],
+                'emp_prodline' => $data['data']['emp_prodline'],
+                'emp_station' => $data['data']['emp_station'],
+                'generated_at' => $data['data']['generated_at'],
             ]
         ]);
-
-        DB::connection('authify')->table('authify_sessions')->insert(session('emp_data'));
 
         // return redirect()->route('dashboard');
         return Inertia::render('Authentication/Login');
     }
-
 
     public function logout(Request $request)
     {
@@ -76,8 +86,22 @@ class AuthenticationController extends Controller
             ->where('token', session()->getId())
             ->delete();
 
-        $this->purgeOverstayingAuth();
+
         $this->clearSession($request);
+
+        return redirect()->route('login-page');
+    }
+
+    protected function validateToken($token)
+    {
+        // // CHANGE WHEN DEPLOYING
+        // $SSO_response = Http::post("http://127.0.0.1:8001/api/authify/validate?token=$token");
+
+        // if ($SSO_response->failed()) {
+        //     return back()->withErrors([
+        //         'general' => 'Invalid credentials or SSO service is unavailable.',
+        //     ]);
+        // }
 
         return redirect()->route('login-page');
     }
@@ -88,14 +112,5 @@ class AuthenticationController extends Controller
         session()->flush();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-    }
-
-    protected function purgeOverstayingAuth()
-    {
-        // Delete all sessions older than 12 hours
-        DB::connection('authify')
-            ->table('authify_sessions')
-            ->where('generated_at', '<', Carbon::now()->subHours(12))
-            ->delete();
     }
 }
