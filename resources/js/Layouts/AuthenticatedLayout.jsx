@@ -8,8 +8,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
 
     useEffect(() => {
-        authCheck();
-        console.log("Current URL:", window.location.href);
+        // authCheck();
     }, [url]);
 
     const authCheck = async () => {
@@ -22,7 +21,7 @@ export default function AuthenticatedLayout({ header, children }) {
             // Remove query params from the URL without reloading the page
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
-            router.post(route("setSession"), queryToken);
+            router.post(route("setSession"), { queryToken });
         }
 
         const token = localStorage.getItem("authify-token");
@@ -61,7 +60,7 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <div className="flex flex-col">
             <div className="flex h-screen overflow-hidden">
-                {/* <Sidebar /> */}
+                <Sidebar />
 
                 <div className="">
                     {/* <NavBar /> */}

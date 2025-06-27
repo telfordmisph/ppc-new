@@ -12,7 +12,7 @@ use Inertia\Inertia;
 
 $app_name = env('APP_NAME', '');
 
-Route::redirect('/', "/$app_name");
+// Route::redirect('/', "/$app_name");
 
 Route::post("/$app_name/setSession", [AuthenticationController::class, 'setSession'])->name('setSession');
 

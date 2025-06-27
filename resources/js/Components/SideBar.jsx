@@ -26,8 +26,13 @@ export default function Sidebar() {
         .join(" ");
 
     const logout = () => {
+        const token = localStorage.getItem("authify-token");
         localStorage.removeItem("authify-token");
         router.get(route("logout"));
+
+        window.location.href = `http://127.0.0.1:8001/authify/logout?token=${encodeURIComponent(
+            token
+        )}&redirect=${encodeURIComponent(window.location.href)}`;
     };
 
     return (
