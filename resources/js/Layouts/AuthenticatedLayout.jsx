@@ -8,12 +8,12 @@ export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
 
     useEffect(() => {
-        // authCheck();
+        authCheck();
     }, [url]);
 
     const authCheck = async () => {
         const queryParams = new URLSearchParams(url.split("?")[1]);
-        const queryToken = queryParams.get("token");
+        const queryToken = queryParams.get("key");
 
         if (queryToken) {
             localStorage.setItem("authify-token", queryToken);
@@ -62,9 +62,9 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
 
-                <div className="">
-                    {/* <NavBar /> */}
-                    <main className="w-full h-screen px-6 py-6 pb-[70px] overflow-y-auto">
+                <div className="w-full ">
+                    <NavBar />
+                    <main className="h-screen px-6 py-6 pb-[70px] overflow-y-auto">
                         <div className="">{children}</div>
                     </main>
                 </div>
