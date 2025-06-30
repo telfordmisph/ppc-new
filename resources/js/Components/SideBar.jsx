@@ -1,6 +1,7 @@
 import { Link, usePage, router } from "@inertiajs/react";
 import Dropdown from "@/Components/Dropdown";
 import { useState, useEffect } from "react";
+import SidebarLink from "./SidebarLink";
 
 export default function Sidebar() {
     const { display_name } = usePage().props;
@@ -46,7 +47,7 @@ export default function Sidebar() {
             >
                 {/* LOGO */}
                 <Link
-                    href="/"
+                    href={route("dashboard")}
                     className="flex items-center pl-[10px] text-xl font-bold"
                 >
                     <svg
@@ -67,34 +68,16 @@ export default function Sidebar() {
                 </Link>
 
                 <div className="flex flex-col justify-between flex-grow h-[93%]">
-                    {/* NAVIGATION */}
-                    <nav className="flex flex-col space-y-1">
-                        <Link
+                    {/* NAVIGATION  START */}
+                    <nav
+                        className="flex flex-col h-screen space-y-1 overflow-y-auto"
+                        style={{
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
+                        }}
+                    >
+                        <SidebarLink
                             href={route("dashboard")}
-                            className={`px-3 rounded text-[11.5pt] py-[2.5px] flex items-center ${
-                                theme === "dark"
-                                    ? "hover:bg-gray-800"
-                                    : "hover:bg-gray-100"
-                            }`}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="w-5 h-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                                />
-                            </svg>
-                            <p className="pl-1">Dashboard</p>
-                        </Link>
-
-                        <Dropdown
                             label="Dashboard"
                             icon={
                                 <svg
@@ -112,15 +95,48 @@ export default function Sidebar() {
                                     />
                                 </svg>
                             }
+                            notifications={5}
+                        />
+
+                        <Dropdown
+                            label="Dropdown"
+                            icon={
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="1.5"
+                                    stroke="currentColor"
+                                    className="w-5 h-5"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+                                    />
+                                </svg>
+                            }
                             links={[
-                                { href: "dashboard", label: "Main" },
                                 {
-                                    href: "dashboard",
-                                    label: "Analytics",
+                                    href: route("unauthorized"),
+                                    label: "Profile",
+                                    notification: true,
+                                },
+                                {
+                                    href: route("dashboard"),
+                                    label: "Account",
+                                    notification: 125,
+                                },
+                                {
+                                    href: route("dashboard"),
+                                    label: "No notifications ",
+                                    notification: false,
                                 },
                             ]}
+                            notification={true}
                         />
                     </nav>
+                    {/* NAVIGATION  END */}
 
                     {/* THEME TOGGLER */}
                     <div className="flex items-center justify-start pl-3 space-x-4">

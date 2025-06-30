@@ -12,6 +12,7 @@ export default function AuthenticatedLayout({ header, children }) {
     }, [url]);
 
     const authCheck = async () => {
+        // Check if the URL contains a query parameter "key" (token value): START
         const queryParams = new URLSearchParams(url.split("?")[1]);
         const queryToken = queryParams.get("key");
 
@@ -23,7 +24,9 @@ export default function AuthenticatedLayout({ header, children }) {
             window.history.replaceState({}, document.title, cleanUrl);
             router.post(route("setSession"), { queryToken });
         }
+        // Check if the URL contains a query parameter "key" (token value): END
 
+        // Check if there is a token stored in localStorage, redirect to login if not: START
         const token = localStorage.getItem("authify-token");
 
         if (!token) {
@@ -32,9 +35,9 @@ export default function AuthenticatedLayout({ header, children }) {
             )}`;
             return;
         }
+        // Check if there is a token stored in localStorage, redirect to login if not: END
 
-        console.log("with token", token);
-
+        // Check if the token is valid, redirect to login if not: START
         try {
             const isTokenValid = await axios.get(
                 `http://127.0.0.1:8001/api/authify/validate?token=${encodeURIComponent(
@@ -50,11 +53,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 )}`;
                 return;
             }
-
-            console.log("isTokenValid", isTokenValid.data);
         } catch (error) {
             console.log("with error", error);
         }
+        // Check if the token is valid, redirect to login if not: END
     };
 
     return (
