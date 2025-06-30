@@ -1,8 +1,6 @@
 import { Link, usePage, router } from "@inertiajs/react";
-import Dropdown from "@/Components/sidebar/Dropdown";
-import SidebarLink from "@/Components/sidebar/SidebarLink";
-import Navigation from "@/Components/sidebar/Navigation";
 import { useState, useEffect } from "react";
+import Navigation from "@/Components/sidebar/Navigation";
 
 export default function Sidebar() {
     const { display_name } = usePage().props;
@@ -26,15 +24,6 @@ export default function Sidebar() {
         ?.split(" ")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-
-    const logout = () => {
-        const token = localStorage.getItem("authify-token");
-        localStorage.removeItem("authify-token");
-        router.get(route("logout"));
-        window.location.href = `http://127.0.0.1:8001/authify/logout?token=${encodeURIComponent(
-            token
-        )}&redirect=${encodeURIComponent(window.location.href)}`;
-    };
 
     return (
         <div className="flex">
@@ -129,48 +118,8 @@ export default function Sidebar() {
                             <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z" />
                         </svg>
                     </label>
-
-                    <button
-                        onClick={() =>
-                            document.getElementById("logoutModal").showModal()
-                        }
-                    >
-                        <svg
-                            className="w-5 h-5 size-6"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
-                            />
-                        </svg>
-                    </button>
                 </div>
             </div>
-
-            {/* Logout Modal */}
-            <dialog id="logoutModal" className="modal">
-                <div className="modal-box">
-                    <h3 className="text-lg font-bold">Confirm Logout?</h3>
-                    <p className="py-4">
-                        This action will log you out on all applications using
-                        authify.
-                    </p>
-                    <div className="modal-action">
-                        <form method="dialog">
-                            <button className="btn">Close</button>
-                        </form>
-                        <button className="text-red-500 btn" onClick={logout}>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </dialog>
         </div>
     );
 }

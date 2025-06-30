@@ -4,7 +4,7 @@ export default function Modal({
     buttonText = "Open Modal",
     children,
     buttonClass = "",
-    className,
+    className = "",
 }) {
     return (
         <>
