@@ -27,7 +27,6 @@ export default function NavBar() {
                                 clipRule="evenodd"
                             />
                         </svg>
-
                         <span className="mt-[3px]">
                             Hello, {emp_data?.emp_firstname}
                         </span>
