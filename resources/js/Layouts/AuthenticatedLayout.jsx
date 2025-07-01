@@ -8,7 +8,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
 
     useEffect(() => {
-        authCheck();
+        // authCheck();
     }, [url]);
 
     const authCheck = async () => {

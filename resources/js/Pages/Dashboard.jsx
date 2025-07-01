@@ -4,7 +4,6 @@ import ChartTest from "./ChartTest";
 import DataTable from "@/Components/DataTable";
 import Modal from "@/Components/Modal";
 
-import TabulatorTable from "@/Components/TabulatorTable";
 import { useState } from "react";
 
 export default function Dashboard({ data, filters }) {
