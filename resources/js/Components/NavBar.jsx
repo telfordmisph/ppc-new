@@ -40,6 +40,7 @@ export default function NavBar() {
                                     Hello, {emp_data?.emp_firstname}
                                 </span>
                             </div>
+
                             <ul
                                 tabIndex={0}
                                 className="p-2 shadow-md dropdown-content menu bg-base-100 rounded-box z-1 w-52"

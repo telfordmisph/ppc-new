@@ -1,37 +1,51 @@
+// Modal.jsx
+import { useEffect, useRef } from "react";
+
 export default function Modal({
     id,
     title = "Modal Title",
-    buttonText = "Open Modal",
+    buttonText = "Open Modal vvv",
     children,
     buttonClass = "",
     className = "",
+    show = false,
+    onClose = () => {},
 }) {
+    const modalRef = useRef(null);
+
+    useEffect(() => {
+        if (show) {
+            modalRef.current?.showModal();
+        } else {
+            modalRef.current?.close();
+        }
+    }, [show]);
+
     return (
         <>
-            {/* Trigger Button */}
-            <button
-                className={buttonClass}
-                onClick={() => document.getElementById(id).showModal()}
-            >
-                {buttonText}
-            </button>
+            {buttonText && (
+                <button
+                    className={buttonClass}
+                    onClick={() => modalRef.current?.showModal()}
+                >
+                    {buttonText}
+                </button>
+            )}
 
-            {/* Modal Dialog */}
-            <dialog id={id} className="modal">
+            <dialog id={id} className="modal" ref={modalRef} onClose={onClose}>
                 <div className={`modal-box ${className}`}>
                     <form method="dialog">
-                        {/* Close Button */}
                         <button
+                            type="button"
                             className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2"
-                            onClick={() => document.getElementById(id)?.close()}
+                            onClick={() => {
+                                modalRef.current?.close();
+                                onClose();
+                            }}
                         >
                             ✕
                         </button>
-
-                        {/* Modal Title */}
                         <h3 className="text-lg font-bold">{title}</h3>
-
-                        {/* Modal Content */}
                         <div className="pt-4">{children}</div>
                     </form>
                 </div>
