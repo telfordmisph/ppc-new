@@ -16,9 +16,9 @@ class AuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
 
-        if (session('emp_data') && !in_array(session('emp_data')['emp_dept'], ['MIS', 'ADMIN'])) {
-            return redirect()->route('unauthorized');
-        }
+        // if (session('emp_data') && !in_array(session('emp_data')['emp_dept'], ['MIS', 'ADMIN'])) {
+        //     return redirect()->route('unauthorized');
+        // }
 
         return $next($request);
     }
