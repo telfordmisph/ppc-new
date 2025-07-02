@@ -11,10 +11,14 @@ class AuthenticationController extends Controller
     {
         $token = $request->input('queryToken');
 
+        // dd($request->all());
+
         $currentUser = DB::connection('authify')
             ->table('authify_sessions')
             ->where('token', $token)
             ->first();
+
+        // dd($currentUser);
 
         session([
             'emp_data' => [

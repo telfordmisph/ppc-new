@@ -16,7 +16,9 @@ export default function Dashboard({ data, filters }) {
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
+
             <pre>{JSON.stringify(props.emp_data, null, 2)}</pre>
+
             <Modal
                 id="TestModal"
                 title="Confirm Logout?"

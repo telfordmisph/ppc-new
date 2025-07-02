@@ -8,7 +8,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
 
     useEffect(() => {
-        // authCheck();
+        authCheck();
     }, [url]);
 
     const authCheck = async () => {
@@ -30,7 +30,7 @@ export default function AuthenticatedLayout({ header, children }) {
         const token = localStorage.getItem("authify-token");
 
         if (!token) {
-            window.location.href = `http://127.0.0.1:8001/authify/login?redirect=${encodeURIComponent(
+            window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
                 window.location.href
             )}`;
             return;
@@ -40,7 +40,7 @@ export default function AuthenticatedLayout({ header, children }) {
         // Check if the token is valid, redirect to login if not: START
         try {
             const isTokenValid = await axios.get(
-                `http://127.0.0.1:8001/api/authify/validate?token=${encodeURIComponent(
+                `http://192.168.2.221/authify/public/api/validate?token=${encodeURIComponent(
                     token
                 )}`
             );
@@ -48,7 +48,7 @@ export default function AuthenticatedLayout({ header, children }) {
             if (isTokenValid.data.status !== "success") {
                 localStorage.removeItem("authify-token");
 
-                window.location.href = `http://127.0.0.1:8001/authify/login?redirect=${encodeURIComponent(
+                window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
                     window.location.href
                 )}`;
                 return;
