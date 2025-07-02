@@ -1,11 +1,18 @@
 import NavBar from "@/Components/NavBar";
 import Sidebar from "@/Components/Sidebar/SideBar";
+import LoadingScreen from "@/Components/LoadingScreen";
 import { Link, usePage, router } from "@inertiajs/react";
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { url } = usePage();
+    const { url, props } = usePage();
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    const withToken = props.emp_data?.token ?? null;
+
+    // console.log(props.emp_data.token);
 
     useEffect(() => {
         authCheck();
@@ -23,6 +30,8 @@ export default function AuthenticatedLayout({ header, children }) {
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
             router.post(route("setSession"), { queryToken });
+
+            setIsLoading(false);
         }
         // Check if the URL contains a query parameter "key" (token value): END
 
@@ -57,13 +66,16 @@ export default function AuthenticatedLayout({ header, children }) {
             console.log("with error", error);
         }
         // Check if the token is valid, redirect to login if not: END
+
+        setIsLoading(false);
     };
 
     return (
         <div className="flex flex-col">
+            {!withToken && <LoadingScreen text="Please wait..." />}
+
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
-
                 <div className="w-full ">
                     <NavBar />
                     <main className="h-screen px-6 py-6 pb-[70px] overflow-y-auto">
