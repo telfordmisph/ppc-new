@@ -19,8 +19,7 @@ export default function Dropdown({
     };
 
     const isActiveLink = (href) => {
-        const normalizedHref = normalizePath(href);
-        return url === normalizedHref || url.startsWith(normalizedHref + "/");
+        return url === new URL(href, window.location.origin).pathname;
     };
 
     const hasActiveLink = useMemo(() => {

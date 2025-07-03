@@ -74,6 +74,7 @@ export default function AuthenticatedLayout({ header, children }) {
         <div className="flex flex-col">
             {!withToken && <LoadingScreen text="Please wait..." />}
 
+            {/* <LoadingScreen text="Please wait..." /> */}
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
                 <div className="w-full ">

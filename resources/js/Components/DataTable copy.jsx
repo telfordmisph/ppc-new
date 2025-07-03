@@ -9,18 +9,41 @@ export default function DataTable({
     routeName = "",
     rowKey = "id",
     selectable = false,
-    children,
+    dateRangeSearch = false,
     onSelectionChange = () => {},
+    children,
 }) {
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
     const [searchInput, setSearchInput] = useState(filters.search || "");
+    const [perPage, setPerPage] = useState(filters.perPage || 10);
+
+    const extractDate = (dt) => (dt ? dt.split(" ")[0] : "");
+    const [dateFrom, setDateFrom] = useState(extractDate(filters.from));
+    const [dateTo, setDateTo] = useState(extractDate(filters.to));
 
     const handleSearch = (e) => {
         e.preventDefault();
         router.get(
             routeName,
             { ...filters, search: searchInput },
+            { preserveState: true }
+        );
+    };
+
+    const handleDateFilter = (e) => {
+        e.preventDefault();
+        const formattedFrom = dateFrom ? `${dateFrom} 00:00:00` : null;
+        const formattedTo = dateTo ? `${dateTo} 23:59:59` : null;
+
+        router.get(
+            routeName,
+            {
+                ...filters,
+                from: formattedFrom,
+                to: formattedTo,
+                search: undefined,
+            },
             { preserveState: true }
         );
     };
@@ -56,10 +79,8 @@ export default function DataTable({
         );
     };
 
-    // Pagination logic: Limit to 5 pages
     const renderPaginationLinks = () => {
-        if (!meta || !meta.links || !meta.currentPage || !meta.lastPage)
-            return null;
+        if (!meta?.links || !meta.currentPage || !meta.lastPage) return null;
 
         const current = meta.currentPage;
         const last = meta.lastPage;
@@ -118,22 +139,24 @@ export default function DataTable({
     };
 
     return (
-        <div className="space-y-4">
-            {/* Search & Filters */}
+        <div className="w-[75vw] p-3 border-[1px] border-gray-300 rounded-lg">
+            {/* Filters */}
             <form
-                onSubmit={handleSearch}
-                className="flex flex-wrap justify-between gap-2"
+                onSubmit={dateRangeSearch ? handleDateFilter : handleSearch}
+                className="flex flex-wrap items-center justify-between gap-2"
             >
                 <select
-                    value={filters.perPage || 10}
-                    onChange={(e) =>
+                    value={perPage}
+                    onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        setPerPage(value);
                         router.get(
                             routeName,
-                            { ...filters, perPage: e.target.value },
+                            { ...filters, perPage: value },
                             { preserveState: true }
-                        )
-                    }
-                    className="select select-sm text-[10pt] py-0 w-[112px]"
+                        );
+                    }}
+                    className="select select-sm w-[100px] py-0"
                 >
                     {[10, 25, 50, 100].map((num) => (
                         <option key={num} value={num}>
@@ -141,23 +164,51 @@ export default function DataTable({
                         </option>
                     ))}
                 </select>
-                <div className="flex items-center gap-1">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        className="input input-bordered input-sm"
-                    />
-                    <button type="submit" className="btn btn-sm btn-primary">
-                        Search
-                    </button>
-                </div>
+
+                {dateRangeSearch ? (
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="input input-sm input-bordered"
+                        />
+                        <span className="mx-1">to</span>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="input input-sm input-bordered"
+                        />
+                        <button
+                            type="submit"
+                            className="btn btn-sm btn-primary"
+                        >
+                            Filter
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="input input-sm input-bordered"
+                        />
+                        <button
+                            type="submit"
+                            className="btn btn-sm btn-primary"
+                        >
+                            Search
+                        </button>
+                    </div>
+                )}
             </form>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="table table-sm">
+            {/* Table with horizontal scroll */}
+            <div className="mt-4 overflow-x-auto">
+                <table className="table table-zebra min-w-[1000px]">
                     <thead>
                         <tr>
                             {selectable && (
@@ -177,7 +228,7 @@ export default function DataTable({
                                 <th
                                     key={col.key}
                                     onClick={() => handleSort(col.key)}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer whitespace-nowrap"
                                 >
                                     {col.label}
                                     {filters.sortBy === col.key && (
@@ -205,14 +256,14 @@ export default function DataTable({
                             </tr>
                         ) : (
                             data.map((row, index) => {
-                                const key = `${row[rowKey]}-${index}` ?? index;
+                                const key = `${row[rowKey]}-${index}`;
                                 const isSelected = selected.some(
                                     (r) => r[rowKey] === row[rowKey]
                                 );
                                 return (
                                     <tr
                                         key={key}
-                                        className="cursor-pointer hover"
+                                        className="transition-colors cursor-pointer hover:bg-gray-100"
                                         onClick={() => handleRowClick(row)}
                                     >
                                         {selectable && (
@@ -230,8 +281,11 @@ export default function DataTable({
                                                 />
                                             </td>
                                         )}
-                                        {columns.map((col) => (
-                                            <td key={`${key}-${col.key}`}>
+                                        {columns.map((col, i) => (
+                                            <td
+                                                key={`${key}-${col.key}-${i}`}
+                                                className="whitespace-nowrap"
+                                            >
                                                 {row[col.key] ?? "-"}
                                             </td>
                                         ))}
@@ -244,8 +298,8 @@ export default function DataTable({
             </div>
 
             {/* Pagination */}
-            {meta && meta.links?.length > 0 && (
-                <div className="flex items-center justify-between">
+            {!dateRangeSearch && meta?.links?.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
                     <div className="text-sm text-gray-500">
                         Showing {meta.from} to {meta.to} of {meta.total} results
                     </div>
@@ -253,7 +307,7 @@ export default function DataTable({
                 </div>
             )}
 
-            {/* Row click modal via children function */}
+            {/* Row Modal */}
             {typeof children === "function" &&
                 activeRow &&
                 children(activeRow, () => setActiveRow(null))}
