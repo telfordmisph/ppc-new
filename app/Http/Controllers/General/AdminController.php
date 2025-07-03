@@ -1,39 +1,42 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\General;
 
+use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
-class DashboardController extends Controller
+class AdminController extends Controller
 {
-
     public function index(Request $request)
     {
         // Extract and sanitize request inputs
-        $search         = $request->input('search');
-        $perPage        = (int) $request->input('perPage', 10);
-        $sortBy         = $request->input('sortBy', 'EMPNAME');
-        $sortDirection  = $request->input('sortDirection', 'asc');
-        $export         = $request->boolean('export');
-        $startDate      = $this->parseDate($request->input('start'), 'start');
-        $endDate        = $this->parseDate($request->input('end'), 'end');
+        $search         = $request->input('search'); // DO NOT ALTER
+        $perPage        = (int) $request->input('perPage', 10); // DO NOT ALTER
+        $sortBy         = $request->input('sortBy', ''); // CAN BE ALTERED
+        $sortDirection  = $request->input('sortDirection', 'asc'); // CAN BE ALTERED
+        $export         = $request->boolean('export'); // DO NOT ALTER
+        $startDate      = $this->parseDate($request->input('start'), 'start'); // DO NOT ALTER
+        $endDate        = $this->parseDate($request->input('end'), 'end'); // DO NOT ALTER
 
         // DB setup
-        $connection = DB::connection('masterlist');
-        $columns = $connection->getSchemaBuilder()->getColumnListing('employee_masterlist');
+        $connection = DB::connection('mysql'); // use mysql for the default connection
+        $columns = $connection->getSchemaBuilder()->getColumnListing('admin'); // PUT TABLE NAME HERE TO GET COLUMN NAMES
 
         // Build query
-        $query = $connection->table('employee_masterlist')
+        $query = $connection->table('admin') // PUT TABLE NAME HERE
 
-            // FOR SEARCH
+            // FOR SEARCHING
             ->when($search, fn($q) => $this->applySearch($q, $columns, $search))
 
-            // FOR DATE RANGE (change column name to check)
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween(DB::raw('DATE(DATEHIRED)'), [$startDate, $endDate]))
-            ->orderBy($sortBy, $sortDirection);
+            // FOR DATE RANGE SEARCHING (change column name to check)
+            ->when($startDate && $endDate, fn($q) => $q->whereBetween(DB::raw('DATE(NULL)'), [$startDate, $endDate]))
+
+            // FOR SORTING
+            ->when($sortBy, fn($q) => $q->orderBy($sortBy, $sortDirection));
+
 
         // Export CSV if requested
         if ($export) {
@@ -41,7 +44,7 @@ class DashboardController extends Controller
         }
 
         // Return paginated Inertia view
-        return Inertia::render('Dashboard', [
+        return Inertia::render('Admin/Admin', [
             'tableData' => $query->paginate($perPage)->withQueryString(),
             'tableFilters' => $request->only([
                 'search',

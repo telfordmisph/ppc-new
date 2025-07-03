@@ -13,9 +13,12 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
     Route::get("/", [DashboardController::class, 'index'])->name('dashboard');
 });
 
+// Authentication routes
+require __DIR__ . '/auth.php';
+
+// General routes
+require __DIR__ . '/general.php';
+
 Route::fallback(function () {
     return Inertia::render('404');
 })->name('404');
-
-// Authentication routes
-require __DIR__ . '/auth.php';

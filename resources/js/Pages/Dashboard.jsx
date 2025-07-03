@@ -6,17 +6,17 @@ import Modal from "@/Components/Modal";
 
 import { useState } from "react";
 
-export default function Dashboard({ data, filters }) {
+export default function Dashboard({ tableData, tableFilters }) {
     const props = usePage().props;
-
-    console.log("Dashboard props:", data.meta);
 
     const [selectedRows, setSelectedRows] = useState([]);
 
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
+
             <pre>{JSON.stringify(props.emp_data, null, 2)}</pre>
+
             <Modal
                 id="TestModal"
                 title="Confirm Logout?"
@@ -36,22 +36,28 @@ export default function Dashboard({ data, filters }) {
                     { key: "EMPLOYID", label: "ID" },
                     { key: "EMPNAME", label: "Employee Name" },
                     { key: "JOB_TITLE", label: "Job Title" },
+                    { key: "EMAIL", label: "EMAIL" },
+                    { key: "PASSWRD", label: "PASSWRD" },
+                    { key: "EMPID", label: "EMPID" },
+                    { key: "BIRTHDAY", label: "BIRTHDAY" },
+                    { key: "ACCSTATUS", label: "ACCSTATUS" },
                 ]}
-                data={data.data}
+                data={tableData.data}
                 meta={{
-                    from: data.from,
-                    to: data.to,
-                    total: data.total,
-                    links: data.links,
-                    currentPage: data.current_page,
-                    lastPage: data.last_page,
+                    from: tableData.from,
+                    to: tableData.to,
+                    total: tableData.total,
+                    links: tableData.links,
+                    currentPage: tableData.current_page,
+                    lastPage: tableData.last_page,
                 }}
                 routeName={route("dashboard")}
-                filters={filters}
+                filters={tableFilters}
                 rowKey="EMPLOYID"
                 selectable={true}
                 onSelectionChange={setSelectedRows}
-                dateRangeSearch={true}
+                // dateRangeSearch={true}
+                showExport={false}
             >
                 {(row, close) => (
                     <Modal

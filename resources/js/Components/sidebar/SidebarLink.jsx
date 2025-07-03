@@ -2,7 +2,7 @@ import React from "react";
 import { Link, usePage } from "@inertiajs/react";
 
 const SidebarLink = ({
-    href = "/",
+    href,
     label,
     icon,
     notifications = 0,
@@ -10,14 +10,14 @@ const SidebarLink = ({
 }) => {
     const { url } = usePage();
 
-    const isActive = url === href;
+    const isActive = url === new URL(href, window.location.origin).pathname;
 
     const themeColor =
         localStorage.getItem("theme") === "dark"
             ? "bg-gray-700"
             : "bg-gray-200";
 
-    const activeColor = isActive ? "" : themeColor;
+    const activeColor = isActive ? themeColor : "";
 
     return (
         <Link

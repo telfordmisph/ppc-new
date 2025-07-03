@@ -11,17 +11,17 @@ export default function DataTable({
     selectable = false,
     dateRangeSearch = false,
     onSelectionChange = () => {},
+    showExport = true,
     children,
 }) {
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
     const [searchInput, setSearchInput] = useState(filters.search || "");
+    const [perPage, setPerPage] = useState(filters.perPage || 10);
 
-    // Extract just the date part from MySQL datetime
     const extractDate = (dt) => (dt ? dt.split(" ")[0] : "");
-
-    const [dateFrom, setDateFrom] = useState(extractDate(filters.from));
-    const [dateTo, setDateTo] = useState(extractDate(filters.to));
+    const [dateFrom, setDateFrom] = useState(extractDate(filters.start));
+    const [dateTo, setDateTo] = useState(extractDate(filters.end));
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -41,12 +41,25 @@ export default function DataTable({
             routeName,
             {
                 ...filters,
-                from: formattedFrom,
-                to: formattedTo,
-                search: undefined, // clear search when using date
+                start: formattedFrom,
+                end: formattedTo,
+                search: undefined,
             },
             { preserveState: true }
         );
+    };
+
+    const handleExport = () => {
+        const query = {
+            ...filters,
+            search: searchInput,
+            perPage,
+            start: dateFrom ? `${dateFrom} 00:00:00` : undefined,
+            end: dateTo ? `${dateTo} 23:59:59` : undefined,
+            export: 1,
+        };
+        const queryString = new URLSearchParams(query).toString();
+        window.open(`${routeName}?${queryString}`, "_blank");
     };
 
     const handleSelectAll = (e) => {
@@ -140,22 +153,24 @@ export default function DataTable({
     };
 
     return (
-        <div className="space-y-4">
-            {/* Search or Date Range Filter */}
+        <div className="w-[75vw] p-3 border-[1px] border-gray-300 rounded-lg">
+            {/* Filters */}
             <form
                 onSubmit={dateRangeSearch ? handleDateFilter : handleSearch}
                 className="flex flex-wrap items-center justify-between gap-2"
             >
                 <select
-                    value={filters.perPage || 10}
-                    onChange={(e) =>
+                    value={perPage}
+                    onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        setPerPage(value);
                         router.get(
                             routeName,
-                            { ...filters, perPage: e.target.value },
+                            { ...filters, perPage: value },
                             { preserveState: true }
-                        )
-                    }
-                    className="select select-sm w-[112px]"
+                        );
+                    }}
+                    className="select select-sm w-[100px] py-0"
                 >
                     {[10, 25, 50, 100].map((num) => (
                         <option key={num} value={num}>
@@ -185,6 +200,15 @@ export default function DataTable({
                         >
                             Filter
                         </button>
+                        {showExport && (
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline"
+                                onClick={handleExport}
+                            >
+                                Export CSV
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="flex items-center gap-2">
@@ -201,13 +225,22 @@ export default function DataTable({
                         >
                             Search
                         </button>
+                        {showExport && (
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline"
+                                onClick={handleExport}
+                            >
+                                Export CSV
+                            </button>
+                        )}
                     </div>
                 )}
             </form>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="table table-sm">
+            <div className="mt-4 overflow-x-auto">
+                <table className="table table-zebra min-w-[1000px]">
                     <thead>
                         <tr>
                             {selectable && (
@@ -227,7 +260,7 @@ export default function DataTable({
                                 <th
                                     key={col.key}
                                     onClick={() => handleSort(col.key)}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer whitespace-nowrap"
                                 >
                                     {col.label}
                                     {filters.sortBy === col.key && (
@@ -262,7 +295,7 @@ export default function DataTable({
                                 return (
                                     <tr
                                         key={key}
-                                        className="cursor-pointer hover"
+                                        className="transition-colors cursor-pointer hover:bg-gray-100"
                                         onClick={() => handleRowClick(row)}
                                     >
                                         {selectable && (
@@ -280,8 +313,11 @@ export default function DataTable({
                                                 />
                                             </td>
                                         )}
-                                        {columns.map((col) => (
-                                            <td key={`${key}-${col.key}`}>
+                                        {columns.map((col, i) => (
+                                            <td
+                                                key={`${key}-${col.key}-${i}`}
+                                                className="whitespace-nowrap"
+                                            >
                                                 {row[col.key] ?? "-"}
                                             </td>
                                         ))}
@@ -294,8 +330,8 @@ export default function DataTable({
             </div>
 
             {/* Pagination */}
-            {!dateRangeSearch && meta && meta.links?.length > 0 && (
-                <div className="flex items-center justify-between">
+            {meta?.links?.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
                     <div className="text-sm text-gray-500">
                         Showing {meta.from} to {meta.to} of {meta.total} results
                     </div>
@@ -303,7 +339,7 @@ export default function DataTable({
                 </div>
             )}
 
-            {/* Row Click Modal */}
+            {/* Row Modal */}
             {typeof children === "function" &&
                 activeRow &&
                 children(activeRow, () => setActiveRow(null))}
