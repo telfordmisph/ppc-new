@@ -36,7 +36,7 @@ export default function Profile({ profile, errors }) {
             <Head title="Profile" />
 
             <div className="max-w-3xl p-6 mx-auto border-[1px] rounded-2xl">
-                <h1 className="pb-2 mb-6 text-2xl font-bold text-gray-800 border-b">
+                <h1 className="pb-2 mb-6 text-2xl font-bold border-b">
                     User Profile
                 </h1>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
