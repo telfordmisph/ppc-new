@@ -54,9 +54,6 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                 routeName={route("index_addAdmin")}
                 filters={tableFilters}
                 rowKey="EMPLOYID"
-                // selectable={true}
-                // onSelectionChange={setSelectedRows}
-                // dateRangeSearch={true}
                 showExport={false}
             >
                 {(row, close) => (
@@ -94,7 +91,7 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                         <div className="flex justify-end mt-4">
                             {role && (
                                 <button
-                                    className="btn"
+                                    className="btn btn-primary"
                                     onClick={() =>
                                         addAdmin(row.EMPLOYID, row.EMPNAME)
                                     }
