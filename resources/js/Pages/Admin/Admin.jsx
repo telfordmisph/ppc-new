@@ -1,20 +1,68 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react";
+import { Head, usePage, router } from "@inertiajs/react";
 import DataTable from "@/Components/DataTable";
 import Modal from "@/Components/Modal";
 
 import { useState } from "react";
+import AddNewAdmin from "@/Pages/Admin/AddNewAdmin";
 
-export default function Admin({ tableData, tableFilters }) {
-    const props = usePage().props;
+export default function Admin({
+    tableData,
+    tableFilters,
+    tableDataMasterlist,
+    tableFiltersMasterlist,
+    emp_data,
+}) {
+    const [role, setRole] = useState(null);
 
-    const [selectedRows, setSelectedRows] = useState([]);
+    function removeAdmin(id) {
+        router.post(
+            route("removeAdmin"),
+            { id },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    console.log("Admin removed");
+                },
+            }
+        );
+    }
+
+    function changeRole(id) {
+        role &&
+            router.patch(
+                route("changeAdminRole"),
+                { id, role },
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        console.log("Admin role changed");
+                    },
+                }
+            );
+    }
+
+    const tableModalClose = (close) => {
+        setRole(null);
+        close();
+    };
 
     return (
         <AuthenticatedLayout>
             <Head title="Admin" />
 
-            <h1 className="text-2xl font-bold">Administrators</h1>
+            {/* <pre>{JSON.stringify(emp_data.emp_system_role, null, 2)}</pre> */}
+
+            <div className="flex items-center justify-between mb-4">
+                <h1 className="text-2xl font-bold">Administrators</h1>
+
+                {["superadmin", "admin"].includes(emp_data.emp_system_role) && (
+                    <AddNewAdmin
+                        tableData={tableDataMasterlist}
+                        tableFilters={tableFiltersMasterlist}
+                    />
+                )}
+            </div>
 
             <DataTable
                 columns={[
@@ -42,27 +90,51 @@ export default function Admin({ tableData, tableFilters }) {
                 {(row, close) => (
                     <Modal
                         id="RowModal"
-                        title={`Employee Details - ${row.EMPNAME}`}
+                        title={`Admin Details`}
                         show={true}
-                        onClose={close}
+                        onClose={() => tableModalClose(close)}
+                        className="w-[300px]"
                     >
-                        {/* <pre>{JSON.stringify(row, null, 2)}</pre> */}
+                        <p>
+                            <strong>ID:</strong> {row.emp_id}
+                        </p>
+                        <strong>Name:</strong> {row.emp_name}
+                        <p>
+                            <strong>Role:</strong> {row.emp_role}
+                        </p>
+                        {["superadmin", "admin"].includes(
+                            emp_data.emp_system_role
+                        ) && (
+                            <div>
+                                <select
+                                    defaultValue={row.emp_role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    className="mt-5 select"
+                                >
+                                    {/* <option value={null}></option> */}
+                                    <option value="superadmin">
+                                        Superadmin
+                                    </option>
+                                    <option value="admin">Admin</option>
+                                    <option value="moderator">Moderator</option>
+                                </select>
 
-                        <p>
-                            <strong>ID:</strong> {row.EMPLOYID}
-                        </p>
-                        <p>
-                            <strong>Name:</strong> {row.EMPNAME}
-                        </p>
-                        <p>
-                            <strong>Job Title:</strong> {row.JOB_TITLE}
-                        </p>
-
-                        <div className="flex justify-end mt-4">
-                            <button className="btn" onClick={close}>
-                                Close
-                            </button>
-                        </div>
+                                <div className="flex justify-end gap-1 mt-5">
+                                    <button
+                                        className="text-blue-600 btn"
+                                        onClick={() => changeRole(row.emp_id)}
+                                    >
+                                        Update Role
+                                    </button>
+                                    <button
+                                        className="text-red-600 btn"
+                                        onClick={() => removeAdmin(row.emp_id)}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </Modal>
                 )}
             </DataTable>

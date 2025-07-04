@@ -31,7 +31,7 @@ export default function Dashboard({ tableData, tableFilters }) {
                 </div>
             </Modal>
 
-            <DataTable
+            {/* <DataTable
                 columns={[
                     { key: "EMPLOYID", label: "ID" },
                     { key: "EMPNAME", label: "Employee Name" },
@@ -66,7 +66,6 @@ export default function Dashboard({ tableData, tableFilters }) {
                         show={true}
                         onClose={close}
                     >
-                        {/* <pre>{JSON.stringify(row, null, 2)}</pre> */}
 
                         <p>
                             <strong>ID:</strong> {row.EMPLOYID}
@@ -90,7 +89,7 @@ export default function Dashboard({ tableData, tableFilters }) {
             <div className="mt-4">
                 <h2 className="text-lg font-semibold">Selected Rows</h2>
                 <pre>{JSON.stringify(selectedRows, null, 2)}</pre>
-            </div>
+            </div> */}
         </AuthenticatedLayout>
     );
 }

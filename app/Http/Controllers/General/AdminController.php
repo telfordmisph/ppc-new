@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\General;
 
 use App\Http\Controllers\Controller;
+use App\Services\DataTableService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,43 +11,76 @@ use Inertia\Inertia;
 
 class AdminController extends Controller
 {
+    protected $datatable;
+
+    public function __construct(DataTableService $datatable)
+    {
+        $this->datatable = $datatable;
+    }
+
     public function index(Request $request)
     {
-        // Extract and sanitize request inputs
-        $search         = $request->input('search'); // DO NOT ALTER
-        $perPage        = (int) $request->input('perPage', 10); // DO NOT ALTER
-        $sortBy         = $request->input('sortBy', ''); // CAN BE ALTERED
-        $sortDirection  = $request->input('sortDirection', 'asc'); // CAN BE ALTERED
-        $export         = $request->boolean('export'); // DO NOT ALTER
-        $startDate      = $this->parseDate($request->input('start'), 'start'); // DO NOT ALTER
-        $endDate        = $this->parseDate($request->input('end'), 'end'); // DO NOT ALTER
+        $result = $this->datatable->handle(
+            $request,
+            'mysql', // connection
+            'admin', // table
+            [ // options
+                'filename' => 'active_admins_export', // optional, for CSV export
+                'defaultSortBy' => 'admin_id', // required
+                'dateColumn'    => 'created_at', // default date column
+                // 'joins' => [ // Comment out if not needed
+                //     // Ex.
+                //     [
+                //         'type'    => 'leftJoin',
+                //         'table'   => 'roles',
+                //         'first'   => 'admin.role_id',
+                //         'second'  => 'roles.id',
+                //     ],
+                // ],
+                // 'conditions' => function ($query) { // Comment out if no conditions
+                //     // Ex.
+                //     return $query
+                //         ->where('emp_name', 'test');
+                // }
+            ]
+        );
 
-        // DB setup
-        $connection = DB::connection('mysql'); // use mysql for the default connection
-        $columns = $connection->getSchemaBuilder()->getColumnListing('admin'); // PUT TABLE NAME HERE TO GET COLUMN NAMES
-
-        // Build query
-        $query = $connection->table('admin') // PUT TABLE NAME HERE
-
-            // FOR SEARCHING
-            ->when($search, fn($q) => $this->applySearch($q, $columns, $search))
-
-            // FOR DATE RANGE SEARCHING (change column name to check)
-            ->when($startDate && $endDate, fn($q) => $q->whereBetween(DB::raw('DATE(NULL)'), [$startDate, $endDate]))
-
-            // FOR SORTING
-            ->when($sortBy, fn($q) => $q->orderBy($sortBy, $sortDirection));
-
-
-        // Export CSV if requested
-        if ($export) {
-            return $this->exportCsv($query->get(), $columns);
+        // FOR CSV EXPORTING (if needed)
+        if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            return $result;
         }
 
-        // Return paginated Inertia view
+        // FOR MASTERLIST DATA
+        $resultMasterlist = $this->datatable->handle(
+            $request,
+            'masterlist', // connection
+            'employee_masterlist', // table
+            [ // options
+                // 'filename' => 'active_admins_export', // optional, for CSV export
+                'defaultSortBy' => 'EMPLOYID', // required
+                'dateColumn'    => 'DATEHIRED', // default date column
+                'conditions' => function ($query) { // Comment out if no conditions
+                    // Ex.
+                    return $query
+                        ->whereNot('EMPLOYID', 0);
+                }
+            ]
+
+        );
+
         return Inertia::render('Admin/Admin', [
-            'tableData' => $query->paginate($perPage)->withQueryString(),
+            'tableData' => $result['data'],
             'tableFilters' => $request->only([
+                'search',
+                'perPage',
+                'sortBy',
+                'sortDirection',
+                'start',
+                'end',
+            ]),
+
+            'tableDataMasterlist' => $resultMasterlist['data'],
+            'tableFiltersMasterlist' => $request->only([
                 'search',
                 'perPage',
                 'sortBy',
@@ -57,44 +91,56 @@ class AdminController extends Controller
         ]);
     }
 
-    private function parseDate(?string $date, string $type): ?string
+    public function addAdmin(Request $request)
     {
-        if (!$date) return null;
 
-        $carbon = Carbon::parse($date);
-        return $type === 'start'
-            ? $carbon->startOfDay()->format('Y-m-d')
-            : $carbon->endOfDay()->format('Y-m-d');
+        // dd($request->all());
+        $checkIfExists = DB::table('admin')
+            ->where('emp_id', $request->input('id'))
+            ->exists();
+
+        if (!$checkIfExists) {
+            DB::table('admin')
+                ->insert([
+                    'emp_id' => $request->input('id'),
+                    'emp_name' => $request->input('name'),
+                    'emp_role' => $request->input('role'),
+                    'last_updated_by' => session('emp_data')['emp_id'],
+                ]);
+        }
+
+        return back()->with('success', 'Admin added successfully.');
     }
 
-    private function applySearch($query, array $columns, string $search)
+    public function removeAdmin(Request $request)
     {
-        return $query->where(function ($q) use ($columns, $search) {
-            foreach ($columns as $column) {
-                $q->orWhere($column, 'like', "%{$search}%");
-            }
-        });
+        DB::table('admin')
+            ->where('emp_id', $request->input('id'))
+            ->delete();
+
+        return back()->with('success', 'Admin removed successfully.');
     }
 
-    private function exportCsv($data, array $columns)
+    public function changeAdminRole(Request $request)
     {
-        $filename = 'employee_export_' . now()->format('Ymd_His') . '.csv';
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"$filename\"",
-        ];
+        $id = $request->input('id');
+        $role = $request->input('role');
 
-        $callback = function () use ($data, $columns) {
-            $output = fopen('php://output', 'w');
-            fputcsv($output, $columns);
+        DB::table('admin')
+            ->where('emp_id', $id)
+            ->update([
+                'emp_role' => $role,
+                'last_updated_by' => session('emp_data')['emp_id'],
+            ]);
 
-            foreach ($data as $row) {
-                fputcsv($output, array_map(fn($col) => $row->$col ?? '', $columns));
-            }
+        // Update session data if the current user is the one whose role is being changed
+        if (session('emp_data')['emp_id'] == $id) {
+            $empData = session('emp_data');
+            $empData['emp_system_role'] = $role;
+            session()->put('emp_data', $empData);
+        }
 
-            fclose($output);
-        };
 
-        return response()->stream($callback, 200, $headers);
+        return back()->with('success', 'Admin role changed successfully.');
     }
 }

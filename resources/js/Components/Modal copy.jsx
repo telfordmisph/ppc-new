@@ -1,7 +1,7 @@
 export default function Modal({
     id,
     title = "Modal Title",
-    buttonText = "Open Modal aa",
+    buttonText = "",
     children,
     buttonClass = "",
     className = "",

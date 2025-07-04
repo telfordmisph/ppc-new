@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class AuthMiddleware
+class AdminMiddleware
 {
     /**
      * Handle an incoming request.
@@ -15,12 +15,6 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-
-        // COMMENT OUT IF NO SPECIFIC DEPT OR JOB TITLE
-        if (session('emp_data') && !in_array(session('emp_data')['emp_dept'], ['MIS', 'Human Resource'])) {
-            return redirect()->route('unauthorized');
-        }
-
         return $next($request);
     }
 }
