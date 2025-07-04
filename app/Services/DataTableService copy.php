@@ -12,8 +12,8 @@ class DataTableService
   {
     $search         = $request->input('search');
     $perPage        = (int) $request->input('perPage', 10);
-    $sortBy         = $request->input('sortBy', $options['defaultSortBy'] ?? null);
-    $sortDirection  = $request->input('sortDirection', 'desc');
+    $sortBy         = $request->input('sortBy', $options['defaultSortBy'] ?? 'id');
+    $sortDirection  = $request->input('sortDirection', 'asc');
     $export         = $request->boolean('export');
     $startDate      = $this->parseDate($request->input('start'), 'start');
     $endDate        = $this->parseDate($request->input('end'), 'end');

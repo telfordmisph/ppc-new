@@ -4,15 +4,8 @@ import DataTable from "@/Components/DataTable";
 import Modal from "@/Components/Modal";
 
 import { useState } from "react";
-import AddNewAdmin from "@/Pages/Admin/AddNewAdmin";
 
-export default function Admin({
-    tableData,
-    tableFilters,
-    tableDataMasterlist,
-    tableFiltersMasterlist,
-    emp_data,
-}) {
+export default function Admin({ tableData, tableFilters, emp_data }) {
     const [role, setRole] = useState(null);
 
     function removeAdmin(id) {
@@ -49,18 +42,24 @@ export default function Admin({
 
     return (
         <AuthenticatedLayout>
-            <Head title="Admin" />
-
-            {/* <pre>{JSON.stringify(emp_data.emp_system_role, null, 2)}</pre> */}
+            <Head title="Manage Administrators" />
 
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold">Administrators</h1>
 
                 {["superadmin", "admin"].includes(emp_data.emp_system_role) && (
-                    <AddNewAdmin
-                        tableData={tableDataMasterlist}
-                        tableFilters={tableFiltersMasterlist}
-                    />
+                    <button
+                        className="text-blue-600 border-blue-600 btn"
+                        onClick={() =>
+                            router.get(
+                                route("index_addAdmin"),
+                                {},
+                                { preserveScroll: true }
+                            )
+                        }
+                    >
+                        Add New Admin
+                    </button>
                 )}
             </div>
 

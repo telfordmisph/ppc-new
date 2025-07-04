@@ -12,11 +12,13 @@ use Inertia\Inertia;
 class AdminController extends Controller
 {
     protected $datatable;
+    protected $datatable1;
 
     public function __construct(DataTableService $datatable)
     {
         $this->datatable = $datatable;
     }
+
 
     public function index(Request $request)
     {
@@ -24,24 +26,8 @@ class AdminController extends Controller
             $request,
             'mysql', // connection
             'admin', // table
-            [ // options
-                'filename' => 'active_admins_export', // optional, for CSV export
-                'defaultSortBy' => 'admin_id', // required
-                'dateColumn'    => 'created_at', // default date column
-                // 'joins' => [ // Comment out if not needed
-                //     // Ex.
-                //     [
-                //         'type'    => 'leftJoin',
-                //         'table'   => 'roles',
-                //         'first'   => 'admin.role_id',
-                //         'second'  => 'roles.id',
-                //     ],
-                // ],
-                // 'conditions' => function ($query) { // Comment out if no conditions
-                //     // Ex.
-                //     return $query
-                //         ->where('emp_name', 'test');
-                // }
+            [
+                // options
             ]
         );
 
@@ -49,24 +35,6 @@ class AdminController extends Controller
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
         }
-
-        // FOR MASTERLIST DATA
-        $resultMasterlist = $this->datatable->handle(
-            $request,
-            'masterlist', // connection
-            'employee_masterlist', // table
-            [ // options
-                // 'filename' => 'active_admins_export', // optional, for CSV export
-                'defaultSortBy' => 'EMPLOYID', // required
-                'dateColumn'    => 'DATEHIRED', // default date column
-                'conditions' => function ($query) { // Comment out if no conditions
-                    // Ex.
-                    return $query
-                        ->whereNot('EMPLOYID', 0);
-                }
-            ]
-
-        );
 
         return Inertia::render('Admin/Admin', [
             'tableData' => $result['data'],
@@ -78,9 +46,27 @@ class AdminController extends Controller
                 'start',
                 'end',
             ]),
+        ]);
+    }
 
-            'tableDataMasterlist' => $resultMasterlist['data'],
-            'tableFiltersMasterlist' => $request->only([
+    public function index_addAdmin(Request $request)
+    {
+        $result = $this->datatable->handle(
+            $request,
+            'masterlist', // connection
+            'employee_masterlist', // table
+            [ // options
+                'conditions' => function ($query) { // Comment out if no conditions
+                    // Ex.
+                    return $query
+                        ->where('ACCSTATUS', 1);
+                },
+            ]
+        );
+
+        return Inertia::render('Admin/NewAdmin', [
+            'tableData' => $result['data'],
+            'tableFilters' => $request->only([
                 'search',
                 'perPage',
                 'sortBy',

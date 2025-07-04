@@ -12,6 +12,7 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
 
 
   Route::get("/admin", [AdminController::class, 'index'])->name('admin');
+  Route::get("/new-admin", [AdminController::class, 'index_addAdmin'])->name('index_addAdmin');
   Route::post("/add-admin", [AdminController::class, 'addAdmin'])->name('addAdmin');
   Route::post("/remove-admin", [AdminController::class, 'removeAdmin'])->name('removeAdmin');
   Route::patch("/change-admin-role", [AdminController::class, 'changeAdminRole'])->name('changeAdminRole');
