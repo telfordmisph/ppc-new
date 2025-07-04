@@ -47,7 +47,9 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold">Administrators</h1>
 
-                {["superadmin", "admin"].includes(emp_data.emp_system_role) && (
+                {["superadmin", "admin"].includes(
+                    emp_data?.emp_system_role
+                ) && (
                     <button
                         className="text-blue-600 border-blue-600 btn"
                         onClick={() =>
@@ -102,7 +104,7 @@ export default function Admin({ tableData, tableFilters, emp_data }) {
                             <strong>Role:</strong> {row.emp_role}
                         </p>
                         {["superadmin", "admin"].includes(
-                            emp_data.emp_system_role
+                            emp_data?.emp_system_role
                         ) && (
                             <div>
                                 <select

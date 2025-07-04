@@ -46,7 +46,7 @@ export default function NavBar() {
                                 className="p-2 shadow-md dropdown-content menu bg-base-100 rounded-box z-1 w-52"
                             >
                                 <li>
-                                    <a>
+                                    <a href={route("profile.index")}>
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             fill="none"
@@ -68,7 +68,7 @@ export default function NavBar() {
                                     </a>
                                 </li>
                                 <li>
-                                    <a onClick={logout}>
+                                    <button onClick={logout}>
                                         <svg
                                             className="w-5 h-5 size-6"
                                             xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +86,7 @@ export default function NavBar() {
                                         <span className="mt-[3px]">
                                             Log out
                                         </span>
-                                    </a>
+                                    </button>
                                 </li>
                             </ul>
                         </div>
