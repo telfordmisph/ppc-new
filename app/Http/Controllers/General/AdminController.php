@@ -59,7 +59,8 @@ class AdminController extends Controller
                 'conditions' => function ($query) { // Comment out if no conditions
                     // Ex.
                     return $query
-                        ->where('ACCSTATUS', 1);
+                        ->where('ACCSTATUS', 1)
+                        ->whereNot('EMPLOYID', 0);
                 },
             ]
         );

@@ -32,6 +32,11 @@ export default function DataTable({
         );
     };
 
+    const themeColor =
+        localStorage.getItem("theme") === "dark"
+            ? "hover:bg-gray-700"
+            : "hover:bg-gray-100";
+
     const handleDateFilter = (e) => {
         e.preventDefault();
         const formattedFrom = dateFrom ? `${dateFrom} 00:00:00` : null;
@@ -308,7 +313,7 @@ export default function DataTable({
                                 return (
                                     <tr
                                         key={key}
-                                        className="transition-colors cursor-pointer hover:bg-gray-100"
+                                        className={`transition-colors cursor-pointer ${themeColor}`}
                                         onClick={() => handleRowClick(row)}
                                     >
                                         {selectable && (
