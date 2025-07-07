@@ -10,7 +10,7 @@ export default function NavBar() {
         router.get(route("logout"));
         window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
             token
-        )}&redirect=${encodeURIComponent(window.location.href)}`;
+        )}&redirect=${encodeURIComponent(route("dashboard"))}`;
     };
 
     return (

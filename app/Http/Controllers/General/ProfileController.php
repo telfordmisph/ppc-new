@@ -11,13 +11,12 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        $profile = DB::connection('masterlist')
+
+        $profile = session('emp_data') && DB::connection('masterlist')
             ->table('employee_masterlist')
             ->select('EMPLOYID', 'EMPNAME', 'JOB_TITLE', 'DEPARTMENT', 'PRODLINE', 'STATION', 'DATEHIRED', 'EMAIL', 'PASSWRD')
             ->where('EMPLOYID', session('emp_data')['emp_id'])
             ->first();
-
-        // dd($profile);
 
         return Inertia::render('Profile', [
             'profile' => $profile,
@@ -52,6 +51,7 @@ class ProfileController extends Controller
             ->update([
                 'PASSWRD' => $credentials['new_password'],
             ]);
+
 
         return back()->with('success', 'Password changed successfully.');
     }

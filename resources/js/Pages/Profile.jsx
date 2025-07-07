@@ -39,34 +39,40 @@ export default function Profile({ profile, errors }) {
                 <h1 className="pb-2 mb-6 text-2xl font-bold border-b">
                     User Profile
                 </h1>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <ProfileField label="Name" value={profile.EMPNAME} />
-                    <ProfileField label="Position" value={profile.JOB_TITLE} />
-                    <ProfileField
-                        label="Department"
-                        value={profile.DEPARTMENT}
-                    />
-                    <ProfileField
-                        label="Production Line"
-                        value={profile.PRODLINE}
-                    />
-                    <ProfileField label="Station" value={profile.STATION} />
-                    <ProfileField label="Email" value={profile.EMAIL} />
-                    <div className="flex items-end gap-2">
+
+                {profile && (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <ProfileField label="Name" value={profile.EMPNAME} />
                         <ProfileField
-                            label="Password"
-                            value={[...Array(profile.PASSWRD.length)]
-                                .map(() => "•")
-                                .join("")}
+                            label="Position"
+                            value={profile.JOB_TITLE}
                         />
-                        <button
-                            className="border-blue-500 btn btn-sm border-[1px]"
-                            onClick={() => setPasswordForm(true)}
-                        >
-                            Change Password
-                        </button>
+                        <ProfileField
+                            label="Department"
+                            value={profile.DEPARTMENT}
+                        />
+                        <ProfileField
+                            label="Production Line"
+                            value={profile.PRODLINE}
+                        />
+                        <ProfileField label="Station" value={profile.STATION} />
+                        <ProfileField label="Email" value={profile.EMAIL} />
+                        <div className="flex items-end gap-2">
+                            <ProfileField
+                                label="Password"
+                                value={[...Array(profile.PASSWRD.length)]
+                                    .map(() => "•")
+                                    .join("")}
+                            />
+                            <button
+                                className="border-blue-500 btn btn-sm border-[1px]"
+                                onClick={() => setPasswordForm(true)}
+                            >
+                                Change Password
+                            </button>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {passwordForm && (
                     <div className="mt-6">

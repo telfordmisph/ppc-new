@@ -12,8 +12,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const withToken = props.emp_data?.token ?? null;
 
-    // console.log(props.emp_data.token);
-
     useEffect(() => {
         authCheck();
     }, [url]);
@@ -40,7 +38,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
         if (!token) {
             window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
-                window.location.href
+                route("dashboard")
             )}`;
             return;
         }
@@ -58,7 +56,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 localStorage.removeItem("authify-token");
 
                 window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
-                    window.location.href
+                    route("dashboard")
                 )}`;
                 return;
             }
