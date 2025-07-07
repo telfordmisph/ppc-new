@@ -1,7 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
-import Modal from "@/Components/Modal";
 import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
 import TextInput from "@/Components/TextInput";
@@ -65,7 +64,7 @@ export default function Profile({ profile, errors }) {
                         <div className="flex items-end gap-2">
                             <ProfileField
                                 label="Password"
-                                value={[...Array(profile.PASSWRD?.length)]
+                                value={[...Array(profile.PASSWRD?.length || 8)]
                                     .map(() => "•")
                                     .join("")}
                             />
@@ -73,19 +72,18 @@ export default function Profile({ profile, errors }) {
                                 className="border-blue-500 btn btn-sm border-[1px]"
                                 onClick={() => setPasswordForm(!passwordForm)}
                             >
-                                Change Password
+                                {passwordForm ? "Cancel" : "Change Password"}
                             </button>
                         </div>
                     </div>
                 )}
 
-                {passwordForm && (
-                    <div className="mt-3">
-                        <p></p>
-
+                {/* Password Form - Toggled */}
+                <div className={passwordForm ? "block mt-6" : "hidden"}>
+                    <div className="p-4 space-y-4 border border-yellow-400 rounded-xl">
                         <div
                             role="alert"
-                            className="py-2 mt-0 mb-2 alert alert-warning"
+                            className="text-sm alert alert-warning"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -101,10 +99,11 @@ export default function Profile({ profile, errors }) {
                                 />
                             </svg>
                             <span>
-                                Warning: Changing your password will log you out
-                                of all systems using authify
+                                Changing your password will log you out of all
+                                systems using Authify.
                             </span>
                         </div>
+
                         <div>
                             <InputLabel
                                 htmlFor="old-password"
@@ -116,7 +115,6 @@ export default function Profile({ profile, errors }) {
                                 name="old-password"
                                 value={password.current_password}
                                 className="block w-full mt-1"
-                                isFocused={true}
                                 onChange={(e) =>
                                     setPassword({
                                         ...password,
@@ -124,25 +122,23 @@ export default function Profile({ profile, errors }) {
                                     })
                                 }
                             />
-
                             <InputError
                                 message={errors.current_password}
                                 className="mt-1"
                             />
                         </div>
 
-                        <div className="mt-4">
+                        <div>
                             <InputLabel
                                 htmlFor="new-password"
                                 value="New Password"
                             />
                             <TextInput
                                 id="new-password"
-                                type="text"
+                                type="password"
                                 name="new-password"
                                 value={password.new_password}
                                 className="block w-full mt-1"
-                                isFocused={true}
                                 onChange={(e) =>
                                     setPassword({
                                         ...password,
@@ -150,25 +146,23 @@ export default function Profile({ profile, errors }) {
                                     })
                                 }
                             />
-
                             <InputError
                                 message={errors.new_password}
                                 className="mt-1"
                             />
                         </div>
 
-                        <div className="mt-4">
+                        <div>
                             <InputLabel
                                 htmlFor="confirm-new-password"
                                 value="Confirm New Password"
                             />
                             <TextInput
                                 id="confirm-new-password"
-                                type="text"
+                                type="password"
                                 name="confirm-new-password"
                                 value={password.new_password_confirmation}
                                 className="block w-full mt-1"
-                                isFocused={true}
                                 onChange={(e) =>
                                     setPassword({
                                         ...password,
@@ -177,7 +171,6 @@ export default function Profile({ profile, errors }) {
                                     })
                                 }
                             />
-
                             <InputError
                                 message={errors.new_password_confirmation}
                                 className="mt-1"
@@ -185,17 +178,14 @@ export default function Profile({ profile, errors }) {
                         </div>
 
                         <button
-                            className="w-full mt-4 btn btn-primary"
-                            onClick={() => handleChangePassword()}
+                            className="w-full mt-2 btn btn-primary"
+                            onClick={handleChangePassword}
                         >
                             Change Password
                         </button>
 
                         {successMessage && (
-                            <div
-                                role="alert"
-                                className="mt-2 text-white bg-green-600 alert"
-                            >
+                            <div className="mt-2 text-white alert alert-success">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     className="w-6 h-6 stroke-current shrink-0"
@@ -213,20 +203,19 @@ export default function Profile({ profile, errors }) {
                             </div>
                         )}
                     </div>
-                )}
+                </div>
             </div>
         </AuthenticatedLayout>
     );
 }
 
-// Reusable profile display component
 function ProfileField({ label, value }) {
     return (
         <div>
             <label className="block text-sm font-medium text-gray-500">
                 {label}
             </label>
-            <p className="mt-1 font-semibold ">{value}</p>
+            <p className="mt-1 font-semibold">{value}</p>
         </div>
     );
 }
