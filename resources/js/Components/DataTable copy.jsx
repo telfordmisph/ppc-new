@@ -176,7 +176,7 @@ export default function DataTable({
     };
 
     return (
-        <div className="w-[75vw] p-3 border-[1px] border-gray-300 rounded-lg">
+        <div className="w-[100%] p-3 border-[1px] border-gray-300 rounded-lg">
             {/* Filters */}
             <form
                 onSubmit={dateRangeSearch ? handleDateFilter : handleSearch}

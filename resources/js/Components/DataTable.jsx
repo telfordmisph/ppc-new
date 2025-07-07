@@ -13,7 +13,7 @@ export default function DataTable({
     onSelectionChange = () => {},
     showExport = false,
     children,
-    filterDropdown = null, // ✅ filterDropdown prop
+    filterDropdown = null,
 }) {
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
@@ -176,11 +176,10 @@ export default function DataTable({
     };
 
     return (
-        <div className="w-[100%] p-3 border-[1px] border-gray-300 rounded-lg">
-            {/* Filters */}
+        <div className="w-full p-3 border border-gray-300 rounded-lg">
             <form
                 onSubmit={dateRangeSearch ? handleDateFilter : handleSearch}
-                className="flex flex-wrap items-center justify-between gap-2"
+                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
             >
                 <select
                     value={perPage}
@@ -203,7 +202,7 @@ export default function DataTable({
                 </select>
 
                 {dateRangeSearch ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col w-full gap-2 sm:flex-row sm:items-center sm:w-auto">
                         <input
                             type="date"
                             value={dateFrom}
@@ -234,10 +233,10 @@ export default function DataTable({
                         )}
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col w-full gap-2 sm:flex-row sm:items-center sm:w-auto">
                         {filterDropdown && (
                             <select
-                                className="select select-sm w-[170px] py-0"
+                                className="select select-sm w-full sm:w-[170px] py-0"
                                 value={dropdownValue}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -268,7 +267,7 @@ export default function DataTable({
                             placeholder="Search..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="input input-sm input-bordered"
+                            className="w-full input input-sm input-bordered sm:w-auto"
                         />
                         <button
                             type="submit"
@@ -302,9 +301,8 @@ export default function DataTable({
                 )}
             </form>
 
-            {/* Table */}
-            <div className="mt-4 overflow-x-auto">
-                <table className="table table-zebra min-w-[100%]">
+            <div className="w-full mt-4 overflow-x-auto">
+                <table className="table min-w-full table-zebra">
                     <thead>
                         <tr>
                             {selectable && (
@@ -380,7 +378,7 @@ export default function DataTable({
                                         {columns.map((col, i) => (
                                             <td
                                                 key={`${key}-${col.key}-${i}`}
-                                                className="whitespace-nowrap"
+                                                className="whitespace-nowrap max-w-[200px] truncate"
                                             >
                                                 {row[col.key] ?? "-"}
                                             </td>
@@ -393,9 +391,8 @@ export default function DataTable({
                 </table>
             </div>
 
-            {/* Pagination */}
             {meta?.links?.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
+                <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-sm text-gray-500">
                         Showing {meta.from} to {meta.to} of {meta.total} results
                     </div>
@@ -403,7 +400,6 @@ export default function DataTable({
                 </div>
             )}
 
-            {/* Row Modal */}
             {typeof children === "function" &&
                 activeRow &&
                 children(activeRow, () => setActiveRow(null))}

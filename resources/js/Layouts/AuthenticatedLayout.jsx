@@ -73,8 +73,6 @@ export default function AuthenticatedLayout({ header, children }) {
             {isLoading && <LoadingScreen text="Please wait..." />}
 
             {/* <LoadingScreen text="Please wait..." /> */}
-
-            {/* <LoadingScreen text="Please wait..." /> */}
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
                 <div className="w-full ">
