@@ -3,7 +3,7 @@ import Modal from "@/Components/Modal";
 
 export default function DemoPage({ tableData, tableFilters }) {
     return (
-        <div>
+        <div className="px-10">
             <h1 className="text-2xl font-bold">Demo</h1>
 
             <h1 className="mt-10 text-2xl font-bold">Datatable</h1>
