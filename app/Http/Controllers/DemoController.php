@@ -28,6 +28,8 @@ class DemoController extends Controller
                 'defaultSortDirection' => 'desc', // sort direction
                 'dateColumn' => 'created_at', // column for date filtering
 
+                'searchColumns' => ['emp_id'], // columns for fuzzy search: if empty, it will search through all the columns of a table
+
                 // Joins
                 // 'joins' => [
                 //     [

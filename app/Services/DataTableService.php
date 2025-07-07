@@ -39,8 +39,11 @@ class DataTableService
     $columns = $connection->getSchemaBuilder()->getColumnListing($tableName);
     $exportColumns = $options['exportColumns'] ?? $columns;
 
+    // Determine which columns to search
+    $searchColumns = $options['searchColumns'] ?? $columns;
+
     // Apply search
-    $query->when($search, fn($q) => $this->applySearch($q, $columns, $search));
+    $query->when($search, fn($q) => $this->applySearch($q, $searchColumns, $search));
 
     // Apply date range filter
     if ($startDate && $endDate && $dateColumn) {

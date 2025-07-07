@@ -24,14 +24,14 @@ class AdminController extends Controller
     {
         $result = $this->datatable->handle(
             $request,
-            'mysql', // connection
-            'admin', // table
+            'mysql',
+            'admin',
             [
-                // options
+                'searchColumns' => ['EMPNAME', 'EMPLOYID', 'JOB_TITLE', 'DEPARTMENT'],
             ]
         );
 
-        // FOR CSV EXPORTING (if needed)
+        // FOR CSV EXPORTING
         if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
             return $result;
         }
@@ -45,6 +45,8 @@ class AdminController extends Controller
                 'sortDirection',
                 'start',
                 'end',
+                'dropdownSearchValue',
+                'dropdownFields',
             ]),
         ]);
     }
@@ -53,17 +55,23 @@ class AdminController extends Controller
     {
         $result = $this->datatable->handle(
             $request,
-            'masterlist', // connection
-            'employee_masterlist', // table
-            [ // options
-                'conditions' => function ($query) { // Comment out if no conditions
-                    // Ex.
+            'masterlist',
+            'employee_masterlist',
+            [
+                'conditions' => function ($query) {
                     return $query
                         ->where('ACCSTATUS', 1)
                         ->whereNot('EMPLOYID', 0);
                 },
+
+                'searchColumns' => ['EMPNAME', 'EMPLOYID', 'JOB_TITLE', 'DEPARTMENT'],
             ]
         );
+
+        // FOR CSV EXPORTING
+        if ($result instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            return $result;
+        }
 
         return Inertia::render('Admin/NewAdmin', [
             'tableData' => $result['data'],
@@ -74,6 +82,8 @@ class AdminController extends Controller
                 'sortDirection',
                 'start',
                 'end',
+                'dropdownSearchValue',
+                'dropdownFields',
             ]),
         ]);
     }

@@ -54,7 +54,7 @@ export default function NewAdmin({ tableData, tableFilters, emp_data }) {
                 routeName={route("index_addAdmin")}
                 filters={tableFilters}
                 rowKey="EMPLOYID"
-                showExport={false}
+                showExport={true}
             >
                 {(row, close) => (
                     <Modal
