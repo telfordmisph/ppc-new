@@ -304,7 +304,7 @@ export default function DataTable({
 
             {/* Table */}
             <div className="mt-4 overflow-x-auto">
-                <table className="table table-zebra min-w-[1000px]">
+                <table className="table table-zebra min-w-[100%]">
                     <thead>
                         <tr>
                             {selectable && (
