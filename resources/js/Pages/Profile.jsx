@@ -25,7 +25,12 @@ export default function Profile({ profile, errors }) {
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    // router.visit(route("profile.index"));
+                    const token = localStorage.getItem("authify-token");
+                    localStorage.removeItem("authify-token");
+                    router.get(route("logout"));
+                    window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
+                        token
+                    )}&redirect=${encodeURIComponent(route("dashboard"))}`;
                 },
             }
         );
@@ -66,7 +71,7 @@ export default function Profile({ profile, errors }) {
                             />
                             <button
                                 className="border-blue-500 btn btn-sm border-[1px]"
-                                onClick={() => setPasswordForm(true)}
+                                onClick={() => setPasswordForm(!passwordForm)}
                             >
                                 Change Password
                             </button>
@@ -75,7 +80,31 @@ export default function Profile({ profile, errors }) {
                 )}
 
                 {passwordForm && (
-                    <div className="mt-6">
+                    <div className="mt-3">
+                        <p></p>
+
+                        <div
+                            role="alert"
+                            className="py-2 mt-0 mb-2 alert alert-warning"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-6 h-6 stroke-current shrink-0"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
+                            </svg>
+                            <span>
+                                Warning: Changing your password will log you out
+                                of all systems using authify
+                            </span>
+                        </div>
                         <div>
                             <InputLabel
                                 htmlFor="old-password"

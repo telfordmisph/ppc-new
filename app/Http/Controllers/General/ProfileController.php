@@ -53,7 +53,6 @@ class ProfileController extends Controller
                 'PASSWRD' => $credentials['new_password'],
             ]);
 
-
         return back()->with('success', 'Password changed successfully.');
     }
 }
