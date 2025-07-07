@@ -10,7 +10,6 @@ export default function Modal({
     className = "",
     show = false,
     onClose = () => {},
-    useForm = true,
 }) {
     const modalRef = useRef(null);
 
@@ -35,37 +34,20 @@ export default function Modal({
 
             <dialog id={id} className="modal" ref={modalRef} onClose={onClose}>
                 <div className={`modal-box ${className}`}>
-                    {useForm ? (
-                        <form method="dialog">
-                            <button
-                                type="button"
-                                className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2"
-                                onClick={() => {
-                                    modalRef.current?.close();
-                                    onClose();
-                                }}
-                            >
-                                ✕
-                            </button>
-                            <h3 className="text-lg font-bold">{title}</h3>
-                            <div className="pt-4">{children}</div>
-                        </form>
-                    ) : (
-                        <div>
-                            <button
-                                type="button"
-                                className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2"
-                                onClick={() => {
-                                    modalRef.current?.close();
-                                    onClose();
-                                }}
-                            >
-                                ✕
-                            </button>
-                            <h3 className="text-lg font-bold">{title}</h3>
-                            <div className="pt-4">{children}</div>
-                        </div>
-                    )}
+                    <div>
+                        <button
+                            type="button"
+                            className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2"
+                            onClick={() => {
+                                modalRef.current?.close();
+                                onClose();
+                            }}
+                        >
+                            ✕
+                        </button>
+                        <h3 className="text-lg font-bold">{title}</h3>
+                        <div className="pt-4">{children}</div>
+                    </div>
                 </div>
             </dialog>
         </>

@@ -10,13 +10,13 @@ export default function AuthenticatedLayout({ header, children }) {
 
     const [isLoading, setIsLoading] = useState(true);
 
-    const withToken = props.emp_data?.token ?? null;
-
     useEffect(() => {
         authCheck();
     }, [url]);
 
     const authCheck = async () => {
+        setIsLoading(true);
+
         // Check if the URL contains a query parameter "key" (token value): START
         const queryParams = new URLSearchParams(url.split("?")[1]);
         const queryToken = queryParams.get("key");
@@ -70,7 +70,9 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="flex flex-col">
-            {!withToken && <LoadingScreen text="Please wait..." />}
+            {isLoading && <LoadingScreen text="Please wait..." />}
+
+            {/* <LoadingScreen text="Please wait..." /> */}
 
             {/* <LoadingScreen text="Please wait..." /> */}
             <div className="flex h-screen overflow-hidden">

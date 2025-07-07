@@ -73,6 +73,38 @@ export default function DemoPage({ tableData, tableFilters }) {
                     </Modal>
                 )}
             </DataTable>
+
+            <h1 className="mt-10 text-2xl font-bold">Modal</h1>
+
+            <Modal
+                id="modalID"
+                title={`Modal Title`}
+                buttonText={`Open Modal`}
+                buttonClass="btn"
+                onClose={() => close()}
+                className="w-[500px]"
+            >
+                <Modal
+                    id="modalIDinner"
+                    title={`Modal Title`}
+                    buttonText={`Open Modal`}
+                    buttonClass="btn"
+                    onClose={() => close()}
+                    className="w-[500px]"
+                >
+                    <p>some content</p>
+                    <div className="flex justify-end gap-2">
+                        <button className="btn">Button 1</button>
+                        <button className="btn">Button 2</button>
+                    </div>
+                </Modal>
+
+                <p>some content</p>
+                <div className="flex justify-end gap-2">
+                    <button className="btn">Button 1</button>
+                    <button className="btn">Button 2</button>
+                </div>
+            </Modal>
         </div>
     );
 }
