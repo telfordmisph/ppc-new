@@ -11,31 +11,43 @@ export default function DataTable({
     selectable = false,
     dateRangeSearch = false,
     onSelectionChange = () => {},
-    showExport = true,
+    showExport = false,
     children,
+    filterDropdown = null, // ✅ filterDropdown prop
 }) {
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
     const [searchInput, setSearchInput] = useState(filters.search || "");
     const [perPage, setPerPage] = useState(filters.perPage || 10);
+    const [dropdownValue, setDropdownValue] = useState(
+        filters?.[filterDropdown?.key] || ""
+    );
 
     const extractDate = (dt) => (dt ? dt.split(" ")[0] : "");
     const [dateFrom, setDateFrom] = useState(extractDate(filters.start));
     const [dateTo, setDateTo] = useState(extractDate(filters.end));
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        router.get(
-            routeName,
-            { ...filters, search: searchInput },
-            { preserveState: true }
-        );
-    };
-
     const themeColor =
         localStorage.getItem("theme") === "dark"
             ? "hover:bg-gray-700"
             : "hover:bg-gray-100";
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+
+        const extraFilter = filterDropdown
+            ? {
+                  [filterDropdown.key]: dropdownValue,
+                  dropdownFields: filterDropdown.fields.join(","),
+              }
+            : {};
+
+        router.get(
+            routeName,
+            { ...filters, search: searchInput, ...extraFilter },
+            { preserveState: true }
+        );
+    };
 
     const handleDateFilter = (e) => {
         e.preventDefault();
@@ -63,6 +75,12 @@ export default function DataTable({
             end: dateTo ? `${dateTo} 23:59:59` : undefined,
             export: 1,
         };
+
+        if (filterDropdown) {
+            query[filterDropdown.key] = dropdownValue;
+            query.dropdownFields = filterDropdown.fields.join(",");
+        }
+
         const queryString = new URLSearchParams(query).toString();
         window.open(`${routeName}?${queryString}`, "_blank");
     };
@@ -217,6 +235,34 @@ export default function DataTable({
                     </div>
                 ) : (
                     <div className="flex items-center gap-2">
+                        {filterDropdown && (
+                            <select
+                                className="select select-sm w-[170px] py-0"
+                                value={dropdownValue}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setDropdownValue(value);
+                                    router.get(
+                                        routeName,
+                                        {
+                                            ...filters,
+                                            search: searchInput,
+                                            [filterDropdown.key]: value,
+                                            dropdownFields:
+                                                filterDropdown.fields.join(","),
+                                        },
+                                        { preserveState: true }
+                                    );
+                                }}
+                            >
+                                <option value="">All</option>
+                                {filterDropdown.options.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <input
                             type="text"
                             placeholder="Search..."

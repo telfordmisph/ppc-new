@@ -13,7 +13,7 @@ class DataTableService
     $search         = $request->input('search');
     $perPage        = (int) $request->input('perPage', 10);
     $sortBy         = $request->input('sortBy', $options['defaultSortBy'] ?? null);
-    $sortDirection  = $request->input('sortDirection', 'desc');
+    $sortDirection  = $request->input('sortDirection', $options['defaultSortDirection'] ?? 'desc');
     $export         = $request->boolean('export');
     $startDate      = $this->parseDate($request->input('start'), 'start');
     $endDate        = $this->parseDate($request->input('end'), 'end');
@@ -35,31 +35,32 @@ class DataTableService
       }
     }
 
-    // Fetch columns only from base table for search/export
+    // Fetch base columns
     $columns = $connection->getSchemaBuilder()->getColumnListing($tableName);
+    $exportColumns = $options['exportColumns'] ?? $columns;
 
-    // Search
+    // Apply search
     $query->when($search, fn($q) => $this->applySearch($q, $columns, $search));
 
-    // Date filtering
+    // Apply date range filter
     if ($startDate && $endDate && $dateColumn) {
       $query->whereBetween(DB::raw("DATE($dateColumn)"), [$startDate, $endDate]);
     }
 
-    // Sorting
+    // Apply sorting
     if ($sortBy) {
       $query->orderBy($sortBy, $sortDirection);
     }
 
-    // Additional user-defined conditions
+    // Additional conditions
     if (!empty($options['conditions']) && is_callable($options['conditions'])) {
       $query = $options['conditions']($query);
     }
 
-    // Export
+    // Export to CSV
     if ($export) {
       $filename = $options['filename'] ?? null;
-      return $this->exportCsv($query->get(), $columns, $tableName, $filename);
+      return $this->exportCsv($query->get(), $exportColumns, $tableName, $filename);
     }
 
     return [
@@ -83,7 +84,6 @@ class DataTableService
         ? $carbon->startOfDay()->format('Y-m-d')
         : $carbon->endOfDay()->format('Y-m-d');
     } catch (\Exception $e) {
-      // Optional: Log this
       return null;
     }
   }
