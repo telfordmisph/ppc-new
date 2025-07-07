@@ -22,7 +22,7 @@ npm install
 
 ## ⚙️ Environment Setup
 
-Copy the example environment file and set the required variables:
+Copy the example environment file and set the required variables (duplicate and rename or by terminal):
 
 ```bash
 cp .env.example .env
@@ -42,12 +42,6 @@ Make sure the following table exists in your database:
 
 - `admin`
 
-If using migrations, run:
-
-```bash
-php artisan migrate
-```
-
 ---
 
 ## ✅ Done
@@ -55,7 +49,7 @@ php artisan migrate
 You’re now ready to start the application!
 
 ```bash
-php artisan serve
+composer run dev
 ```
 
 ---
