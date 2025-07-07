@@ -60,7 +60,7 @@ export default function Profile({ profile, errors }) {
                         <div className="flex items-end gap-2">
                             <ProfileField
                                 label="Password"
-                                value={[...Array(profile.PASSWRD.length)]
+                                value={[...Array(profile.PASSWRD?.length)]
                                     .map(() => "•")
                                     .join("")}
                             />

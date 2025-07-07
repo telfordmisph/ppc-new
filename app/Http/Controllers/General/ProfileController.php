@@ -11,12 +11,13 @@ class ProfileController extends Controller
 {
     public function index()
     {
-
-        $profile = session('emp_data') && DB::connection('masterlist')
+        $profile = !empty(session('emp_data'))
+            ? DB::connection('masterlist')
             ->table('employee_masterlist')
             ->select('EMPLOYID', 'EMPNAME', 'JOB_TITLE', 'DEPARTMENT', 'PRODLINE', 'STATION', 'DATEHIRED', 'EMAIL', 'PASSWRD')
             ->where('EMPLOYID', session('emp_data')['emp_id'])
-            ->first();
+            ->first()
+            : null;
 
         return Inertia::render('Profile', [
             'profile' => $profile,
