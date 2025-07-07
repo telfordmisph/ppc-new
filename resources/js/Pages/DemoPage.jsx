@@ -1,7 +1,10 @@
 import DataTable from "@/Components/DataTable";
 import Modal from "@/Components/Modal";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function DemoPage({ tableData, tableFilters }) {
+    toast.success("Successfully toasted!");
+
     return (
         <div className="px-10">
             <h1 className="text-2xl font-bold">Demo</h1>
@@ -105,6 +108,16 @@ export default function DemoPage({ tableData, tableFilters }) {
                     <button className="btn">Button 2</button>
                 </div>
             </Modal>
+
+            <h1 className="mt-10 text-2xl font-bold">Toast</h1>
+            <a
+                href="https://react-hot-toast.com/"
+                target="_blank"
+                className="text-blue-500"
+            >
+                React Hot Toast Documentation
+            </a>
+            <Toaster position="bottom-right" reverseOrder={false} />
         </div>
     );
 }
