@@ -42,7 +42,7 @@ Make sure the following table exists in your database:
 
 - `admin`
 
-Note: locate the System_Tables.sql from root level of the template and create a table for the admin in yur database
+Note: locate the System_Tables.sql from the root level of the template and copy and create the admin table in your database
 
 ---
 
