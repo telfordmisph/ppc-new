@@ -20,6 +20,12 @@ export default function Login() {
         }
     }, [props.emp_data]);
 
+    useEffect(() => {
+        if (!props.emp_data?.token) {
+            router.visit(route("login"));
+        }
+    }, [props.emp_data]);
+
     const submit = (e) => {
         e.preventDefault();
         post(route("login"));

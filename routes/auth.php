@@ -15,6 +15,10 @@ Route::prefix($app_name)->group(function () {
     Route::get("/logout", [AuthenticationController::class, 'logout'])->name('logout');
   });
 
+  Route::get('/login', function () {
+    return Inertia::render('Authentication/Login');
+  })->name('login');
+
   Route::get("/unauthorized", function () {
     return Inertia::render('Unauthorized');
   })->name(name: 'unauthorized');

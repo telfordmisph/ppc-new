@@ -14,6 +14,14 @@ export default function AuthenticatedLayout({ header, children }) {
         authCheck();
     }, [url]);
 
+    useEffect(() => {
+        const token = localStorage.getItem("authify-token");
+        if (!token) {
+            window.location.href =
+                "http://192.168.2.221/authify/public/login?redirect=http://localhost:8000";
+        }
+    }, []);
+
     const authCheck = async () => {
         setIsLoading(true);
 
@@ -69,15 +77,14 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     return (
-        <div className="flex flex-col">
-            {isLoading && <LoadingScreen text="Please wait..." />}
-
+        <div className="flex flex-col bg-base-300">
             {/* <LoadingScreen text="Please wait..." /> */}
             <div className="flex h-screen overflow-hidden">
                 <Sidebar />
                 <div className="w-full ">
                     <NavBar />
-                    <main className="h-screen px-6 py-6 pb-[70px] overflow-y-auto">
+                    <main className="relative h-screen px-6 py-6 pb-[70px] overflow-y-auto">
+                        {isLoading && <LoadingScreen text="Please wait..." />}
                         <div className="">{children}</div>
                     </main>
                 </div>

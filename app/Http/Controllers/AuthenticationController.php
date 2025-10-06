@@ -19,9 +19,9 @@ class AuthenticationController extends Controller
             ->first();
 
 
-        $isAdmin = DB::table('admin')
-            ->where('emp_id', $currentUser->emp_id)
-            ->first();
+        // $isAdmin = DB::table('admin')
+        //     ->where('emp_id', $currentUser->emp_id)
+        //     ->first();
 
         session([
             'emp_data' => [
@@ -34,7 +34,8 @@ class AuthenticationController extends Controller
                 'emp_prodline' => $currentUser->emp_prodline,
                 'emp_station' => $currentUser->emp_station,
                 'generated_at' => $currentUser->generated_at,
-                'emp_system_role' => $isAdmin->emp_role ?? null,
+                // 'emp_system_role' => $isAdmin->emp_role ?? null,
+                'emp_system_role' => null,
             ]
         ]);
     }

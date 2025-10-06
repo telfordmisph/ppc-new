@@ -14,4 +14,19 @@ class DashboardController extends Controller
     {
         return Inertia::render('Dashboard');
     }
+
+    public function wipDashboardIndex(Request $request)
+    {
+        return Inertia::render('WIPDashboard');
+    }
+
+    public function pickupDashboardIndex(Request $request)
+    {
+        return Inertia::render('PickupDashboard');
+    }
+
+    public function residualDashboardIndex(Request $request)
+    {
+        return Inertia::render('ResidualDashboard');
+    }
 }

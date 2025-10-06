@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePage, Link } from "@inertiajs/react";
+import { Transition } from "@headlessui/react";
+import clsx from "clsx";
 
 export default function Dropdown({
     label,
@@ -34,73 +36,68 @@ export default function Dropdown({
 
     const hoverColor =
         localStorage.getItem("theme") === "dark"
-            ? "hover:bg-gray-800"
-            : "hover:bg-gray-100";
+            ? "hover:bg-base-200"
+            : "hover:bg-base-300";
 
     const activeColor =
         localStorage.getItem("theme") === "dark"
             ? "bg-gray-700"
-            : "bg-gray-200";
+            : "bg-neutral text-white";
 
     return (
         <div className="relative w-full">
             <button
                 onClick={() => setOpen(!open)}
-                className={`flex items-center justify-between w-full px-[10px] py-2 rounded ${hoverColor}`}
+                className={`flex items-center h-8 justify-between w-full px-[10px] py-2 rounded ${hoverColor}`}
             >
-                <div className="relative flex items-center space-x-1">
+                <div className="relative flex items-center space-x-2">
                     {icon && <span className="w-6 h-6 pt-[2px]">{icon}</span>}
                     <span className="pl-0 pr-1">{label}</span>
 
                     {/* Dropdown notification */}
                     {notification ? (
                         typeof notification === "number" ? (
-                            <span className="ml-1 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                            <span className="ml-1 bg-accent text-content text-xs font-bold px-1.5 py-0.5 rounded-full">
                                 {notification > 99 ? "99+" : notification}
                             </span>
                         ) : (
-                            <span className="w-2 h-2 bg-red-600 rounded-full"></span>
+                            <span className="w-2 h-2 bg-accent rounded-full"></span>
                         )
                     ) : null}
                 </div>
 
-                <span className="pt-[3px]">
-                    {open ? (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="size-4"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="m4.5 15.75 7.5-7.5 7.5 7.5"
-                            />
-                        </svg>
-                    ) : (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="size-4"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                            />
-                        </svg>
-                    )}
+                <span
+                    className={`pt-[3px] transition-transform duration-300 ${
+                        open ? "rotate-180" : "rotate-0"
+                    }`}
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="w-4 h-4"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19.5 8.25L12 15.75 4.5 8.25"
+                        />
+                    </svg>
                 </span>
             </button>
 
-            {open && (
-                <div className="mt-1 ml-6 space-y-1">
+            <Transition
+                show={open}
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="transition ease-in duration-150"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+            >
+                <div className="mt-1 ml-5">
                     {links.map((link, index) => {
                         const active = isActiveLink(link.href);
                         const linkNotification = link.notification;
@@ -109,11 +106,20 @@ export default function Dropdown({
                             <Link
                                 key={`${normalizePath(link.href)}-${index}`}
                                 href={link.href}
-                                className={`flex items-center justify-between px-2 py-1 text-sm rounded transition-colors ${
-                                    active ? `${activeColor}` : ""
-                                } ${hoverColor}`}
+                                className={clsx(
+                                    "flex items-center h-8 justify-between pr-2 text-sm rounded transition-colors",
+                                    !active && hoverColor,
+                                    active && activeColor,
+                                    active && "text-accent"
+                                )}
                             >
-                                <div className="flex items-center space-x-1">
+                                <div className="flex items-center space-x-2">
+                                    <div
+                                        className={clsx(
+                                            "w-[2px] h-8",
+                                            active ? "bg-accent" : "bg-base-300" // fallback if not active
+                                        )}
+                                    ></div>
                                     {link.icon ? (
                                         <span className="w-4 h-4">
                                             {link.icon}
@@ -137,23 +143,22 @@ export default function Dropdown({
                                     <p className="pl-1">{link.label}</p>
                                 </div>
 
-                                {/* Per-link notification */}
                                 {linkNotification ? (
                                     typeof linkNotification === "number" ? (
-                                        <span className="bg-red-600 text-white text-xs px-1.5 py-0.5 rounded-md">
+                                        <span className="bg-accent text-content text-xs px-1.5 py-0.5 rounded-md">
                                             {linkNotification > 99
                                                 ? "99+"
                                                 : linkNotification}
                                         </span>
                                     ) : (
-                                        <span className="w-2 h-2 mr-[7px] bg-red-600 rounded-full"></span>
+                                        <span className="w-2 h-2 mr-[7px] bg-accent rounded-full"></span>
                                     )
                                 ) : null}
                             </Link>
                         );
                     })}
                 </div>
-            )}
+            </Transition>
         </div>
     );
 }

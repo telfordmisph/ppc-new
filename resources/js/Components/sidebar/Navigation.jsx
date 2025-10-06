@@ -1,9 +1,28 @@
+import {
+    FaTachometerAlt,
+    FaTasks,
+    FaUserCog,
+    FaUsers,
+    FaClipboardList,
+} from "react-icons/fa";
+
+import {
+    LuLayoutDashboard,
+    LuListChecks,
+    LuTableOfContents,
+    LuLayoutGrid,
+    LuLayoutList,
+    LuTrash,
+    LuList,
+} from "react-icons/lu";
+
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { usePage } from "@inertiajs/react";
 
 export default function NavLinks() {
     const { emp_data } = usePage().props;
+
     return (
         <nav
             className="flex flex-col flex-grow space-y-1 overflow-y-auto"
@@ -12,88 +31,225 @@ export default function NavLinks() {
             <SidebarLink
                 href={route("dashboard")}
                 label="Dashboard"
-                icon={
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-5 h-5"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                        />
-                    </svg>
-                }
-                notifications={5}
+                icon={<LuLayoutDashboard className="w-5 h-5" />}
+                notifications={0}
             />
 
             <Dropdown
-                label="Dropdown"
-                icon={
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-5 h-5"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                        />
-                    </svg>
-                }
+                label="WIP Monitoring"
+                icon={<LuListChecks className="w-5 h-5" />}
+                links={[
+                    {
+                        href: route("wip.dashboard"),
+                        label: "WIP Dashboard",
+                        icon: <LuLayoutGrid className="w-5 h-5" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("wipTable"),
+                        label: "WIP Table",
+                        icon: <LuTableOfContents className="w-5 h-5" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("pickup.dashboard"),
+                        label: "Pickup Dashboard",
+                        icon: <LuLayoutList className="w-5 h-5" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("residual.dashboard"),
+                        label: "Residual Dashboard",
+                        icon: <LuTrash className="w-5 h-5" />,
+                        notification: false,
+                    },
+                ]}
+                notification={false}
+            />
+
+            {/* <Dropdown
+                label="User Settings"
+                icon={<FaUserCog className="w-5 h-5" />}
                 links={[
                     {
                         href: route("admin"),
                         label: "Profile",
+                        icon: <FaUserCog className="w-5 h-5" />,
                         notification: true,
                     },
                     {
                         href: route("admin"),
                         label: "Account",
+                        icon: <FaUserCog className="w-5 h-5" />,
                         notification: 125,
                     },
                     {
                         href: route("dashboard"),
                         label: "No notifications",
+                        icon: <FaUserCog className="w-5 h-5" />,
                         notification: false,
                     },
                 ]}
                 notification={true}
+            /> */}
+
+            <SidebarLink
+                href={route("part-name-list")}
+                label="Partname List"
+                icon={<LuList className="w-5 h-5" />}
+                notifications={false}
             />
 
             {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
-                <div>
-                    <SidebarLink
-                        href={route("admin")}
-                        label="Administrators"
-                        icon={
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="w-5 h-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-                                />
-                            </svg>
-                        }
-                        // notifications={5}
-                    />
-                </div>
+                <SidebarLink
+                    href={route("admin")}
+                    label="Administrators"
+                    icon={<FaUsers className="w-5 h-5" />}
+                />
             )}
         </nav>
     );
 }
+
+// import Dropdown from "@/Components/sidebar/Dropdown";
+// import SidebarLink from "@/Components/sidebar/SidebarLink";
+// import { usePage } from "@inertiajs/react";
+
+// export default function NavLinks() {
+//     const { emp_data } = usePage().props;
+//     return (
+//         <nav
+//             className="flex flex-col flex-grow space-y-1 overflow-y-auto"
+//             style={{ scrollbarWidth: "none" }}
+//         >
+//             <SidebarLink
+//                 href={route("dashboard")}
+//                 label="Dashboard"
+//                 icon={
+//                     <svg
+//                         xmlns="http://www.w3.org/2000/svg"
+//                         fill="none"
+//                         viewBox="0 0 24 24"
+//                         strokeWidth="1.5"
+//                         stroke="currentColor"
+//                         className="w-5 h-5"
+//                     >
+//                         <path
+//                             strokeLinecap="round"
+//                             strokeLinejoin="round"
+//                             d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+//                         />
+//                     </svg>
+//                 }
+//                 notifications={5}
+//             />
+
+//             <Dropdown
+//                 label="WIP Monitoring"
+//                 icon={
+//                     <svg
+//                         xmlns="http://www.w3.org/2000/svg"
+//                         fill="none"
+//                         viewBox="0 0 24 24"
+//                         strokeWidth="1.5"
+//                         stroke="currentColor"
+//                         className="w-5 h-5"
+//                     >
+//                         <path
+//                             strokeLinecap="round"
+//                             strokeLinejoin="round"
+//                             d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+//                         />
+//                     </svg>
+//                 }
+//                 links={[
+//                     {
+//                         href: route("admin"),
+//                         label: "WIP Dashboard",
+//                         notification: true,
+//                     },
+//                     {
+//                         href: route("admin"),
+//                         label: "WIP Table",
+//                         notification: 125,
+//                     },
+//                     {
+//                         href: route("dashboard"),
+//                         label: "Pickup Dashboard",
+//                         notification: false,
+//                     },
+//                     {
+//                         href: route("dashboard"),
+//                         label: "Residual Dashboard",
+//                         notification: false,
+//                     },
+//                 ]}
+//                 notification={true}
+//             />
+
+//             <Dropdown
+//                 label="User Settings"
+//                 icon={
+//                     <svg
+//                         xmlns="http://www.w3.org/2000/svg"
+//                         fill="none"
+//                         viewBox="0 0 24 24"
+//                         strokeWidth="1.5"
+//                         stroke="currentColor"
+//                         className="w-5 h-5"
+//                     >
+//                         <path
+//                             strokeLinecap="round"
+//                             strokeLinejoin="round"
+//                             d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+//                         />
+//                     </svg>
+//                 }
+//                 links={[
+//                     {
+//                         href: route("admin"),
+//                         label: "Profile",
+//                         notification: true,
+//                     },
+//                     {
+//                         href: route("admin"),
+//                         label: "Account",
+//                         notification: 125,
+//                     },
+//                     {
+//                         href: route("dashboard"),
+//                         label: "No notifications",
+//                         notification: false,
+//                     },
+//                 ]}
+//                 notification={true}
+//             />
+
+//             {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
+//                 <div>
+//                     <SidebarLink
+//                         href={route("admin")}
+//                         label="Administrators"
+//                         icon={
+//                             <svg
+//                                 xmlns="http://www.w3.org/2000/svg"
+//                                 fill="none"
+//                                 viewBox="0 0 24 24"
+//                                 strokeWidth="1.5"
+//                                 stroke="currentColor"
+//                                 className="w-5 h-5"
+//                             >
+//                                 <path
+//                                     strokeLinecap="round"
+//                                     strokeLinejoin="round"
+//                                     d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+//                                 />
+//                             </svg>
+//                         }
+//                         // notifications={5}
+//                     />
+//                 </div>
+//             )}
+//         </nav>
+//     );
+// }

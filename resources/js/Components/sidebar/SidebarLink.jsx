@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, usePage } from "@inertiajs/react";
+import clsx from "clsx";
 
 const SidebarLink = ({
     href,
@@ -12,17 +13,22 @@ const SidebarLink = ({
 
     const isActive = url === new URL(href, window.location.origin).pathname;
 
-    const themeColor =
-        localStorage.getItem("theme") === "dark"
-            ? "bg-gray-700"
-            : "bg-gray-200";
+    const isDark = localStorage.getItem("theme") === "dark";
 
-    const activeColor = isActive ? themeColor : "";
+    const hoverColor = isDark ? "hover:bg-base-200" : "hover:bg-base-300";
 
     return (
         <Link
             href={href}
-            className={`relative flex justify-between px-4 py-1 pl-[10px] transition-colors duration-150 rounded-md ${activeColor}`}
+            className={clsx(
+                `relative flex h-8 justify-between px-4 py-1 pl-[10px] transition-colors duration-150 rounded-md`,
+                hoverColor,
+                isActive
+                    ? isDark
+                        ? "bg-gray-700 text-white"
+                        : "bg-neutral text-white"
+                    : "text-base"
+            )}
         >
             <div className="flex items-center">
                 <span className="w-6 h-6 pt-[2px]">{icon}</span>
@@ -31,7 +37,7 @@ const SidebarLink = ({
 
             <div>
                 {notifications > 0 && (
-                    <span className="inline-flex items-center justify-center px-2 py-1 ml-2 text-xs leading-none text-white bg-red-600 rounded-md">
+                    <span className="inline-flex items-center justify-center px-2 py-1 ml-2 text-xs leading-none text-content bg-accent rounded-md">
                         {notifications}
                     </span>
                 )}
