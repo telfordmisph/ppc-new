@@ -32,7 +32,8 @@ const BarChart = ({ data }) => {
         });
     };
 
-    // Convert object data into array for Recharts
+    const isDark = localStorage.getItem("theme") === "dark";
+
     const chartData = useMemo(() => {
         return Object.values(data).sort(
             (a, b) => new Date(a.date) - new Date(b.date)
@@ -88,7 +89,11 @@ const BarChart = ({ data }) => {
                         orientation="right"
                         tickFormatter={(v) => `${v.toFixed(1)}%`}
                     />
-                    <Tooltip />
+                    <Tooltip
+                        labelStyle={{
+                            color: isDark ? "#aaa" : "#333",
+                        }}
+                    />
                     <Legend />
                     {visibleBars.f1 && (
                         <Bar
