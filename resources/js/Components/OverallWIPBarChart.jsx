@@ -11,6 +11,29 @@ import {
     ResponsiveContainer,
     Line,
 } from "recharts";
+import TogglerButton from "./TogglerButton";
+
+const toggleButtons = [
+    {
+        key: "f1",
+        label: "F1",
+        activeClass: "bg-primary border-primary text-white",
+        inactiveClass: "border-primary text-primary hover:bg-primary-content",
+    },
+    {
+        key: "f2",
+        label: "F2",
+        activeClass: "bg-accent border-accent text-white",
+        inactiveClass: "border-accent text-accent hover:bg-accent-content",
+    },
+    {
+        key: "f3",
+        label: "F3",
+        activeClass: "bg-secondary border-secondary text-white",
+        inactiveClass:
+            "border-secondary text-secondary hover:bg-secondary-content",
+    },
+];
 
 const BarChart = ({ data }) => {
     const [visibleBars, setVisibleBars] = useState({
@@ -40,38 +63,15 @@ const BarChart = ({ data }) => {
         );
     }, [data]);
 
-    const accentColor =
-        getComputedStyle(document.documentElement)
-            .getPropertyValue("--accent") // DaisyUI accent variable
-            .trim() || "#f43f5e"; // fallback
-
     return (
         <div className="flex flex-col w-full h-full p-6 rounded-lg shadow-md bg-base-200">
             <div className="mb-4 space-x-2">
-                <button
-                    onClick={() => toggleBar("f1")}
-                    className="px-3 py-1 border rounded"
-                >
-                    F1 {visibleBars.f1 ? "✔" : "❌"}
-                </button>
-                <button
-                    onClick={() => toggleBar("f2")}
-                    className="px-3 py-1 border rounded"
-                >
-                    F2 {visibleBars.f2 ? "✔" : "❌"}
-                </button>
-                <button
-                    onClick={() => toggleBar("f3")}
-                    className="px-3 py-1 border rounded"
-                >
-                    F3 {visibleBars.f3 ? "✔" : "❌"}
-                </button>
-                <button
-                    onClick={toggleAll}
-                    className="px-3 py-1 border rounded"
-                >
-                    Toggle All
-                </button>
+                <TogglerButton
+                    toggleButtons={toggleButtons}
+                    visibleBars={visibleBars}
+                    toggleBar={toggleBar}
+                    toggleAll={toggleAll}
+                />
             </div>
 
             <ResponsiveContainer width="100%">

@@ -109,17 +109,12 @@ export default function Dashboard({ tableData, tableFilters }) {
 
             <div className="flex h-[500px]">
                 <div className="flex items-center justify-center w-8/12">
-                    <BarChartSkeleton />
-
-                    {/* {wipLoading || !wipData ? (
-                        // <div className="flex flex-col items-center justify-center w-full h-full p-6 rounded-lg shadow-md bg-base-200">
-                        //     <span className="loading loading-bars loading-lg"></span>
-                        //     <span className="text-sm">Loading WIP Data...</span>
-                        // </div>
+                    {/* <BarChartSkeleton /> */}
+                    {wipLoading || !wipData ? (
                         <BarChartSkeleton />
                     ) : (
                         <BarChart data={wipData} />
-                    )} */}
+                    )}
                 </div>
 
                 <div className="flex flex-col items-center justify-center w-4/12 gap-4 px-4 text-accent">
@@ -131,8 +126,8 @@ export default function Dashboard({ tableData, tableFilters }) {
                                     ? `As of ${latestWip.date}`
                                     : "No data"
                             }
-                            color="base-content"
-                            className="w-full bg-gradient-to-r from-accent to-primary"
+                            color=""
+                            className="text-white w-full bg-gradient-to-tr from-[#F43098] via-[#422AD5] to-[#00D3BB]"
                             icon={<FaTasks size={32} />}
                             useDataHook={() => ({
                                 data: latestWip?.total || 0,

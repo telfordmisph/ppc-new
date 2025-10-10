@@ -1,13 +1,68 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { usePage } from "@inertiajs/react";
-import { useState } from "react";
+import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
+import { usePage, router } from "@inertiajs/react";
+import { useEffect, useState } from "react";
 
 const PartNameList = () => {
-    const { partNames } = usePage().props; // fetched from controller
-    const [maxItem, setMaxItem] = useState(10);
+    const {
+        partNames: serverPartNames,
+        search: serverSearch,
+        perPage: serverPerPage,
+        totalEntries,
+    } = usePage().props;
 
-    const handleMaxItemChange = (value) => {
-        setMaxItem(value);
+    console.log("🚀 ~ PartNameList ~ serverPartNames:", serverPartNames);
+    console.log("🚀 ~ serverSearch ~ serverSearch:", serverSearch);
+
+    const start = serverPartNames.from;
+    const end = serverPartNames.to;
+    const filteredTotal = serverPartNames.total;
+    const overallTotal = totalEntries ?? filteredTotal;
+
+    // Local states for input controls
+    const [searchInput, setSearchInput] = useState(serverSearch || "");
+    const [maxItem, setMaxItem] = useState(serverPerPage || 10);
+
+    // Local state for current page (optional, for UI highlighting)
+    const [currentPage, setCurrentPage] = useState(
+        serverPartNames.current_page || 1
+    );
+
+    // Debounced search effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            // Trigger Inertia visit only when input changes
+            router.visit("/part-name-list", {
+                data: { search: searchInput, perPage: maxItem, page: 1 },
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+            setCurrentPage(1); // Reset local page for highlighting
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Handle page navigation
+    const goToPage = (page) => {
+        router.visit("/part-name-list", {
+            data: { search: searchInput, perPage: maxItem, page },
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+        setCurrentPage(page);
+    };
+
+    const changeMaxItemPerPage = (maxItem) => {
+        router.visit("/part-name-list", {
+            data: { search: searchInput, perPage: maxItem, page: 1 },
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+        setMaxItem(maxItem);
     };
 
     return (
@@ -15,9 +70,11 @@ const PartNameList = () => {
             <div className="px-4">
                 <h1 className="mb-4 text-2xl font-bold">Part Names</h1>
 
+                {/* Controls */}
                 <div className="flex justify-between py-4">
+                    {/* Max items dropdown */}
                     <div className="dropdown dropdown-bottom">
-                        <div tabIndex={0} role="button" className="m-1 btn">
+                        <div tabIndex={0} className="m-1 btn">
                             {`Show ${maxItem} items`}
                         </div>
                         <ul
@@ -27,10 +84,10 @@ const PartNameList = () => {
                             {[10, 25, 50, 100].map((item) => (
                                 <li key={item}>
                                     <a
+                                        onClick={() => {
+                                            changeMaxItemPerPage(item);
+                                        }}
                                         className="flex items-center justify-between"
-                                        onClick={() =>
-                                            handleMaxItemChange(item)
-                                        }
                                     >
                                         {item}
                                         {maxItem === item && (
@@ -44,6 +101,7 @@ const PartNameList = () => {
                         </ul>
                     </div>
 
+                    {/* Search input */}
                     <label className="input">
                         <svg
                             className="h-[1em] opacity-50"
@@ -61,65 +119,52 @@ const PartNameList = () => {
                                 <path d="m21 21-4.3-4.3"></path>
                             </g>
                         </svg>
-                        <input type="search" required placeholder="Search" />
+                        <input
+                            type="search"
+                            placeholder="Search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                        />
                     </label>
                 </div>
 
+                {/* Table */}
                 <table className="table w-full table-auto table-xs">
                     <thead>
                         <tr>
-                            <th className="px-4 py-2">ID</th>
-                            <th className="px-4 py-2">Part Name</th>
-                            <th className="px-4 py-2">Focus Group</th>
-                            <th className="px-4 py-2">Factory</th>
-                            <th className="px-4 py-2">PL</th>
-                            <th className="px-4 py-2">Package Name</th>
-                            <th className="px-4 py-2">Lead Count</th>
-                            <th className="px-4 py-2">Body Size</th>
-                            <th className="px-4 py-2">Package</th>
-                            <th className="px-4 py-2">Added By</th>
-                            <th className="px-4 py-2">Date Created</th>
-                            <th className="px-4 py-2">Actions</th>
-                            {/* Add other columns as needed */}
+                            <th>ID</th>
+                            <th>Part Name</th>
+                            <th>Focus Group</th>
+                            <th>Factory</th>
+                            <th>PL</th>
+                            <th>Package Name</th>
+                            <th>Lead Count</th>
+                            <th>Body Size</th>
+                            <th>Package</th>
+                            <th>Added By</th>
+                            <th>Date Created</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {partNames.data.map((part) => (
+                        {serverPartNames.data.map((part) => (
                             <tr key={part.ppc_partnamedb_id}>
-                                <td className="px-4 py-2">
-                                    {part.ppc_partnamedb_id}
+                                <td>{part.ppc_partnamedb_id}</td>
+                                <td>{part?.Partname || "-"}</td>
+                                <td>{part?.Focus_grp || "-"}</td>
+                                <td>{part?.Factory || "-"}</td>
+                                <td>{part?.PL || "-"}</td>
+                                <td>{part?.Packagename || "-"}</td>
+                                <td>{part?.Leadcount || "-"}</td>
+                                <td>{part?.Bodysize || "-"}</td>
+                                <td>{part?.Package || "-"}</td>
+                                <td>{part?.added_by || "-"}</td>
+                                <td>
+                                    {formatISOTimestampToDate(
+                                        part?.date_created
+                                    )}
                                 </td>
-                                <td className="px-4 py-2">
-                                    {part?.Partname || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.Focus_grp || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.Factory || "-"}
-                                </td>
-                                <td className="px-4 py-2">{part?.PL || "-"}</td>
-                                <td className="px-4 py-2">
-                                    {part?.Packagename || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.Leadcount || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.Bodysize || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.Package || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {part?.added_by || "-"}
-                                </td>
-                                <td className="px-4 py-2">
-                                    {(
-                                        part?.date_created || "-"
-                                    ).toLocaleString()}
-                                </td>
-                                <td className="px-4 py-2">
+                                <td>
                                     <button className="btn btn-sm">Edit</button>
                                     <button className="btn btn-sm text-error">
                                         Delete
@@ -130,17 +175,46 @@ const PartNameList = () => {
                     </tbody>
                 </table>
 
-                <div className="flex w-full mt-4 place-content-center join">
-                    {partNames.links.map((link, index) => (
-                        <a
-                            key={index}
-                            href={link.url}
-                            className={`join-item btn rounded ${
-                                link.active ? "bg-blue-500 text-white" : ""
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ))}
+                {/* Pagination */}
+                <div className="flex w-full justify-between mt-4">
+                    <div className="text-sm text-gray-600 content-center my-2">
+                        {`Showing ${start ?? 0} to ${
+                            end ?? 0
+                        } of ${filteredTotal.toLocaleString()} entries`}
+                        {overallTotal && overallTotal !== filteredTotal
+                            ? ` (filtered from ${overallTotal.toLocaleString()} total entries)`
+                            : ""}
+                    </div>
+                    <div className="join">
+                        {serverPartNames.links.map((link, index) => {
+                            // Extract numeric page from URL
+                            const page = link.url
+                                ? parseInt(
+                                      new URL(link.url).searchParams.get("page")
+                                  )
+                                : currentPage;
+
+                            return (
+                                <button
+                                    key={index}
+                                    className={`join-item btn rounded ${
+                                        link.active || page === currentPage
+                                            ? "bg-accent"
+                                            : ""
+                                    }`}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (!link.url) return;
+                                        goToPage(page);
+                                    }}
+                                    disabled={!link.url}
+                                />
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

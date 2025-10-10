@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
@@ -8,6 +8,102 @@ import MultiSelectDropdown from "@/Components/MultiSelectDropdown";
 import { useFetch } from "@/Hooks/useFetch";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import formatDate from "@/Utils/formatDate";
+import StackedBarChart from "@/Components/StackedBarChart";
+import TogglerButton from "@/Components/TogglerButton";
+import BarChartSkeleton from "@/Components/BarChartSkeleton";
+import sortObjectArray from "@/Utils/sortObjectArray";
+
+const toggleButtons = [
+    {
+        key: "f1",
+        label: "F1",
+        activeClass: "bg-primary border-primary text-white",
+        inactiveClass: "border-primary text-primary hover:bg-primary-content",
+    },
+    {
+        key: "f2",
+        label: "F2",
+        activeClass: "bg-secondary border-secondary text-white",
+        inactiveClass:
+            "border-secondary text-secondary hover:bg-secondary-content",
+    },
+    {
+        key: "f3",
+        label: "F3",
+        activeClass: "bg-accent border-accent text-white",
+        inactiveClass: "border-accent text-accent hover:bg-accent-content",
+    },
+];
+
+const summaryWipPLBarsQuantity = [
+    {
+        visibilityKey: "f1",
+        dataKey: "f1_total_quantity",
+        stackId: "a",
+        fill: "#422ad5",
+    },
+    {
+        visibilityKey: "f2",
+        dataKey: "f2_total_quantity",
+        stackId: "a",
+        fill: "#f43098",
+    },
+    {
+        visibilityKey: "f3",
+        dataKey: "f3_total_quantity",
+        stackId: "a",
+        fill: "#00D3BB",
+    },
+];
+
+const summaryWipBarsLots = [
+    {
+        visibilityKey: "always",
+        dataKey: "total_lots",
+        stackId: "a",
+        fill: ["#422ad5", "#f43098", "#00D3BB"],
+    },
+];
+
+const summaryWipPLBarsLots = [
+    {
+        visibilityKey: "f1",
+        dataKey: "f1_total_lots",
+        stackId: "a",
+        fill: "#422ad5",
+    },
+    {
+        visibilityKey: "f2",
+        dataKey: "f2_total_lots",
+        stackId: "a",
+        fill: "#f43098",
+    },
+    {
+        visibilityKey: "f3",
+        dataKey: "f3_total_lots",
+        stackId: "a",
+        fill: "#00D3BB",
+    },
+];
+
+function buildComputeFunction(selectedTotal, visibleBars) {
+    const activeKeys = Object.entries(visibleBars)
+        .filter(([_, isVisible]) => isVisible)
+        .map(([key]) => key);
+
+    console.log("🚀 ~ buildComputeFunction ~ activeKeys:", activeKeys);
+
+    if (activeKeys.length === 0) return null;
+
+    return (item) =>
+        activeKeys.reduce((sum, key) => {
+            const field =
+                selectedTotal === "quantity"
+                    ? `${key}_total_quantity`
+                    : `${key}_total_lots`;
+            return sum + Number(item[field] || 0);
+        }, 0);
+}
 
 const WIPDashboard = () => {
     const [startDate, setStartDate] = useState(null);
@@ -21,11 +117,18 @@ const WIPDashboard = () => {
     );
 
     const [isWorkweek, setIsWorkWeek] = useState(false);
-
     const [selectedWorkWeek, setSelectedWorkWeek] = useState([]);
     const [tempSelectedWorkWeek, setTempSelectedWorkWeek] = useState([]);
 
-    const [selectedFactory, setSelectedFactory] = useState("Select All");
+    const [selectedPL, setSelectedPL] = useState("PL6");
+    const [selectedTotal, setSelectedTotal] = useState("quantity");
+
+    const [visibleBars, setVisibleBars] = useState({
+        f1: true,
+        f2: true,
+        f3: true,
+        always: true,
+    });
 
     const dateRange =
         startDate && endDate
@@ -36,20 +139,40 @@ const WIPDashboard = () => {
     console.log("🚀 ~ WIPDashboard ~ tempEndDate:", tempEndDate);
     console.log("🚀 ~ WIPDashboard ~ dateRange:", dateRange);
 
-    const {
-        data,
-        loading,
-        error,
-        fetch: refetch,
-    } = useFetch("/api/overall-wip", {
-        params: {
-            dateRange: startDate && endDate ? dateRange : "",
-            workweek: selectedWorkWeek.join(" ") || "",
-        },
-        deps: [dateRange, selectedWorkWeek],
-    });
+    const commonParams = {
+        dateRange: startDate && endDate ? dateRange : "",
+        workweek: selectedWorkWeek.join(" ") || "",
+    };
 
-    const verb = loading ? "Loading" : "Showing";
+    // Define endpoints clearly
+    const endpoints = {
+        overall: "/api/overall-wip",
+        summary: "/api/wip-quantity-and-lot-totals",
+        summaryPL: "/api/wip-quantity-and-lot-totals-pl",
+    };
+
+    const {
+        data: overallWipData,
+        loading: overallWipLoading,
+        error: overallWipError,
+        fetch: overallWipFetch,
+    } = useFetch(endpoints.overall, { params: commonParams });
+
+    const {
+        data: summaryWipData,
+        loading: summaryWipLoading,
+        error: summaryWipError,
+        fetch: summaryWipFetch,
+    } = useFetch(endpoints.summary, { params: commonParams });
+
+    const {
+        data: summaryWipPLData,
+        loading: summaryWipPLLoading,
+        error: summaryWipPLError,
+        fetch: summaryWipPLFetch,
+    } = useFetch(endpoints.summaryPL, { params: commonParams });
+
+    const verb = overallWipLoading ? "Loading" : "Showing";
 
     const filterType = dateRange
         ? "dateRange"
@@ -71,12 +194,12 @@ const WIPDashboard = () => {
             : `${verb} WIP on ${filter}`;
 
     useEffect(() => {
-        if (loading) {
+        if (overallWipLoading) {
             console.log("Loading WIP Data...");
         } else {
             console.log("WIP Data Loaded O K N A AAAAAAAAAA.");
         }
-    }, [loading]);
+    }, [overallWipLoading]);
 
     const handleDateChange = (dates) => {
         const [start, end] = dates;
@@ -88,7 +211,6 @@ const WIPDashboard = () => {
         setTempStartDate(null);
         setTempEndDate(null);
         setTempSelectedWorkWeek([]);
-        setSelectedFactory("Select All");
     };
 
     useEffect(() => {
@@ -114,13 +236,52 @@ const WIPDashboard = () => {
             )}`;
             setStartDate(tempStartDate);
             setEndDate(tempEndDate);
-            refetch({ dateRange: newDateRange, workweek: "" });
+            overallWipFetch({ dateRange: newDateRange, workweek: "" });
+            summaryWipFetch({ dateRange: newDateRange, workweek: "" });
+            summaryWipPLFetch({ dateRange: newDateRange, workweek: "" });
         } else {
             const newWorkweek = tempSelectedWorkWeek.join(" ");
             setSelectedWorkWeek(tempSelectedWorkWeek);
-            refetch({ dateRange: "", workweek: newWorkweek });
+            overallWipFetch({ dateRange: "", workweek: newWorkweek });
+            summaryWipFetch({ dateRange: "", workweek: newWorkweek });
+            summaryWipPLFetch({ dateRange: "", workweek: newWorkweek });
         }
     };
+
+    const handleChangePLFilter = (e) => {
+        if (e.target.checked) {
+            setSelectedPL("PL6");
+        } else {
+            setSelectedPL("PL1");
+        }
+    };
+
+    const handleChangeTotalFilter = (e) => {
+        if (e.target.checked) {
+            setSelectedTotal("lots");
+        } else {
+            setSelectedTotal("quantity");
+        }
+    };
+
+    const toggleBar = (key) => {
+        setVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const toggleAll = () => {
+        const allVisible = Object.values(visibleBars).every(Boolean);
+        setVisibleBars({
+            f1: !allVisible,
+            f2: !allVisible,
+            f3: !allVisible,
+            always: true,
+        });
+    };
+
+    const compute = useMemo(
+        () => buildComputeFunction(selectedTotal, visibleBars),
+        [selectedTotal, visibleBars]
+    );
 
     return (
         <AuthenticatedLayout>
@@ -129,7 +290,7 @@ const WIPDashboard = () => {
                 <h1 className="w-3/12 px-4 text-2xl font-bold">
                     WIP Dashboard
                 </h1>
-                <h1>{!loading && message}</h1>
+                <h1>{!overallWipLoading && message}</h1>
             </div>
 
             <div className="flex">
@@ -221,32 +382,142 @@ const WIPDashboard = () => {
 
                 <div className="w-9/12 p-4 rounded-lg shadow-md bg-base-200">
                     <div className="overflow-x-auto">
-                        {loading ? (
+                        {overallWipLoading ? (
                             <WIPTableSkeleton message={message} />
-                        ) : error ? (
+                        ) : overallWipError ? (
                             <div className="text-red-500">
-                                Error: {error.message}
+                                Error: {overallWipError.message}
                             </div>
                         ) : (
-                            <WIPTable data={data} />
+                            <WIPTable data={overallWipData} />
                         )}
                     </div>
                 </div>
             </div>
 
-            <div>
-                <div className="divider divider-start">Include WIP</div>
+            <div className="p-4 mt-4 rounded-lg bg-base-200">
+                <h1 className="text-xl divider divider-start">
+                    Total Quantity Graph
+                </h1>
 
-                <select
-                    defaultValue="Select All"
-                    className="w-full select"
-                    onChange={(e) => setSelectedFactory(e.target.value)}
-                >
-                    <option>Select All</option>
-                    <option>F1</option>
-                    <option>F2</option>
-                    <option>F3</option>
-                </select>
+                <div className="flex space-x-4">
+                    <div>
+                        <TogglerButton
+                            toggleButtons={toggleButtons}
+                            visibleBars={visibleBars}
+                            toggleBar={toggleBar}
+                            toggleAll={toggleAll}
+                        />
+                    </div>
+
+                    <div className="divider divider-horizontal"></div>
+
+                    <div className="flex items-center space-x-2">
+                        <div>Total Quantity</div>
+                        <input
+                            type="checkbox"
+                            onChange={(e) => handleChangeTotalFilter(e)}
+                            className="toggle toggle-sm"
+                        />
+                        <div>Total Lots</div>
+                    </div>
+                </div>
+                <div className="w-full h-[500px]">
+                    {summaryWipLoading ? (
+                        <BarChartSkeleton />
+                    ) : summaryWipError ? (
+                        <div className="text-red-500">
+                            Error: {summaryWipError.message}
+                        </div>
+                    ) : (
+                        <StackedBarChart
+                            // data={summaryWipData?.data || []}
+                            data={sortObjectArray(summaryWipData?.data || [], {
+                                keys: ["total_lots"],
+                                order: "desc",
+                                compute:
+                                    selectedTotal === "quantity"
+                                        ? compute
+                                        : null,
+                            })}
+                            bars={
+                                selectedTotal === "quantity"
+                                    ? summaryWipPLBarsQuantity
+                                    : summaryWipBarsLots
+                            }
+                            visibleBars={visibleBars}
+                        />
+                    )}
+                </div>
+            </div>
+
+            <div className="p-4 mt-4 rounded-lg bg-base-200">
+                <h1 className="text-xl divider divider-start">Include WIP</h1>
+
+                <div className="flex space-x-4">
+                    <div>
+                        <TogglerButton
+                            toggleButtons={toggleButtons}
+                            visibleBars={visibleBars}
+                            toggleBar={toggleBar}
+                            toggleAll={toggleAll}
+                        />
+                    </div>
+
+                    <div className="divider divider-horizontal"></div>
+
+                    <div className="flex items-center space-x-2">
+                        <div>Total Quantity</div>
+                        <input
+                            type="checkbox"
+                            onChange={(e) => handleChangeTotalFilter(e)}
+                            className="toggle toggle-sm"
+                        />
+                        <div>Total Lots</div>
+                    </div>
+
+                    <div className="divider divider-horizontal"></div>
+
+                    <div className="flex items-center space-x-2">
+                        <div>PL1</div>
+                        <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={(e) => handleChangePLFilter(e)}
+                            className="toggle toggle-sm"
+                        />
+                        <div>PL6</div>
+                    </div>
+                </div>
+
+                <div className="h-[500px]">
+                    {summaryWipPLLoading ? (
+                        <BarChartSkeleton />
+                    ) : summaryWipPLError ? (
+                        <div className="text-red-500">
+                            Error: {summaryWipPLError.message}
+                        </div>
+                    ) : (
+                        <StackedBarChart
+                            data={sortObjectArray(
+                                summaryWipPLData?.data?.filter(
+                                    (item) => item.PL === selectedPL
+                                ) || [],
+                                {
+                                    keys: ["total_quantity"],
+                                    order: "desc",
+                                    compute,
+                                }
+                            )}
+                            bars={
+                                selectedTotal === "quantity"
+                                    ? summaryWipPLBarsQuantity
+                                    : summaryWipPLBarsLots
+                            }
+                            visibleBars={visibleBars}
+                        />
+                    )}
+                </div>
             </div>
         </AuthenticatedLayout>
     );
