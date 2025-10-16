@@ -4,6 +4,7 @@ import LoadingScreen from "@/Components/LoadingScreen";
 import { Link, usePage, router } from "@inertiajs/react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import Footer from "@/Components/Footer";
 
 export default function AuthenticatedLayout({ header, children }) {
     const { url, props } = usePage();
@@ -79,14 +80,15 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <div className="flex flex-col bg-base-300">
             {/* <LoadingScreen text="Please wait..." /> */}
-            <div className="flex h-screen overflow-hidden">
+            <div className="flex h-screen">
                 <Sidebar />
-                <div className="w-full ">
+                <div className="flex flex-col flex-1 ">
                     <NavBar />
-                    <main className="relative h-screen px-6 py-6 pb-[70px] overflow-y-auto">
+                    <main className="bg-base-300 relative w-full h-screen px-6 py-6 pb-[70px] overflow-y-auto">
                         {isLoading && <LoadingScreen text="Please wait..." />}
                         <div className="">{children}</div>
                     </main>
+                    <Footer />
                 </div>
             </div>
         </div>
