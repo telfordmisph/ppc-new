@@ -94,7 +94,7 @@ export default function NavLinks() {
             /> */}
 
             <SidebarLink
-                href={route("part-name-list")}
+                href={route("partname.index")}
                 label="Partname List"
                 icon={<LuList className="w-5 h-5" />}
                 notifications={false}

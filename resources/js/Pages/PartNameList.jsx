@@ -31,8 +31,7 @@ const PartNameList = () => {
     // Debounced search effect
     useEffect(() => {
         const timer = setTimeout(() => {
-            // Trigger Inertia visit only when input changes
-            router.visit("/part-name-list", {
+            router.visit(route("partname.index"), {
                 data: { search: searchInput, perPage: maxItem, page: 1 },
                 preserveState: true,
                 preserveScroll: true,
@@ -46,7 +45,7 @@ const PartNameList = () => {
 
     // Handle page navigation
     const goToPage = (page) => {
-        router.visit("/part-name-list", {
+        router.visit(route("partname.index"), {
             data: { search: searchInput, perPage: maxItem, page },
             preserveState: true,
             preserveScroll: true,
@@ -56,7 +55,7 @@ const PartNameList = () => {
     };
 
     const changeMaxItemPerPage = (maxItem) => {
-        router.visit("/part-name-list", {
+        router.visit(route("partname.index"), {
             data: { search: searchInput, perPage: maxItem, page: 1 },
             preserveState: true,
             preserveScroll: true,

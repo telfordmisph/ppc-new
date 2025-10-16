@@ -36,7 +36,7 @@ const PickupDashboard = () => {
         loading: overallPickupLoading,
         error: overallPickupError,
         fetch: overallpickupFetch,
-    } = useFetch("/api/overall-pickup", {
+    } = useFetch(route("api.wip.pickup"), {
         params: {
             dateRange: dateRange || "",
         },
@@ -47,7 +47,7 @@ const PickupDashboard = () => {
         loading: pickupSummaryLoading,
         error: pickupSummaryError,
         fetch: pickupSummaryFetch,
-    } = useFetch("/api/package-pickup-summary", {
+    } = useFetch(route("api.wip.packagePickupSummary"), {
         auto: false,
     });
 

@@ -146,9 +146,9 @@ const WIPDashboard = () => {
 
     // Define endpoints clearly
     const endpoints = {
-        overall: "/api/overall-wip",
-        summary: "/api/wip-quantity-and-lot-totals",
-        summaryPL: "/api/wip-quantity-and-lot-totals-pl",
+        overall: "api.wip.overall",
+        summary: "api.wip.quantityLotTotals",
+        summaryPL: "api.wip.quantityLotTotalsPL",
     };
 
     const {
@@ -156,21 +156,21 @@ const WIPDashboard = () => {
         loading: overallWipLoading,
         error: overallWipError,
         fetch: overallWipFetch,
-    } = useFetch(endpoints.overall, { params: commonParams });
+    } = useFetch(route(endpoints.overall), { params: commonParams });
 
     const {
         data: summaryWipData,
         loading: summaryWipLoading,
         error: summaryWipError,
         fetch: summaryWipFetch,
-    } = useFetch(endpoints.summary, { params: commonParams });
+    } = useFetch(route(endpoints.summary), { params: commonParams });
 
     const {
         data: summaryWipPLData,
         loading: summaryWipPLLoading,
         error: summaryWipPLError,
         fetch: summaryWipPLFetch,
-    } = useFetch(endpoints.summaryPL, { params: commonParams });
+    } = useFetch(route(endpoints.summaryPL), { params: commonParams });
 
     const verb = overallWipLoading ? "Loading" : "Showing";
 

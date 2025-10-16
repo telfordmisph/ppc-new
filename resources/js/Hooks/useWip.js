@@ -13,7 +13,7 @@ export function useWip() {
 
     async function fetchWip() {
       try {
-        const res = await fetch("/api/today-wip");
+        const res = await fetch(route("api.wip.today"));
         if (!res.ok) throw new Error("Failed to fetch WIP data");
         const json = await res.json();
 
