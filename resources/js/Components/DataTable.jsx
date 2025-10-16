@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { router } from "@inertiajs/react";
+import { useThemeStore } from "@/Store/themeStore";
 
 export default function DataTable({
     columns,
@@ -15,6 +16,7 @@ export default function DataTable({
     children,
     filterDropdown = null,
 }) {
+const { theme } = useThemeStore();
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
     const [searchInput, setSearchInput] = useState(filters.search || "");
@@ -28,9 +30,7 @@ export default function DataTable({
     const [dateTo, setDateTo] = useState(extractDate(filters.end));
 
     const themeColor =
-        localStorage.getItem("theme") === "dark"
-            ? "hover:bg-gray-700"
-            : "hover:bg-gray-100";
+        theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100";
 
     const handleSearch = (e) => {
         e.preventDefault();

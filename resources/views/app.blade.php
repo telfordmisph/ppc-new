@@ -23,4 +23,9 @@
     <body class="font-sans antialiased">
         @inertia
     </body>
+    <script>
+        const theme = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-theme", theme);
+    </script>
+
 </html>

@@ -2,24 +2,13 @@ import { Link, usePage, router } from "@inertiajs/react";
 import { useState, useEffect } from "react";
 import Navigation from "@/Components/sidebar/Navigation";
 import ThemeToggler from "@/Components/sidebar/ThemeToggler";
+import { useThemeStore } from "@/Store/themeStore";
 
 export default function Sidebar() {
     const { display_name } = usePage().props;
     const [theme, setTheme] = useState("light");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // for responsiveness
-
-    useEffect(() => {
-        const storedTheme = localStorage.getItem("theme") || "light";
-        setTheme(storedTheme);
-        document.documentElement.setAttribute("data-theme", storedTheme);
-    }, []);
-
-    const toggleTheme = () => {
-        const newTheme = theme === "light" ? "dark" : "light";
-        setTheme(newTheme);
-        document.documentElement.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-    };
+    const { theme, toggleTheme } = useThemeStore();
 
     const formattedAppName = display_name
         ?.split(" ")
@@ -56,18 +45,12 @@ export default function Sidebar() {
                     md:translate-x-0
                     md:flex
                     flex-col min-h-screen w-[270px] space-y-6 px-4 pb-6 pt-4
-                    ${
-                        theme === "light"
-                            ? "bg-gray-50 text-black"
-                            : "bg-base-100 text-base-content"
-                    }
                 `}
                 style={{
                     scrollbarWidth: "none",
                     msOverflowStyle: "none",
                 }}
             >
-                {/* LOGO */}
                 <Link
                     href={route("dashboard")}
                     className="flex items-center pl-[10px] text-lg font-bold"

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, usePage } from "@inertiajs/react";
 import clsx from "clsx";
+import { useThemeStore } from "@/Store/themeStore";
 
 const SidebarLink = ({
     href,
@@ -11,9 +12,11 @@ const SidebarLink = ({
 }) => {
     const { url } = usePage();
 
+    const { theme } = useThemeStore();
+
     const isActive = url === new URL(href, window.location.origin).pathname;
 
-    const isDark = localStorage.getItem("theme") === "dark";
+    const isDark = theme === "dark";
 
     const hoverColor = isDark ? "hover:bg-base-200" : "hover:bg-base-300";
 
@@ -37,7 +40,7 @@ const SidebarLink = ({
 
             <div>
                 {notifications > 0 && (
-                    <span className="inline-flex items-center justify-center px-2 py-1 ml-2 text-xs leading-none text-content bg-accent rounded-md">
+                    <span className="inline-flex items-center justify-center px-2 py-1 ml-2 text-xs leading-none rounded-md text-content bg-accent">
                         {notifications}
                     </span>
                 )}

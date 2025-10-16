@@ -1,9 +1,12 @@
+import { useThemeStore } from "@/Store/themeStore";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 export default forwardRef(function TextInput(
     { type = "text", className = "", isFocused = false, ...props },
     ref
 ) {
+const { theme } = useThemeStore();
+
     const localRef = useRef(null);
 
     useImperativeHandle(ref, () => ({
@@ -16,8 +19,7 @@ export default forwardRef(function TextInput(
         }
     }, [isFocused]);
 
-    const themeColor =
-        localStorage.getItem("theme") === "dark" ? "bg-gray-800" : "bg-white";
+    const themeColor = theme === "dark" ? "bg-gray-800" : "bg-white";
 
     return (
         <input

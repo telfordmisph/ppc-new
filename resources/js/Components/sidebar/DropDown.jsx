@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { usePage, Link } from "@inertiajs/react";
 import { Transition } from "@headlessui/react";
 import clsx from "clsx";
+import { useThemeStore } from "@/Store/themeStore";
 
 export default function Dropdown({
     label,
@@ -10,7 +11,7 @@ export default function Dropdown({
     notification = null,
 }) {
     const { url } = usePage();
-
+const { theme } = useThemeStore();
     const normalizePath = (href) => {
         try {
             const urlObj = new URL(href, window.location.origin);
@@ -35,14 +36,10 @@ export default function Dropdown({
     }, [hasActiveLink]);
 
     const hoverColor =
-        localStorage.getItem("theme") === "dark"
-            ? "hover:bg-base-200"
-            : "hover:bg-base-300";
+        theme === "dark" ? "hover:bg-base-200" : "hover:bg-base-300";
 
     const activeColor =
-        localStorage.getItem("theme") === "dark"
-            ? "bg-gray-700"
-            : "bg-neutral text-white";
+        theme === "dark" ? "bg-gray-700" : "bg-neutral text-white";
 
     return (
         <div className="relative w-full">
@@ -61,7 +58,7 @@ export default function Dropdown({
                                 {notification > 99 ? "99+" : notification}
                             </span>
                         ) : (
-                            <span className="w-2 h-2 bg-accent rounded-full"></span>
+                            <span className="w-2 h-2 rounded-full bg-accent"></span>
                         )
                     ) : null}
                 </div>
