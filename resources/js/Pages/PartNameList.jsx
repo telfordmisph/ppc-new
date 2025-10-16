@@ -1,6 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
 import { usePage, router } from "@inertiajs/react";
+import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 
 const PartNameList = () => {
