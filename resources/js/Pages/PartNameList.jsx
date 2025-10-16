@@ -3,9 +3,10 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
 import { usePage, router } from "@inertiajs/react";
 import toast from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { FaEdit, FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
+import Modal from "@/Components/Modal";
 
 const PartNameList = () => {
     const {
@@ -22,11 +23,11 @@ const PartNameList = () => {
     const end = serverPartNames.to;
     const filteredTotal = serverPartNames.total;
     const overallTotal = totalEntries ?? filteredTotal;
-
+    const deleteModalRef = useRef(null);
     const [searchInput, setSearchInput] = useState(serverSearch || "");
     const [maxItem, setMaxItem] = useState(serverPerPage || 10);
     const [selectedPart, setSelectedPart] = useState(null);
-
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(
         serverPartNames.current_page || 1
     );
@@ -93,7 +94,7 @@ const PartNameList = () => {
 
             refresh();
 
-            document.getElementById("my_modal_3").close();
+            deleteModalRef.current.close();
             toast.success("Part deleted successfully!");
         } catch (error) {
             toast.error("Failed to update part.");
@@ -217,14 +218,62 @@ const PartNameList = () => {
                                         class="btn btn-ghost btn-sm text-error"
                                         onClick={() => {
                                             setSelectedPart(part);
-                                            document
-                                                .getElementById("my_modal_3")
-                                                .showModal();
+                                            // setIsDeleteModalOpen(true);
+                                            deleteModalRef.current.open();
                                         }}
                                     >
                                         <FaTrash />
                                     </a>
-                                    <dialog id="my_modal_3" className="modal">
+
+                                    <Modal
+                                        ref={deleteModalRef}
+                                        id="deletePartModal"
+                                        title="Are you sure?"
+                                        show={isDeleteModalOpen}
+                                        onClose={() =>
+                                            setIsDeleteModalOpen(false)
+                                        }
+                                        className="max-w-lg"
+                                    >
+                                        <p className="py-4">
+                                            This action cannot be undone. Delete{" "}
+                                            <span className="pl-1">
+                                                {selectedPart?.Partname ||
+                                                    "this?"}
+                                            </span>
+                                        </p>
+
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                className="btn btn-error"
+                                                onClick={() => {
+                                                    handleDelete();
+                                                    deleteModalRef.current?.close();
+                                                }}
+                                                disabled={mutateLoading}
+                                            >
+                                                {mutateLoading ? (
+                                                    <>
+                                                        <span className="loading loading-spinner"></span>{" "}
+                                                        Deleting
+                                                    </>
+                                                ) : (
+                                                    "Confirm Delete"
+                                                )}
+                                            </button>
+
+                                            <button
+                                                className="btn"
+                                                onClick={() =>
+                                                    deleteModalRef.current?.close()
+                                                }
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </Modal>
+
+                                    {/* <dialog id="my_modal_3" className="modal">
                                         <div className="modal-box">
                                             <form method="dialog">
                                                 <button className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2">
@@ -265,7 +314,7 @@ const PartNameList = () => {
                                                 </form>
                                             </div>
                                         </div>
-                                    </dialog>
+                                    </dialog> */}
                                 </td>
                             </tr>
                         ))}
