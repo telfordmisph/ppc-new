@@ -8,9 +8,9 @@ import MultiSelectDropdown from "@/Components/MultiSelectDropdown";
 import { useFetch } from "@/Hooks/useFetch";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import formatDate from "@/Utils/formatDate";
-import StackedBarChart from "@/Components/StackedBarChart";
+import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import TogglerButton from "@/Components/TogglerButton";
-import BarChartSkeleton from "@/Components/BarChartSkeleton";
+import BarChartSkeleton from "@/Components/Charts/BarChartSkeleton";
 import sortObjectArray from "@/Utils/sortObjectArray";
 
 const toggleButtons = [
@@ -297,7 +297,8 @@ const WIPDashboard = () => {
                 <div className="w-4/12">
                     <div className="flex flex-col w-full h-full p-4">
                         <h1>Filter</h1>
-                        <div className="divider">
+                        <div className="flex flex-col items-center mb-4 xl:flex-row lg:justify-between">
+                            {/* <div className="lg:divider"> */}
                             <label
                                 className={`label cursor-pointer ${
                                     !isWorkweek
@@ -307,14 +308,12 @@ const WIPDashboard = () => {
                             >
                                 Date Range
                             </label>
-
                             <input
                                 type="checkbox"
                                 checked={isWorkweek}
                                 onChange={(e) => handleDateFilterChange(e)}
                                 className="bg-secondary toggle checked:bg-primary"
                             />
-
                             <label
                                 className={`label cursor-pointer ${
                                     isWorkweek
@@ -358,7 +357,7 @@ const WIPDashboard = () => {
                             />
                         )}
 
-                        <div className="flex w-full gap-2 mt-4">
+                        <div className="flex flex-col w-full gap-2 mt-4 lg:flex-row">
                             <button
                                 className="btn btn-error"
                                 onClick={resetFilter}
@@ -422,7 +421,7 @@ const WIPDashboard = () => {
                         <div>Total Lots</div>
                     </div>
                 </div>
-                <div className="w-full h-[500px]">
+                <div className="w-full flex justify-center h-[500px]">
                     {summaryWipLoading ? (
                         <BarChartSkeleton />
                     ) : summaryWipError ? (
@@ -440,6 +439,7 @@ const WIPDashboard = () => {
                                         ? compute
                                         : null,
                             })}
+                            isLoading={summaryWipLoading}
                             bars={
                                 selectedTotal === "quantity"
                                     ? summaryWipPLBarsQuantity
@@ -490,7 +490,7 @@ const WIPDashboard = () => {
                     </div>
                 </div>
 
-                <div className="h-[500px]">
+                <div className="w-full  flex justify-center h-[500px]">
                     {summaryWipPLLoading ? (
                         <BarChartSkeleton />
                     ) : summaryWipPLError ? (
@@ -509,6 +509,7 @@ const WIPDashboard = () => {
                                     compute,
                                 }
                             )}
+                            isLoading={summaryWipPLLoading}
                             bars={
                                 selectedTotal === "quantity"
                                     ? summaryWipPLBarsQuantity

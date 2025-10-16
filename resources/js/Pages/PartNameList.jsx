@@ -1,8 +1,11 @@
+import { useMutation } from "@/Hooks/useMutation";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
 import { usePage, router } from "@inertiajs/react";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
+import { FaEdit, FaExclamationTriangle, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa6";
 
 const PartNameList = () => {
     const {
@@ -20,16 +23,20 @@ const PartNameList = () => {
     const filteredTotal = serverPartNames.total;
     const overallTotal = totalEntries ?? filteredTotal;
 
-    // Local states for input controls
     const [searchInput, setSearchInput] = useState(serverSearch || "");
     const [maxItem, setMaxItem] = useState(serverPerPage || 10);
+    const [selectedPart, setSelectedPart] = useState(null);
 
-    // Local state for current page (optional, for UI highlighting)
     const [currentPage, setCurrentPage] = useState(
         serverPartNames.current_page || 1
     );
 
-    // Debounced search effect
+    const {
+        mutate,
+        loading: mutateLoading,
+        cancel: mutateCancel,
+    } = useMutation();
+
     useEffect(() => {
         const timer = setTimeout(() => {
             router.visit(route("partname.index"), {
@@ -38,13 +45,12 @@ const PartNameList = () => {
                 preserveScroll: true,
                 replace: true,
             });
-            setCurrentPage(1); // Reset local page for highlighting
-        }, 2000);
+            setCurrentPage(1);
+        }, 700);
 
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    // Handle page navigation
     const goToPage = (page) => {
         router.visit(route("partname.index"), {
             data: { search: searchInput, perPage: maxItem, page },
@@ -65,14 +71,47 @@ const PartNameList = () => {
         setMaxItem(maxItem);
     };
 
+    const refresh = () => {
+        router.visit(route("partname.index"), {
+            data: { search: searchInput, perPage: maxItem, currentPage },
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const handleDelete = async () => {
+        try {
+            await mutate(
+                route("api.partname.delete", {
+                    id: selectedPart.ppc_partnamedb_id,
+                }),
+                {
+                    method: "DELETE",
+                }
+            );
+
+            refresh();
+
+            document.getElementById("my_modal_3").close();
+            toast.success("Part deleted successfully!");
+        } catch (error) {
+            toast.error("Failed to update part.");
+            console.error(error);
+        }
+    };
+
     return (
         <AuthenticatedLayout>
-            <div className="px-4">
-                <h1 className="mb-4 text-2xl font-bold">Part Names</h1>
+            <div className="w-full px-4">
+                <div className="flex items-center justify-between text-center">
+                    <h1 className="text-2xl font-bold">Part Names</h1>
+                    <a href={route("partname.create")} class="btn btn-primary">
+                        <FaPlus /> Add PartName
+                    </a>
+                </div>
 
-                {/* Controls */}
                 <div className="flex justify-between py-4">
-                    {/* Max items dropdown */}
                     <div className="dropdown dropdown-bottom">
                         <div tabIndex={0} className="m-1 btn">
                             {`Show ${maxItem} items`}
@@ -101,7 +140,6 @@ const PartNameList = () => {
                         </ul>
                     </div>
 
-                    {/* Search input */}
                     <label className="input">
                         <svg
                             className="h-[1em] opacity-50"
@@ -128,7 +166,6 @@ const PartNameList = () => {
                     </label>
                 </div>
 
-                {/* Table */}
                 <table className="table w-full table-auto table-xs">
                     <thead>
                         <tr>
@@ -164,11 +201,71 @@ const PartNameList = () => {
                                         part?.date_created
                                     )}
                                 </td>
-                                <td>
-                                    <button className="btn btn-sm">Edit</button>
-                                    <button className="btn btn-sm text-error">
-                                        Delete
-                                    </button>
+                                <td className="flex flex-col lg:flex-row">
+                                    <a
+                                        href={route("partname.edit", {
+                                            id: part.ppc_partnamedb_id,
+                                            search: searchInput,
+                                            perPage: maxItem,
+                                            page: currentPage,
+                                        })}
+                                        class="btn btn-ghost btn-sm btn-primary"
+                                    >
+                                        <FaEdit />
+                                    </a>
+                                    <a
+                                        class="btn btn-ghost btn-sm text-error"
+                                        onClick={() => {
+                                            setSelectedPart(part);
+                                            document
+                                                .getElementById("my_modal_3")
+                                                .showModal();
+                                        }}
+                                    >
+                                        <FaTrash />
+                                    </a>
+                                    <dialog id="my_modal_3" className="modal">
+                                        <div className="modal-box">
+                                            <form method="dialog">
+                                                <button className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2">
+                                                    ✕
+                                                </button>
+                                            </form>
+                                            <h3 className="flex items-center gap-2 text-lg font-semibold">
+                                                <FaExclamationTriangle className="text-red-400" />
+                                                <span>Are you sure?</span>
+                                            </h3>
+                                            <p className="py-4">
+                                                This action cannot be undone.
+                                                Delete
+                                                <span className="pl-1">
+                                                    {`${selectedPart?.Partname}?` ||
+                                                        "this?"}
+                                                </span>
+                                            </p>
+
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    className="btn btn-error"
+                                                    onClick={handleDelete}
+                                                >
+                                                    {mutateLoading ? (
+                                                        <>
+                                                            <span className="loading loading-spinner"></span>{" "}
+                                                            Deleting
+                                                        </>
+                                                    ) : (
+                                                        "Confirm Delete"
+                                                    )}
+                                                </button>
+                                                <form method="dialog">
+                                                    <button className="btn">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </dialog>
                                 </td>
                             </tr>
                         ))}
@@ -176,8 +273,8 @@ const PartNameList = () => {
                 </table>
 
                 {/* Pagination */}
-                <div className="flex w-full justify-between mt-4">
-                    <div className="text-sm text-gray-600 content-center my-2">
+                <div className="flex justify-between w-full mt-4">
+                    <div className="content-center my-2 text-sm text-gray-600">
                         {`Showing ${start ?? 0} to ${
                             end ?? 0
                         } of ${filteredTotal.toLocaleString()} entries`}

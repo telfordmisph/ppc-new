@@ -1,6 +1,6 @@
 export default function LoadingScreen({ text = "Loading..." }) {
     return (
-        <div className="top-0 left-0 w-full h-full flex absolute items-center justify-center bg-base-200 font-[Poppins]">
+        <div className="bg-base-300 top-0 left-0 w-full h-full flex absolute items-center justify-center font-[Poppins]">
             <div className="flex flex-col items-center space-y-4">
                 <div className="flex items-center space-x-4">
                     <span className="loading loading-ring loading-xl"></span>

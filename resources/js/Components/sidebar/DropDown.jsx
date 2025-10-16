@@ -11,7 +11,7 @@ export default function Dropdown({
     notification = null,
 }) {
     const { url } = usePage();
-const { theme } = useThemeStore();
+    const { theme } = useThemeStore();
     const normalizePath = (href) => {
         try {
             const urlObj = new URL(href, window.location.origin);

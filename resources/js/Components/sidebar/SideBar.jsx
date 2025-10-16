@@ -6,7 +6,6 @@ import { useThemeStore } from "@/Store/themeStore";
 
 export default function Sidebar() {
     const { display_name } = usePage().props;
-    const [theme, setTheme] = useState("light");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // for responsiveness
     const { theme, toggleTheme } = useThemeStore();
 
@@ -16,10 +15,10 @@ export default function Sidebar() {
         .join(" ");
 
     return (
-        <div className="flex">
+        <div className="z-[1] flex w-0 shadow-lg md:w-64">
             {/* Mobile Hamburger */}
             <button
-                className="absolute z-50 p-2 rounded top-4 right-4 md:hidden"
+                className="absolute p-2 rounded top-4 right-4 md:hidden"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
                 <svg
@@ -37,10 +36,9 @@ export default function Sidebar() {
                 </svg>
             </button>
 
-            {/* Sidebar */}
             <div
                 className={`
-                    bg-base-100 fixed md:relative top-0 left-0 z-40 transition-transform transform
+                    w-full bg-base-100 fixed md:relative top-0 left-0 transition-transform transform
                     ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
                     md:translate-x-0
                     md:flex

@@ -5,7 +5,7 @@ export default forwardRef(function TextInput(
     { type = "text", className = "", isFocused = false, ...props },
     ref
 ) {
-const { theme } = useThemeStore();
+    const { theme } = useThemeStore();
 
     const localRef = useRef(null);
 

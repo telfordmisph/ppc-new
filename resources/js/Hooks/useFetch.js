@@ -42,7 +42,6 @@ export function useFetch(url, options = {}) {
       }
       const result = await response.json();
       
-      console.log("🚀 ~ r r e e s s u u l l t t:", result)
       setData(result);
     } catch (err) {
       if (err.name !== "AbortError") {

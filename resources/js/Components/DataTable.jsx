@@ -16,7 +16,7 @@ export default function DataTable({
     children,
     filterDropdown = null,
 }) {
-const { theme } = useThemeStore();
+    const { theme } = useThemeStore();
     const [selected, setSelected] = useState([]);
     const [activeRow, setActiveRow] = useState(null);
     const [searchInput, setSearchInput] = useState(filters.search || "");

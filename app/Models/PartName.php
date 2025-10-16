@@ -14,17 +14,17 @@ class PartName extends Model
     protected $primaryKey = 'ppc_partnamedb_id';
 
     protected $fillable = [
+        'Partname',
         'Focus_grp',
         'Factory',
         'PL',
-        'Partname',
         'Packagename',
         'Packagecategory',
         'Leadcount',
         'Bodysize',
         'Package',
-        'added_by',
-        'date_created',
+        // 'added_by',
+        // 'date_created',
     ];
 
     protected $casts = [

@@ -1,10 +1,4 @@
-import {
-    FaTachometerAlt,
-    FaTasks,
-    FaUserCog,
-    FaUsers,
-    FaClipboardList,
-} from "react-icons/fa";
+import { FaUsers } from "react-icons/fa";
 
 import {
     LuLayoutDashboard,
@@ -66,32 +60,6 @@ export default function NavLinks() {
                 ]}
                 notification={false}
             />
-
-            {/* <Dropdown
-                label="User Settings"
-                icon={<FaUserCog className="w-5 h-5" />}
-                links={[
-                    {
-                        href: route("admin"),
-                        label: "Profile",
-                        icon: <FaUserCog className="w-5 h-5" />,
-                        notification: true,
-                    },
-                    {
-                        href: route("admin"),
-                        label: "Account",
-                        icon: <FaUserCog className="w-5 h-5" />,
-                        notification: 125,
-                    },
-                    {
-                        href: route("dashboard"),
-                        label: "No notifications",
-                        icon: <FaUserCog className="w-5 h-5" />,
-                        notification: false,
-                    },
-                ]}
-                notification={true}
-            /> */}
 
             <SidebarLink
                 href={route("partname.index")}
