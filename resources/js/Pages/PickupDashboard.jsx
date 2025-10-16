@@ -9,10 +9,11 @@ import { useFetch } from "@/Hooks/useFetch";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { buildDateRange } from "@/Utils/formatDate";
 import { TbFilter } from "react-icons/tb";
-import PickupBarChart from "@/Components/PickupBarChart";
+import PickupBarChart from "@/Components/Charts/PickupBarChart";
 import clsx from "clsx";
 import { FaChartBar } from "react-icons/fa";
-import BarChartSkeleton from "@/Components/BarChartSkeleton";
+import BarChartSkeleton from "@/Components/Charts/BarChartSkeleton";
+import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
 
 const PickupDashboard = () => {
     const [startDate, setStartDate] = useState(() => {
@@ -26,8 +27,8 @@ const PickupDashboard = () => {
         date.setHours(23, 59, 59, 999);
         return date;
     });
-    const [tempStartDate, setTempStartDate] = useState(null);
-    const [tempEndDate, setTempEndDate] = useState(null);
+    const [tempStartDate, setTempStartDate] = useState(startDate);
+    const [tempEndDate, setTempEndDate] = useState(endDate);
     const dateRange = buildDateRange(startDate, endDate);
     const [selectedChartStatus, setSelectedChartStatus] = useState(null);
 
@@ -50,6 +51,8 @@ const PickupDashboard = () => {
     } = useFetch(route("api.wip.packagePickupSummary"), {
         auto: false,
     });
+
+    console.log("🚀 ~ PickupDashboard ~ pickupSummaryData:", pickupSummaryData);
 
     const verb = overallPickupLoading ? "Loading" : "Showing";
 
@@ -86,13 +89,24 @@ const PickupDashboard = () => {
         });
     };
 
-    const handleDateChange = (date, type) => {
-        if (type === "start") {
-            setTempStartDate(date);
-        } else {
-            setTempEndDate(date);
+    function handleDateChange(date, type) {
+        if (!date) {
+            if (type === "start") {
+                setTempStartDate(date);
+
+                if (tempStartDate > tempEndDate) {
+                    setTempEndDate(tempStartDate);
+                }
+            } else {
+                setTempEndDate(date);
+            }
+
+            return;
         }
-    };
+
+        if (type === "start") setTempStartDate(date);
+        else setTempEndDate(date);
+    }
 
     const resetFilter = () => {
         setTempStartDate(null);
@@ -120,10 +134,12 @@ const PickupDashboard = () => {
         <AuthenticatedLayout>
             <Head title="Pickup Dashboard" />
             <div className="flex items-center justify-between">
-                <h1 className="w-3/12 px-4 text-2xl font-bold">
+                <h1 className="w-3/12 text-2xl font-bold md:px-4">
                     Pickup Dashboard
                 </h1>
-                <h1>{!overallPickupLoading ? message : "Empty"}</h1>
+                <h1 className="text-sm text-right sm:text-md">
+                    {!overallPickupLoading ? message : "Empty"}
+                </h1>
             </div>
 
             <div className="md:flex">
@@ -136,30 +152,53 @@ const PickupDashboard = () => {
                         </div>
 
                         <span>from</span>
-                        <DatePicker
-                            selected={tempStartDate}
-                            onChange={(date) => handleDateChange(date, "start")}
-                            placeholderText="Select start date and time"
-                            showTimeSelect
-                            timeFormat="h:mm aa"
-                            timeIntervals={1}
-                            dateFormat="MMM d, yyyy h:mm aa"
-                            className="w-full rounded-lg input input-bordered"
+                        <input
+                            type="datetime-local"
+                            value={formatDateToLocalInput(tempStartDate)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                handleDateChange(
+                                    val ? new Date(val) : null,
+                                    "start"
+                                );
+                            }}
+                            placeholder="Select start date and time"
+                            className="w-full rounded-lg bg-base-200 input input-bordered"
                         />
 
                         <span className="mt-2">to</span>
-                        <DatePicker
-                            selected={tempEndDate}
-                            onChange={(date) => handleDateChange(date, "end")}
-                            placeholderText="Select end date and time"
-                            showTimeSelect
-                            timeFormat="h:mm aa"
-                            timeIntervals={1}
-                            dateFormat="MMM d, yyyy h:mm aa"
-                            className="w-full rounded-lg input input-bordered"
+
+                        <input
+                            type="datetime-local"
+                            value={formatDateToLocalInput(tempEndDate)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                handleDateChange(
+                                    val ? new Date(val) : null,
+                                    "end"
+                                );
+                            }}
+                            placeholder="Select end date and time"
+                            className="w-full rounded-lg bg-base-200 input input-bordered"
+                            min={
+                                tempStartDate
+                                    ? tempStartDate.toISOString().slice(0, 16)
+                                    : ""
+                            }
+                            disabled={!tempStartDate}
                         />
 
-                        <div className="flex justify-end w-full gap-2 mt-4">
+                        <p
+                            className={`mt-1 text-sm text-error transition-all ${
+                                tempStartDate > tempEndDate
+                                    ? "visible opacity-100"
+                                    : "invisible opacity-0"
+                            }`}
+                        >
+                            Start date must be less than End Date
+                        </p>
+
+                        <div className="flex justify-end w-full gap-2 mt-4 md:flex-col lg:flex-row">
                             <button
                                 className="flex-1 btn btn-error"
                                 onClick={resetFilter}
@@ -200,10 +239,19 @@ const PickupDashboard = () => {
             </h1>
 
             <div className="flex justify-center w-full h-[450px] p-4 mt-4 rounded-lg shadow-md bg-base-200">
-                {pickupSummaryLoading ? (
-                    <BarChartSkeleton />
+                {pickupSummaryData?.data?.length ? (
+                    <PickupBarChart
+                        data={pickupSummaryData.data}
+                        isLoading={pickupSummaryLoading}
+                    />
                 ) : (
-                    <PickupBarChart data={pickupSummaryData?.data || []} />
+                    <div className="flex items-center justify-center w-full space-x-2">
+                        <span>Preview summary by clicking </span>
+                        <button className="h-6 pointer-events-none btn btn-sm">
+                            <FaChartBar />
+                        </button>
+                        <span>.</span>
+                    </div>
                 )}
             </div>
         </AuthenticatedLayout>
