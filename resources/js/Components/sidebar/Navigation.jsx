@@ -19,7 +19,7 @@ export default function NavLinks() {
 
     return (
         <nav
-            className="flex flex-col flex-grow space-y-1 overflow-y-auto"
+            className="flex flex-col space-y-1 overflow-y-auto grow"
             style={{ scrollbarWidth: "none" }}
         >
             <SidebarLink

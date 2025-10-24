@@ -39,16 +39,16 @@ export default function Dropdown({
         theme === "dark" ? "hover:bg-base-200" : "hover:bg-base-300";
 
     const activeColor =
-        theme === "dark" ? "bg-gray-700" : "bg-neutral text-white";
+        theme === "dark" ? "bg-base-200" : "bg-base-300 text-primary";
 
     return (
         <div className="relative w-full">
             <button
                 onClick={() => setOpen(!open)}
-                className={`flex items-center h-8 justify-between w-full px-[10px] py-2 rounded ${hoverColor}`}
+                className={`flex items-center h-8 justify-between w-full px-2.5 py-2 rounded-lg ${hoverColor}`}
             >
                 <div className="relative flex items-center space-x-2">
-                    {icon && <span className="w-6 h-6 pt-[2px]">{icon}</span>}
+                    {icon && <span className="w-6 h-6 pt-0.5">{icon}</span>}
                     <span className="pl-0 pr-1">{label}</span>
 
                     {/* Dropdown notification */}
@@ -58,7 +58,7 @@ export default function Dropdown({
                                 {notification > 99 ? "99+" : notification}
                             </span>
                         ) : (
-                            <span className="w-2 h-2 rounded-full bg-accent"></span>
+                            <span className="w-2 h-2 rounded-full bg-primary"></span>
                         )
                     ) : null}
                 </div>
@@ -104,17 +104,19 @@ export default function Dropdown({
                                 key={`${normalizePath(link.href)}-${index}`}
                                 href={link.href}
                                 className={clsx(
-                                    "flex items-center h-8 justify-between pr-2 text-sm rounded transition-colors",
+                                    "flex items-center h-8 justify-between pr-2 text-sm rounded-lgtransition-colors",
                                     !active && hoverColor,
                                     active && activeColor,
-                                    active && "text-accent"
+                                    active && "text-primary"
                                 )}
                             >
                                 <div className="flex items-center space-x-2">
                                     <div
                                         className={clsx(
-                                            "w-[2px] h-8",
-                                            active ? "bg-accent" : "bg-base-300" // fallback if not active
+                                            "w-0.5 h-8",
+                                            active
+                                                ? "bg-primary"
+                                                : "bg-base-300"
                                         )}
                                     ></div>
                                     {link.icon ? (
@@ -142,7 +144,7 @@ export default function Dropdown({
 
                                 {linkNotification ? (
                                     typeof linkNotification === "number" ? (
-                                        <span className="bg-accent text-content text-xs px-1.5 py-0.5 rounded-md">
+                                        <span className="bg-accent text-content text-xs px-1.5 py-0.5 rounded-lg">
                                             {linkNotification > 99
                                                 ? "99+"
                                                 : linkNotification}

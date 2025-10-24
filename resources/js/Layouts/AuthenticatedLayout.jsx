@@ -80,7 +80,7 @@ export default function AuthenticatedLayout({ header, children }) {
     return (
         <div className="flex flex-col bg-base-300">
             {/* <LoadingScreen text="Please wait..." /> */}
-            <div className="flex h-screen">
+            <div className="flex h-screen text-sm">
                 <Sidebar />
                 <div className="flex flex-col flex-1 ">
                     <NavBar />

@@ -39,7 +39,7 @@ export default function Profile({ profile, errors }) {
         <AuthenticatedLayout>
             <Head title="Profile" />
 
-            <div className="max-w-3xl p-6 mx-auto border-[1px] rounded-2xl">
+            <div className="max-w-3xl p-6 mx-auto border-[1px] rounded-lg">
                 <h1 className="pb-2 mb-6 text-2xl font-bold border-b">
                     User Profile
                 </h1>
@@ -80,7 +80,7 @@ export default function Profile({ profile, errors }) {
 
                 {/* Password Form - Toggled */}
                 <div className={passwordForm ? "block mt-6" : "hidden"}>
-                    <div className="p-4 space-y-4 border border-yellow-400 rounded-xl">
+                    <div className="p-4 space-y-4 border border-yellow-400 rounded-lg">
                         <div
                             role="alert"
                             className="text-sm alert alert-warning"

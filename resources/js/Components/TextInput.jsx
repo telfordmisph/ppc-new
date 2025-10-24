@@ -27,7 +27,7 @@ export default forwardRef(function TextInput(
             type={type}
             className={
                 themeColor +
-                " rounded-md first-letter:rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 " +
+                " rounded-lg first-letter:rounded-lg border-gray-300 shadow-lg focus:border-indigo-500 focus:ring-indigo-500 " +
                 className
             }
             ref={localRef}

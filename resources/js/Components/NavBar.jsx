@@ -43,7 +43,7 @@ export default function NavBar() {
 
                             <ul
                                 tabIndex={0}
-                                className="p-2 shadow-md dropdown-content menu bg-base-100 rounded-box z-1 w-52"
+                                className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
                             >
                                 <li>
                                     <a href={route("profile.index")}>

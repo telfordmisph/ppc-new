@@ -18,7 +18,7 @@ export default function Sidebar() {
         <div className="z-[1] flex w-0 shadow-lg md:w-64">
             {/* Mobile Hamburger */}
             <button
-                className="absolute p-2 rounded top-4 right-4 md:hidden"
+                className="absolute p-2 rounded-lgtop-4 right-4 md:hidden"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
                 <svg
@@ -53,7 +53,7 @@ export default function Sidebar() {
                     href={route("dashboard")}
                     className="flex items-center pl-[10px] text-lg font-bold"
                 >
-                    <p className="pt-[2px] pl-1">Telford</p>
+                    <p className="pt-[2px] pl-1">PPC Portal</p>
                 </Link>
 
                 <Navigation />

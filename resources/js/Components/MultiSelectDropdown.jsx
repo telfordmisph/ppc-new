@@ -21,7 +21,7 @@ export default function MultiSelectDropdown({
     className = "",
     buttonClassName = "btn w-full justify-between rounded-lg",
     dropdownClassName = "dropdown-content rounded-lg menu p-2 shadow bg-base-100 w-full",
-    chipClassName = "badge badge-primary gap-1 cursor-pointer",
+    chipClassName = "badge badge-accent gap-1 cursor-pointer",
     clearButtonClassName = "badge badge-error gap-1 cursor-pointer",
     selectLabel = ["Select Options", "Modify Selection"],
 }) {
@@ -52,7 +52,7 @@ export default function MultiSelectDropdown({
                         {option}
                         <button
                             onClick={() => toggleOption(option)}
-                            className="focus:outline-none"
+                            className="focus:outline-none rounded-lg"
                         >
                             <FaTimes size={14} />
                         </button>

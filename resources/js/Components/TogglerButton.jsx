@@ -9,12 +9,12 @@ const TogglerButton = ({
     toggleAll,
 }) => {
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="join rounded-lg">
             {toggleButtons.map(({ key, label, activeClass, inactiveClass }) => (
                 <button
                     key={key}
                     onClick={() => toggleBar(key)}
-                    className={`flex btn btn-sm items-center gap-x-2 px-3 py-1 border rounded transition-colors duration-200 ${
+                    className={`join-item flex btn btn-sm text-sm items-center gap-x-2 px-3 py-1 transition-colors duration-200 ${
                         visibleBars[key] ? activeClass : inactiveClass
                     }`}
                 >
@@ -26,7 +26,7 @@ const TogglerButton = ({
             {toggleAll && (
                 <button
                     onClick={toggleAll}
-                    className="px-3 py-1 btn btn-sm btn-outline"
+                    className="join-item px-3 py-1 btn btn-sm text-sm btn-outline"
                 >
                     Toggle All
                 </button>

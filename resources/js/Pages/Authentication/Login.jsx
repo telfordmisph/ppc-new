@@ -43,7 +43,7 @@ export default function Login() {
 
                 <InputError
                     message={errors.general}
-                    className="py-2 mt-2 mb-4 font-medium text-center bg-red-100 rounded-m5"
+                    className="py-2 mt-2 mb-4 font-medium text-center bg-red-100 rounded-lg"
                 />
 
                 <form onSubmit={submit} className="space-y-5">
@@ -91,7 +91,7 @@ export default function Login() {
                     <div>
                         <button
                             type="submit"
-                            className="w-full px-4 py-2 text-white transition bg-indigo-600 rounded hover:bg-indigo-700"
+                            className="w-full px-4 py-2 text-white transition bg-indigo-600 rounded-lghover:bg-indigo-700"
                             disabled={processing}
                         >
                             {processing ? "Logging in..." : "Login"}

@@ -177,7 +177,7 @@ export default function DataTable({
     };
 
     return (
-        <div className="w-[100%] p-3 border-[1px] border-gray-300 rounded-lg">
+        <div className="w-[100%] p-3 border border-gray-300 rounded-lg">
             {/* Filters */}
             <form
                 onSubmit={dateRangeSearch ? handleDateFilter : handleSearch}
@@ -305,7 +305,7 @@ export default function DataTable({
 
             {/* Table */}
             <div className="mt-4 overflow-x-auto">
-                <table className="table table-zebra min-w-[100%]">
+                <table className="table table-zebra min-w-full">
                     <thead>
                         <tr>
                             {selectable && (
