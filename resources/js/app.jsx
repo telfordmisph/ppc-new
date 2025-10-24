@@ -3,6 +3,7 @@ import "./bootstrap";
 
 import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "react-hot-toast";
 
@@ -21,7 +22,10 @@ createInertiaApp({
         root.render(
             <>
                 <Toaster position="top-right" reverseOrder={false} />
-                <App {...props} />
+
+                <StrictMode>
+                    <App {...props} />
+                </StrictMode>
             </>
         );
     },
