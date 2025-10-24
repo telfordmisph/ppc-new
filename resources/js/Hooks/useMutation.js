@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 
 export function useMutation() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [data, setData] = useState(null);
   const abortControllerRef = useRef(null);
 
@@ -14,13 +14,11 @@ export function useMutation() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    setLoading(true);
-    setError(null);
+    setIsLoading(true);
+    setErrorMessage(null);
 
     try {
       const { method = "POST", body } = options;
-      console.log("🚀 body:", body)
-      console.log("🚀 vvv:", JSON.stringify(body))
 
       const response = await fetch(url, {
         method,
@@ -33,27 +31,31 @@ export function useMutation() {
         signal: controller.signal,
       });
 
-      console.log("🚀 ~ mutate ~ resulasfsadfjldkjt:")
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        const error = new Error("Invalid JSON response from server");
+        error.status = response.status;
+        throw error;
+      }
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("Server response:", response.status, text);
-        throw new Error(`HTTP error ${response.status}`);
+      if (!response.ok || (result && result.status === "error")) {
+        const error = new Error(result?.message || `HTTP error: ${response.status}`);
+        error.status = response.status;
+        error.data = result;
+        throw error;
       }
       
-      const result = await response.json();
-      console.log("🚀 ~ mutate ~ result:", result)
       setData(result);
       return result;
-    } catch (err) {
-      if (err.name === "AbortError") {
-        console.log("Request canceled");
-      } else {
-        setError(err);
-        throw err;
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setErrorMessage(error.message);
+        throw error;
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -68,5 +70,5 @@ export function useMutation() {
     abortControllerRef.current?.abort();
   };
 
-  return { mutate, data, error, loading, cancel };
+  return { mutate, data, errorMessage, isLoading, cancel };
 }

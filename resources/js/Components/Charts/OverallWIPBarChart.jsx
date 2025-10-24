@@ -12,30 +12,10 @@ import {
 import TogglerButton from "../TogglerButton";
 import BaseChart from "./BaseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
+import { TOGGLE_BUTTONS } from "@/Constants/toggleButtons";
 
-const toggleButtons = [
-    {
-        key: "f1",
-        label: "F1",
-        activeClass: "bg-primary border-primary text-white",
-        inactiveClass: "border-primary text-primary hover:bg-primary-content",
-    },
-    {
-        key: "f2",
-        label: "F2",
-        activeClass: "bg-accent border-accent text-white",
-        inactiveClass: "border-accent text-accent hover:bg-accent-content",
-    },
-    {
-        key: "f3",
-        label: "F3",
-        activeClass: "bg-secondary border-secondary text-white",
-        inactiveClass:
-            "border-secondary text-secondary hover:bg-secondary-content",
-    },
-];
-
-const BarChart = ({ data, isLoading }) => {
+const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
+    console.log("🚀 ~ BarChart ~ data:", data);
     const [visibleBars, setVisibleBars] = useState({
         f1: true,
         f2: true,
@@ -56,20 +36,50 @@ const BarChart = ({ data, isLoading }) => {
     };
 
     const chartData = useMemo(() => {
-        return Object.values(data).sort(
+        const sorted = Object.values(data).sort(
             (a, b) => new Date(a.date) - new Date(b.date)
         );
-    }, [data]);
+
+        if (!windowSize || windowSize <= 1) return sorted;
+
+        // Compute moving average
+        return sorted.map((item, index, arr) => {
+            const start = Math.max(0, index - windowSize + 1);
+            const subset = arr.slice(start, index + 1);
+            const avgTrend =
+                subset.reduce((sum, cur) => sum + (cur.trend || 0), 0) /
+                subset.length;
+
+            return { ...item, trendSmoothed: avgTrend };
+        });
+    }, [data, windowSize]);
 
     return (
-        <>
-            <div className="mb-4 space-x-2">
-                <TogglerButton
-                    toggleButtons={toggleButtons}
-                    visibleBars={visibleBars}
-                    toggleBar={toggleBar}
-                    toggleAll={toggleAll}
-                />
+        <div className="w-full flex flex-col gap-4 h-full">
+            <div className="items-center justify-between block w-full lg:space-x-2 lg:flex">
+                <div className="flex items-center content-center gap-2">
+                    <legend className="">Smooth</legend>
+                    <input
+                        type="number"
+                        className="input validator"
+                        required
+                        placeholder="Type a number between 1 to 10"
+                        value={windowSize}
+                        onChange={(e) => setWindowSize(e.target.value)}
+                        min="1"
+                        max={Object.keys(data).length}
+                        title="Must be between be 1 to 10"
+                    />
+                </div>
+
+                <div className="mt-4 lg:mt-0">
+                    <TogglerButton
+                        toggleButtons={TOGGLE_BUTTONS}
+                        visibleBars={visibleBars}
+                        toggleBar={toggleBar}
+                        toggleAll={toggleAll}
+                    />
+                </div>
             </div>
 
             <BaseChart data={data} isLoading={isLoading}>
@@ -95,35 +105,43 @@ const BarChart = ({ data, isLoading }) => {
                         />
                         {tooltip}
                         <Legend />
+
+                        <Bar
+                            dataKey="total"
+                            hide
+                            className="hidden"
+                            fill={colors.baseContent}
+                        />
+
                         {visibleBars.f1 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f1"
-                                fill={colors.primary}
+                                fill={colors.f1Color}
                             />
                         )}
                         {visibleBars.f2 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f2"
-                                fill={colors.secondary}
+                                fill={colors.f2Color}
                             />
                         )}
                         {visibleBars.f3 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f3"
-                                fill={colors.accent}
+                                fill={colors.f3Color}
                             />
                         )}
                         <Line
                             yAxisId="right"
-                            type="monotone"
-                            dataKey="trend"
-                            stroke={colors.baseContent}
+                            type="basis"
+                            dataKey={windowSize > 1 ? "trendSmoothed" : "trend"}
+                            stroke={colors.accent}
                             strokeWidth={2}
                             dot={{ r: 4 }}
-                            activeDot={{ r: 6 }}
+                            activeDot={{ r: 12 }}
                         />
                         <Brush
                             dataKey="date"
@@ -134,7 +152,7 @@ const BarChart = ({ data, isLoading }) => {
                     </ReBarChart>
                 )}
             </BaseChart>
-        </>
+        </div>
     );
 };
 

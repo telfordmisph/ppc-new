@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import MultiSelectDropdown from "@/Components/MultiSelectDropdown";
@@ -12,47 +12,31 @@ import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import TogglerButton from "@/Components/TogglerButton";
 import BarChartSkeleton from "@/Components/Charts/BarChartSkeleton";
 import sortObjectArray from "@/Utils/sortObjectArray";
-
-const toggleButtons = [
-    {
-        key: "f1",
-        label: "F1",
-        activeClass: "bg-primary border-primary text-white",
-        inactiveClass: "border-primary text-primary hover:bg-primary-content",
-    },
-    {
-        key: "f2",
-        label: "F2",
-        activeClass: "bg-secondary border-secondary text-white",
-        inactiveClass:
-            "border-secondary text-secondary hover:bg-secondary-content",
-    },
-    {
-        key: "f3",
-        label: "F3",
-        activeClass: "bg-accent border-accent text-white",
-        inactiveClass: "border-accent text-accent hover:bg-accent-content",
-    },
-];
+import Modal from "@/Components/Modal";
+import { useMutation } from "@/Hooks/useMutation";
+import toast from "react-hot-toast";
+import clsx from "clsx";
+import { COLORS } from "@/Constants/colors";
+import { TOGGLE_BUTTONS } from "@/Constants/toggleButtons";
 
 const summaryWipPLBarsQuantity = [
     {
         visibilityKey: "f1",
         dataKey: "f1_total_quantity",
         stackId: "a",
-        fill: "#422ad5",
+        fill: COLORS.f1Color,
     },
     {
         visibilityKey: "f2",
         dataKey: "f2_total_quantity",
         stackId: "a",
-        fill: "#f43098",
+        fill: COLORS.f2Color,
     },
     {
         visibilityKey: "f3",
         dataKey: "f3_total_quantity",
         stackId: "a",
-        fill: "#00D3BB",
+        fill: COLORS.f3Color,
     },
 ];
 
@@ -61,7 +45,7 @@ const summaryWipBarsLots = [
         visibilityKey: "always",
         dataKey: "total_lots",
         stackId: "a",
-        fill: ["#422ad5", "#f43098", "#00D3BB"],
+        fill: [COLORS.f1Color, , COLORS.f2Color, , COLORS.f3Color],
     },
 ];
 
@@ -70,19 +54,19 @@ const summaryWipPLBarsLots = [
         visibilityKey: "f1",
         dataKey: "f1_total_lots",
         stackId: "a",
-        fill: "#422ad5",
+        fill: COLORS.f1Color,
     },
     {
         visibilityKey: "f2",
         dataKey: "f2_total_lots",
         stackId: "a",
-        fill: "#f43098",
+        fill: COLORS.f2Color,
     },
     {
         visibilityKey: "f3",
         dataKey: "f3_total_lots",
         stackId: "a",
-        fill: "#00D3BB",
+        fill: COLORS.f3Color,
     },
 ];
 
@@ -106,6 +90,7 @@ function buildComputeFunction(selectedTotal, visibleBars) {
 }
 
 const WIPDashboard = () => {
+    const manualWIPImportRef = useRef(null);
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
     const today = new Date();
@@ -144,35 +129,32 @@ const WIPDashboard = () => {
         workweek: selectedWorkWeek.join(" ") || "",
     };
 
-    // Define endpoints clearly
     const endpoints = {
         overall: "api.wip.overall",
         summary: "api.wip.quantityLotTotals",
-        summaryPL: "api.wip.quantityLotTotalsPL",
     };
 
     const {
         data: overallWipData,
-        loading: overallWipLoading,
-        error: overallWipError,
+        isLoading: isOverallWipLoading,
+        errorMessage: overallWipErrorMessage,
         fetch: overallWipFetch,
     } = useFetch(route(endpoints.overall), { params: commonParams });
 
     const {
         data: summaryWipData,
-        loading: summaryWipLoading,
-        error: summaryWipError,
+        isLoading: isSummaryWipLoading,
+        errorMessage: summaryWipErrorMessage,
         fetch: summaryWipFetch,
     } = useFetch(route(endpoints.summary), { params: commonParams });
 
     const {
-        data: summaryWipPLData,
-        loading: summaryWipPLLoading,
-        error: summaryWipPLError,
-        fetch: summaryWipPLFetch,
-    } = useFetch(route(endpoints.summaryPL), { params: commonParams });
+        isLoading: isImportWipLoading,
+        errorMessage: importWipErrorMessage,
+        mutate: importWip,
+    } = useMutation();
 
-    const verb = overallWipLoading ? "Loading" : "Showing";
+    const verb = isOverallWipLoading ? "Loading" : "Showing";
 
     const filterType = dateRange
         ? "dateRange"
@@ -194,12 +176,12 @@ const WIPDashboard = () => {
             : `${verb} WIP on ${filter}`;
 
     useEffect(() => {
-        if (overallWipLoading) {
+        if (isOverallWipLoading) {
             console.log("Loading WIP Data...");
         } else {
             console.log("WIP Data Loaded O K N A AAAAAAAAAA.");
         }
-    }, [overallWipLoading]);
+    }, [isOverallWipLoading]);
 
     const handleDateChange = (dates) => {
         const [start, end] = dates;
@@ -238,13 +220,11 @@ const WIPDashboard = () => {
             setEndDate(tempEndDate);
             overallWipFetch({ dateRange: newDateRange, workweek: "" });
             summaryWipFetch({ dateRange: newDateRange, workweek: "" });
-            summaryWipPLFetch({ dateRange: newDateRange, workweek: "" });
         } else {
             const newWorkweek = tempSelectedWorkWeek.join(" ");
             setSelectedWorkWeek(tempSelectedWorkWeek);
             overallWipFetch({ dateRange: "", workweek: newWorkweek });
             summaryWipFetch({ dateRange: "", workweek: newWorkweek });
-            summaryWipPLFetch({ dateRange: "", workweek: newWorkweek });
         }
     };
 
@@ -283,26 +263,149 @@ const WIPDashboard = () => {
         [selectedTotal, visibleBars]
     );
 
+    const showImportSuccessToast = (result) => {
+        const formattedF1F2 = Number(result?.f1f2 ?? 0).toLocaleString();
+        const formattedF3 = Number(result?.f3 ?? 0).toLocaleString();
+
+        return (
+            <div className="p-4 bg-base-100">
+                <div className="mb-2 font-bold text-success">
+                    Successfully imported!
+                </div>
+                <div>
+                    <div className="flex justify-between">
+                        <div className="font-light">new f1/f2 entries:</div>
+                        <div className="font-bold">{formattedF1F2}</div>
+                    </div>
+                    <div className="flex justify-between">
+                        <div className="font-light">new f3 entries:</div>
+                        <div className="font-bold">{formattedF3}</div>
+                    </div>
+                </div>
+                <div className="mt-3">
+                    <button
+                        className="btn btn-wide btn-sm"
+                        onClick={() => toast.dismiss()}
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const handleManualWIPImport = async () => {
+        const promise = importWip(route("import.manual"));
+        const toastId = "import-toast";
+
+        const toastTransition = (t) =>
+            clsx(
+                "transition-all duration-300",
+                t.visible
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-2"
+            );
+
+        toast.custom(
+            (t) => (
+                <div
+                    className={clsx(
+                        "flex items-center gap-2 p-4 m-2 rounded-lg shadow-lg bg-base-100",
+                        toastTransition(t)
+                    )}
+                >
+                    <span className="loading loading-spinner loading-xs" />
+                    <span>Importing WIP data...</span>
+                </div>
+            ),
+            { id: toastId, duration: Infinity, removeDelay: 400 }
+        );
+
+        try {
+            const result = await promise;
+            toast.dismiss(toastId);
+
+            toast.custom(
+                (t) => (
+                    <div
+                        className={clsx(
+                            "m-2 p-4 rounded-lg shadow-lg bg-base-100",
+                            toastTransition(t)
+                        )}
+                    >
+                        <div className="mb-2 font-bold text-success">
+                            Successfully imported!
+                        </div>
+
+                        <div className="flex justify-between">
+                            <span className="font-light">
+                                new f1/f2 entries:
+                            </span>
+                            <span className="font-bold">
+                                {Number(result?.f1f2 ?? 0).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                            <span className="font-light">new f3 entries:</span>
+                            <span className="font-bold">
+                                {Number(result?.f3 ?? 0).toLocaleString()}
+                            </span>
+                        </div>
+
+                        <button
+                            className="mt-3 btn btn-wide btn-sm"
+                            onClick={() => toast.dismiss(t.id)}
+                        >
+                            Close
+                        </button>
+                    </div>
+                ),
+                { duration: Infinity, removeDelay: 400 }
+            );
+        } catch (error) {
+            toast.dismiss(toastId);
+
+            toast.custom(
+                (t) => (
+                    <div
+                        className={clsx(
+                            "p-4 m-2 rounded-lg shadow-lg text-error-content bg-error",
+                            toastTransition(t)
+                        )}
+                    >
+                        <div className="mb-1 font-bold">
+                            Failed to import WIP.
+                        </div>
+                        <div className="text-sm opacity-80">
+                            {importWipErrorMessage}
+                        </div>
+                    </div>
+                ),
+                { duration: 4000, removeDelay: 400 }
+            );
+
+            console.error(error);
+        }
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="WIP Dashboard" />
             <div className="flex justify-between">
-                <h1 className="w-3/12 px-4 text-2xl font-bold">
-                    WIP Dashboard
-                </h1>
-                <h1>{!overallWipLoading && message}</h1>
+                <h1 className="w-3/12 text-xl font-bold mb-4">WIP Dashboard</h1>
+                <h1>{!isOverallWipLoading && message}</h1>
             </div>
 
-            <div className="flex">
-                <div className="w-4/12">
-                    <div className="flex flex-col w-full h-full p-4">
+            <div className="flex h-full">
+                <div className="flex flex-col justify-between w-4/12 pr-4">
+                    <div className="flex flex-col w-full">
                         <h1>Filter</h1>
-                        <div className="flex flex-col items-center mb-4 xl:flex-row lg:justify-between">
-                            {/* <div className="lg:divider"> */}
+                        <div className="flex flex-col text-sm items-center mb-4 xl:flex-row lg:justify-between">
                             <label
                                 className={`label cursor-pointer ${
                                     !isWorkweek
-                                        ? "text-secondary"
+                                        ? "text-accent"
                                         : "text-gray-500"
                                 }`}
                             >
@@ -312,13 +415,11 @@ const WIPDashboard = () => {
                                 type="checkbox"
                                 checked={isWorkweek}
                                 onChange={(e) => handleDateFilterChange(e)}
-                                className="bg-secondary toggle checked:bg-primary"
+                                className="toggle peer-focus:ring-accent/50"
                             />
                             <label
                                 className={`label cursor-pointer ${
-                                    isWorkweek
-                                        ? "text-primary"
-                                        : "text-gray-500"
+                                    isWorkweek ? "text-accent" : "text-gray-500"
                                 }`}
                             >
                                 Workweek
@@ -334,10 +435,10 @@ const WIPDashboard = () => {
                                 value={tempSelectedWorkWeek}
                                 onChange={setTempSelectedWorkWeek}
                                 className="max-w-sm"
-                                buttonClassName="btn btn-outline w-full justify-between"
-                                dropdownClassName="dropdown-content max-h-60 overflow-y-auto rounded-lg menu p-2 shadow bg-base-100 w-full"
-                                chipClassName="badge badge-secondary gap-1"
-                                clearButtonClassName="badge badge-warning gap-1"
+                                buttonClassName="btn border border-base-content/20 w-full justify-between"
+                                dropdownClassName="dropdown-content mt-1 border border-base-content/20 max-h-60 overflow-y-auto rounded-lg menu p-2 shadow bg-base-100 w-full"
+                                chipClassName="badge badge-outline badge-accent gap-1"
+                                clearButtonClassName="badge badge-soft badge-secondary gap-1"
                                 selectLabel={[
                                     "Select WIP Lines",
                                     "Modify WIP Lines",
@@ -345,7 +446,7 @@ const WIPDashboard = () => {
                             />
                         ) : (
                             <DatePicker
-                                className="w-full rounded-lg input input-bordered"
+                                className="w-full rounded-lg input"
                                 selected={tempStartDate}
                                 onChange={handleDateChange}
                                 startDate={tempStartDate}
@@ -359,13 +460,13 @@ const WIPDashboard = () => {
 
                         <div className="flex flex-col w-full gap-2 mt-4 lg:flex-row">
                             <button
-                                className="btn btn-error"
+                                className="btn btn-outline btn-error"
                                 onClick={resetFilter}
                             >
                                 Reset
                             </button>
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-soft btn-primary"
                                 onClick={handleRefetch}
                                 disabled={
                                     !isWorkweek
@@ -377,15 +478,63 @@ const WIPDashboard = () => {
                             </button>
                         </div>
                     </div>
+
+                    <div className="">
+                        <button
+                            className="shadow-lg btn btm-active btn-primary btn-wide"
+                            onClick={() => manualWIPImportRef.current?.open()}
+                        >
+                            Refresh auto daily WIP import
+                        </button>
+                        <Modal
+                            ref={manualWIPImportRef}
+                            id="deletePartModal"
+                            title="Refresh auto daily WIP import"
+                            onClose={() => manualWIPImportRef.current?.close()}
+                            className="max-w-lg"
+                        >
+                            <p className="py-4">
+                                Are you sure? This will start the WIP import.
+                                Current import progress (if any) will block this
+                                action.
+                            </p>
+
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    className="btn btn-soft btn-warning"
+                                    onClick={async () => {
+                                        manualWIPImportRef.current?.close();
+                                        handleManualWIPImport();
+                                    }}
+                                    disabled={isImportWipLoading}
+                                >
+                                    {isImportWipLoading && (
+                                        <span className="loading loading-spinner"></span>
+                                    )}
+                                    Proceed
+                                </button>
+
+                                <button
+                                    className="btn"
+                                    onClick={() =>
+                                        manualWIPImportRef.current?.close()
+                                    }
+                                    disabled={isImportWipLoading}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </Modal>
+                    </div>
                 </div>
 
-                <div className="w-9/12 p-4 rounded-lg shadow-md bg-base-200">
+                <div className="w-9/12 h-full p-4 rounded-lg shadow-lg bg-base-200">
                     <div className="overflow-x-auto">
-                        {overallWipLoading ? (
+                        {isOverallWipLoading ? (
                             <WIPTableSkeleton message={message} />
-                        ) : overallWipError ? (
+                        ) : overallWipErrorMessage ? (
                             <div className="text-red-500">
-                                Error: {overallWipError.message}
+                                {overallWipErrorMessage}
                             </div>
                         ) : (
                             <WIPTable data={overallWipData} />
@@ -395,14 +544,14 @@ const WIPDashboard = () => {
             </div>
 
             <div className="p-4 mt-4 rounded-lg bg-base-200">
-                <h1 className="text-xl divider divider-start">
+                <h1 className="text-base divider divider-start">
                     Total Quantity Graph
                 </h1>
 
                 <div className="flex space-x-4">
                     <div>
                         <TogglerButton
-                            toggleButtons={toggleButtons}
+                            toggleButtons={TOGGLE_BUTTONS}
                             visibleBars={visibleBars}
                             toggleBar={toggleBar}
                             toggleAll={toggleAll}
@@ -415,22 +564,22 @@ const WIPDashboard = () => {
                         <div>Total Quantity</div>
                         <input
                             type="checkbox"
+                            checked={selectedTotal === "lots"}
                             onChange={(e) => handleChangeTotalFilter(e)}
-                            className="toggle toggle-sm"
+                            className="toggle"
                         />
                         <div>Total Lots</div>
                     </div>
                 </div>
                 <div className="w-full flex justify-center h-[500px]">
-                    {summaryWipLoading ? (
+                    {isSummaryWipLoading ? (
                         <BarChartSkeleton />
-                    ) : summaryWipError ? (
+                    ) : summaryWipErrorMessage ? (
                         <div className="text-red-500">
-                            Error: {summaryWipError.message}
+                            Error: {summaryWipErrorMessage.message}
                         </div>
                     ) : (
                         <StackedBarChart
-                            // data={summaryWipData?.data || []}
                             data={sortObjectArray(summaryWipData?.data || [], {
                                 keys: ["total_lots"],
                                 order: "desc",
@@ -439,7 +588,7 @@ const WIPDashboard = () => {
                                         ? compute
                                         : null,
                             })}
-                            isLoading={summaryWipLoading}
+                            isLoading={isSummaryWipLoading}
                             bars={
                                 selectedTotal === "quantity"
                                     ? summaryWipPLBarsQuantity
@@ -457,7 +606,7 @@ const WIPDashboard = () => {
                 <div className="flex space-x-4">
                     <div>
                         <TogglerButton
-                            toggleButtons={toggleButtons}
+                            toggleButtons={TOGGLE_BUTTONS}
                             visibleBars={visibleBars}
                             toggleBar={toggleBar}
                             toggleAll={toggleAll}
@@ -469,10 +618,12 @@ const WIPDashboard = () => {
                     <div className="flex items-center space-x-2">
                         <div>Total Quantity</div>
                         <input
+                            checked={selectedTotal === "lots"}
                             type="checkbox"
+                            className="toggle"
                             onChange={(e) => handleChangeTotalFilter(e)}
-                            className="toggle toggle-sm"
                         />
+
                         <div>Total Lots</div>
                     </div>
 
@@ -481,26 +632,28 @@ const WIPDashboard = () => {
                     <div className="flex items-center space-x-2">
                         <div>PL1</div>
                         <input
+                            checked={selectedPL === "PL6"}
                             type="checkbox"
                             defaultChecked
+                            className="toggle"
                             onChange={(e) => handleChangePLFilter(e)}
-                            className="toggle toggle-sm"
                         />
+
                         <div>PL6</div>
                     </div>
                 </div>
 
                 <div className="w-full  flex justify-center h-[500px]">
-                    {summaryWipPLLoading ? (
+                    {isSummaryWipLoading ? (
                         <BarChartSkeleton />
-                    ) : summaryWipPLError ? (
+                    ) : summaryWipErrorMessage ? (
                         <div className="text-red-500">
-                            Error: {summaryWipPLError.message}
+                            Error: {summaryWipErrorMessage.message}
                         </div>
                     ) : (
                         <StackedBarChart
                             data={sortObjectArray(
-                                summaryWipPLData?.data?.filter(
+                                summaryWipData?.all_packages?.filter(
                                     (item) => item.PL === selectedPL
                                 ) || [],
                                 {
@@ -509,7 +662,7 @@ const WIPDashboard = () => {
                                     compute,
                                 }
                             )}
-                            isLoading={summaryWipPLLoading}
+                            isLoading={isSummaryWipLoading}
                             bars={
                                 selectedTotal === "quantity"
                                     ? summaryWipPLBarsQuantity
@@ -559,7 +712,7 @@ const WIPTable = ({ data }) => {
     const overallTotal = data?.total_quantity || 0;
 
     return (
-        <table className="table w-full">
+        <table className="table w-full rounded-lg">
             <thead>
                 <tr>
                     <th></th>
@@ -579,15 +732,17 @@ const WIPTable = ({ data }) => {
                         </td>
                     </tr>
                 ))}
-                <tr>
-                    <th className="text-right">Overall</th>
-                    <td className="font-bold text-primary">
+                <tr className="rounded-lg">
+                    <th className="text-right rounded-l-lg bg-primary/20">
+                        Overall
+                    </th>
+                    <td className="font-bold bg-primary/20">
                         {formatNumber(overallPl1)}
                     </td>
-                    <td className="font-bold text-secondary">
+                    <td className="font-bold bg-primary/20">
                         {formatNumber(overallPl6)}
                     </td>
-                    <td className="font-bold text-right text-accent">
+                    <td className="font-bold rounded-r-lg text-right bg-primary/20">
                         {formatNumber(overallTotal)}
                     </td>
                 </tr>

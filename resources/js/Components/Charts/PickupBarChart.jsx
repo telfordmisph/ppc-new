@@ -5,13 +5,12 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
-    Tooltip,
     Legend,
     Brush,
 } from "recharts";
 import BaseChart from "./BaseChart";
 
-export default function PickupBarChart({ data, isLoading }) {
+export default function PickupBarChart({ data = [], isLoading = false }) {
     return (
         <BaseChart data={data} isLoading={isLoading}>
             {({ colors, tooltip }) => (
@@ -39,12 +38,12 @@ export default function PickupBarChart({ data, isLoading }) {
                     <Bar
                         yAxisId="left"
                         dataKey="total_quantity"
-                        fill={colors.primary}
+                        fill={colors.f1Color}
                     />
                     <Bar
                         yAxisId="right"
                         dataKey="total_lots"
-                        fill={colors.secondary}
+                        fill={colors.f2Color}
                     />
                     <Brush
                         dataKey="packageName"

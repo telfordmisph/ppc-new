@@ -4,8 +4,8 @@ export function useFetch(url, options = {}) {
   const { params = {}, auto = true } = options;
   
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(auto);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(auto);
+  const [errorMessage, setErrorMessage] = useState(null);
   const abortControllerRef = useRef(null);
 
   const buildUrlWithParams = (baseUrl, params) => {
@@ -23,8 +23,8 @@ export function useFetch(url, options = {}) {
     const controller = new AbortController();
     abortControllerRef.current = controller;
     
-    setLoading(true);
-    setError(null);
+    setIsLoading(true);
+    setErrorMessage(null);
     
     try {
       const fetchUrl = buildUrlWithParams(url, currentParams);
@@ -37,18 +37,30 @@ export function useFetch(url, options = {}) {
         signal: controller.signal,
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        const error = new Error("Invalid JSON response from server");
+        error.status = response.status;
+        throw error;
       }
-      const result = await response.json();
-      
+
+      if (!response.ok || (result && result.status === "error")) {
+        const error = new Error(result?.message || `HTTP error: ${response.status}`);
+        error.status = response.status;
+        error.data = result;
+        throw error;
+      }
+
       setData(result);
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        setError(err);
+    } catch (error) {
+      console.log("🚀 ~ fetchData ~ err:", error)
+      if (error.name !== "AbortError") {
+        setErrorMessage(error.message);
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };  
 
@@ -64,8 +76,8 @@ export function useFetch(url, options = {}) {
 
   return {
     data, 
-    loading, 
-    error, 
+    isLoading, 
+    errorMessage, 
     fetch: (overrideParams = params) => fetchData(overrideParams), 
     abort: () => abortControllerRef.current?.abort() 
   };

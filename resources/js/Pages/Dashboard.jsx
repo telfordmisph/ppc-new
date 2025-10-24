@@ -3,7 +3,7 @@ import BarChart from "@/Components/Charts/OverallWIPBarChart";
 import { useWip } from "@/Hooks/useWip";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FaMinus, FaTasks, FaIndustry } from "react-icons/fa";
 import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
 
@@ -21,16 +21,16 @@ function StatCard({
 
     return (
         <div
-            className={`w-full h-full rounded-lg shadow-md flex-col bg-base-200 stat ${className}`}
+            className={`border border-base-content/10 rounded-lg shadow-lg bg-base-100 stat ${className}`}
         >
             <div className="font-extrabold stat-title">{title}</div>
 
             <div className="flex items-center justify-between w-full align-baseline">
                 <div className={`stat-value text-${color} text-2xl mb-1`}>
                     {loading ? (
-                        <div className="w-20 h-6 rounded bg-base-content animate-pulse"></div>
+                        <div className="w-20 h-6 rounded-lg bg-base-300 animate-pulse"></div>
                     ) : error ? (
-                        <span className="text-red-500">Error</span>
+                        <span className="text-red-500">{error}</span>
                     ) : (
                         data.toLocaleString?.() || data
                     )}
@@ -38,7 +38,7 @@ function StatCard({
 
                 <div className={`stat-figure text-${color} mb-2`}>
                     {loading ? (
-                        <div className="w-8 h-8 rounded-full bg-base-content animate-pulse"></div>
+                        <div className="w-8 h-8 rounded-full bg-base-300 animate-pulse"></div>
                     ) : (
                         icon
                     )}
@@ -48,7 +48,7 @@ function StatCard({
             {desc && (
                 <div className="text-sm stat-desc">
                     {loading ? (
-                        <div className="w-32 h-4 rounded bg-base-content animate-pulse"></div>
+                        <div className="w-32 h-4 rounded-lg bg-base-300 animate-pulse"></div>
                     ) : (
                         desc
                     )}
@@ -60,33 +60,15 @@ function StatCard({
 
 export default function Dashboard({ tableData, tableFilters }) {
     const props = usePage().props;
+    const [windowSize, setWindowSize] = useState(1);
 
     const {
         wip: wipData,
-        loading: wipLoading,
-        error: wipError,
+        isLoading: isWipLoading,
+        errorMessage: wipErrorMessage,
         latest: latestWip,
         yesterday: yesterdayWip,
-    } = useWip();
-
-    useEffect(() => {
-        if (wipData) {
-            console.log("WIP Data:", wipData);
-            console.log("Yesterday WIP:", yesterdayWip);
-        }
-    }, [wipData]);
-
-    useEffect(() => {
-        console.log("Latest fdffWIP:", latestWip);
-    }, [latestWip]);
-
-    useEffect(() => {
-        if (wipLoading) {
-            console.log("Loading WIP data...");
-        } else {
-            console.log("WIP data loaded.");
-        }
-    }, [wipLoading, wipError]);
+    } = useWip(windowSize);
 
     const trendValue = latestWip?.trend ?? 0;
     const trendIcon =
@@ -105,111 +87,87 @@ export default function Dashboard({ tableData, tableFilters }) {
         <AuthenticatedLayout>
             <Head title="Dashboard" />
 
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-            <div className="grid h-[800px] grid-cols-1 grid-rows-6 md:grid-rows-1 gap-4 md:h-auto md:grid-cols-12">
-                <div className="flex items-center justify-center order-2 col-span-1 row-span-4 md:order-1 md:col-span-8">
-                    <div className="flex flex-col items-center justify-center w-full h-full p-6 rounded-lg shadow-md bg-base-100">
-                        <BarChart data={wipData} isLoading={wipLoading} />
-                    </div>
+            <div className="grid md:h-[600px] grid-cols-2 grid-rows-12 md:grid-rows-1 gap-4 h-[800px] md:grid-cols-12">
+                <div className="order-2 col-span-2 row-span-8 md:order-1 md:row-span-1 md:col-span-8 border border-base-content/10 items-center justify-center w-full h-full p-4 rounded-lg shadow-lg bg-base-100">
+                    <BarChart
+                        data={wipData}
+                        isLoading={isWipLoading}
+                        windowSize={windowSize}
+                        setWindowSize={setWindowSize}
+                    />
                 </div>
 
-                <div className="grid items-center justify-center grid-cols-6 col-span-1 row-span-2 gap-4 md:order-2 md:col-span-4 text-accent">
-                    <div className="grid w-full h-full grid-cols-2 col-span-6 gap-4 md:grid-cols-1">
-                        <StatCard
-                            title="Overall Factory WIP"
-                            desc={
-                                latestWip
-                                    ? `As of ${latestWip.date}`
-                                    : "No data"
-                            }
-                            color=""
-                            className="text-white w-full bg-gradient-to-tr from-[#F43098] via-[#422AD5] to-[#00D3BB]"
-                            icon={<FaTasks size={32} />}
-                            useDataHook={() => ({
-                                data: latestWip?.total || 0,
-                                loading: wipLoading,
-                                error: wipError,
-                            })}
-                        />
+                <div className="grid h-full md:grid-rows-5 grid-rows-2 md:row-span-1 grid-cols-12 col-span-2 row-span-4 gap-4 order-1 md:order-2 md:col-span-4 text-accent">
+                    <StatCard
+                        title="Overall Factory WIP"
+                        desc={latestWip ? `As of ${latestWip.date}` : "No data"}
+                        color=""
+                        className="row-span-1 col-span-6 md:col-span-12 text-white w-full bg-linear-to-tr from-f1color/60 via-f2color/75 to-f3color"
+                        icon={<FaTasks size={32} />}
+                        useDataHook={() => ({
+                            data: latestWip?.total || 0,
+                            loading: isWipLoading,
+                            error: wipErrorMessage,
+                        })}
+                    />
 
-                        <StatCard
-                            title="Trend Today"
-                            desc="Since Yesterday"
-                            color={trendColor}
-                            icon={trendIcon}
-                            useDataHook={() => ({
-                                data: `${trendValue.toFixed(2)}%`,
-                                loading: wipLoading,
-                                error: wipError,
-                            })}
-                        />
-                    </div>
+                    <StatCard
+                        title="Trend Today"
+                        desc="Since Yesterday"
+                        color={trendColor}
+                        icon={trendIcon}
+                        useDataHook={() => ({
+                            data: `${trendValue.toFixed(2)}%`,
+                            loading: isWipLoading,
+                            error: wipErrorMessage,
+                        })}
+                        className="row-span-1 col-span-6 md:col-span-12"
+                    />
 
-                    {latestWip ? (
-                        <>
-                            <StatCard
-                                title="F1 WIP"
-                                desc={`As of ${latestWip.date}`}
-                                color="primary"
-                                icon={
-                                    <FaIndustry
-                                        size={32}
-                                        className="hidden md:block"
-                                    />
-                                }
-                                useDataHook={() => ({
-                                    data: latestWip?.f1 || 0,
-                                    loading: wipLoading,
-                                    error: wipError,
-                                })}
-                                className="col-span-2 md:col-span-6"
-                            />
-                            <StatCard
-                                title="F2 WIP"
-                                desc={`As of ${latestWip.date}`}
-                                color="accent"
-                                icon={
-                                    <FaIndustry
-                                        size={32}
-                                        className="hidden md:block"
-                                    />
-                                }
-                                useDataHook={() => ({
-                                    data: latestWip?.f2 || 0,
-                                    loading: wipLoading,
-                                    error: wipError,
-                                })}
-                                className="col-span-2 md:col-span-6"
-                            />
-                            <StatCard
-                                title="F3 WIP"
-                                desc={`As of ${latestWip.date}`}
-                                color="secondary"
-                                icon={
-                                    <FaIndustry
-                                        size={32}
-                                        className="hidden md:block"
-                                    />
-                                }
-                                useDataHook={() => ({
-                                    data: latestWip?.f3 || 0,
-                                    loading: wipLoading,
-                                    error: wipError,
-                                })}
-                                className="col-span-2 md:col-span-6"
-                            />
-                        </>
-                    ) : (
-                        <div className="flex flex-col w-full gap-4">
-                            {[1, 2, 3].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="w-full h-32 rounded-lg bg-base-200 animate-pulse"
-                                ></div>
-                            ))}
-                        </div>
-                    )}
+                    <StatCard
+                        title="F1 WIP"
+                        desc={`As of ${latestWip?.date || "No data"}`}
+                        color="f1color"
+                        icon={
+                            <FaIndustry size={32} className="hidden md:block" />
+                        }
+                        useDataHook={() => ({
+                            data: latestWip?.f1 || 0,
+                            loading: isWipLoading,
+                            error: wipErrorMessage,
+                        })}
+                        className="row-span-1 col-span-4 md:col-span-12"
+                    />
+                    <StatCard
+                        title="F2 WIP"
+                        desc={`As of ${latestWip?.date || "No data"}`}
+                        color="f2color"
+                        icon={
+                            <FaIndustry size={32} className="hidden md:block" />
+                        }
+                        useDataHook={() => ({
+                            data: latestWip?.f2 || 0,
+                            loading: isWipLoading,
+                            error: wipErrorMessage,
+                        })}
+                        className="row-span-1 col-span-4 md:col-span-12"
+                    />
+                    <StatCard
+                        title="F3 WIP"
+                        desc={`As of ${latestWip?.date || "No data"}`}
+                        color="f3color"
+                        icon={
+                            <FaIndustry size={32} className="hidden md:block" />
+                        }
+                        useDataHook={() => ({
+                            data: latestWip?.f3 || 0,
+                            loading: isWipLoading,
+                            error: wipErrorMessage,
+                        })}
+                        className="row-span-1 col-span-4 md:col-span-12"
+                    />
                 </div>
             </div>
         </AuthenticatedLayout>

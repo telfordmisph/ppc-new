@@ -5,17 +5,34 @@ export function useWip() {
   const [latest, setLatest] = useState(null);
   const [yesterday, setYesterday] = useState(null);
   const [trend, setTrend] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function fetchWip() {
       try {
-        const res = await fetch(route("api.wip.today"));
-        if (!res.ok) throw new Error("Failed to fetch WIP data");
-        const json = await res.json();
+        const response = await fetch(route("api.wip.today"));
+
+        let json;
+        try {
+          json = await response.json();
+        } catch (jsonErr) {
+          const error = new Error("Invalid JSON response from server");
+          error.status = response.status;
+          throw error;
+        }
+
+        if (!response.ok || (json && json.status === "error")) {
+          const error = new Error(json?.message || `HTTP error: ${response.status}`);
+          error.status = response.status;
+          error.data = json;
+          console.log("🚀 ~ feasdftchWip ~ xx:", error)
+          console.log("🚀 ~ feasdftchWip ~ xx:", error.status)
+          console.log("🚀 ~ feasdftchWip ~ xx:", error.data)
+          throw error;
+        }
 
         if (json.length > 0) {
           const sorted = [...json].sort(
@@ -25,9 +42,11 @@ export function useWip() {
           const withTrend = sorted.map((item, index, arr) => {
             if (index === 0) return { ...item, trend: 0 };
             const prev = arr[index - 1];
-            const dayTrend = prev.total > 0
+            let dayTrend = prev.total > 0
               ? ((item.total - prev.total) / prev.total) * 100
               : 0;
+
+            dayTrend = Math.round(dayTrend * 100) / 100;
             return { ...item, trend: dayTrend };
           });
 
@@ -47,16 +66,15 @@ export function useWip() {
             setYesterday(yesterdayData);
             setTrend(todayData.trend);
 
-            setLoading(false);
+            setIsLoading(false);
           }
         } else {
           throw new Error("No WIP data available");
         }
       } catch (err) {
-        if (mounted) {
-          setError(err);
-          setLoading(false);
-        }
+        console.log("asdfasdfsda 🚀 ~ fetchWip ~ err:", err)
+          setErrorMessage(err.message);
+          setIsLoading(false);
       }
     }
 
@@ -67,5 +85,5 @@ export function useWip() {
     };
   }, []);
 
-  return { wip, latest, yesterday, trend, loading, error };
+  return { wip, latest, yesterday, trend, isLoading, errorMessage };
 }

@@ -2,22 +2,21 @@ import { useMutation } from "@/Hooks/useMutation";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
 import { usePage, router } from "@inertiajs/react";
-import toast from "react-hot-toast";
 import { useEffect, useState, useRef } from "react";
 import { FaEdit, FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
 import Modal from "@/Components/Modal";
+import { useToast } from "@/Hooks/useToast";
 
 const PartNameList = () => {
+    const toast = useToast();
+
     const {
         partNames: serverPartNames,
         search: serverSearch,
         perPage: serverPerPage,
         totalEntries,
     } = usePage().props;
-
-    console.log("🚀 ~ PartNameList ~ serverPartNames:", serverPartNames);
-    console.log("🚀 ~ serverSearch ~ serverSearch:", serverSearch);
 
     const start = serverPartNames.from;
     const end = serverPartNames.to;
@@ -27,14 +26,14 @@ const PartNameList = () => {
     const [searchInput, setSearchInput] = useState(serverSearch || "");
     const [maxItem, setMaxItem] = useState(serverPerPage || 10);
     const [selectedPart, setSelectedPart] = useState(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(
         serverPartNames.current_page || 1
     );
 
     const {
         mutate,
-        loading: mutateLoading,
+        isLoading: isMutateLoading,
+        errorMessage: mutateErrorMessage,
         cancel: mutateCancel,
     } = useMutation();
 
@@ -97,7 +96,7 @@ const PartNameList = () => {
             deleteModalRef.current.close();
             toast.success("Part deleted successfully!");
         } catch (error) {
-            toast.error("Failed to update part.");
+            toast.error(mutateErrorMessage);
             console.error(error);
         }
     };
@@ -106,8 +105,11 @@ const PartNameList = () => {
         <AuthenticatedLayout>
             <div className="w-full px-4">
                 <div className="flex items-center justify-between text-center">
-                    <h1 className="text-2xl font-bold">Part Names</h1>
-                    <a href={route("partname.create")} class="btn btn-primary">
+                    <h1 className="text-base font-bold">Part Names</h1>
+                    <a
+                        href={route("partname.create")}
+                        className="btn btn-primary"
+                    >
                         <FaPlus /> Add PartName
                     </a>
                 </div>
@@ -119,7 +121,7 @@ const PartNameList = () => {
                         </div>
                         <ul
                             tabIndex={0}
-                            className="p-2 shadow-sm dropdown-content menu bg-base-100 rounded-box z-1 w-52"
+                            className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
                         >
                             {[10, 25, 50, 100].map((item) => (
                                 <li key={item}>
@@ -210,15 +212,14 @@ const PartNameList = () => {
                                             perPage: maxItem,
                                             page: currentPage,
                                         })}
-                                        class="btn btn-ghost btn-sm btn-primary"
+                                        className="btn btn-ghost btn-sm btn-primary"
                                     >
                                         <FaEdit />
                                     </a>
                                     <a
-                                        class="btn btn-ghost btn-sm text-error"
+                                        className="btn btn-ghost btn-sm text-error"
                                         onClick={() => {
                                             setSelectedPart(part);
-                                            // setIsDeleteModalOpen(true);
                                             deleteModalRef.current.open();
                                         }}
                                     >
@@ -229,13 +230,12 @@ const PartNameList = () => {
                                         ref={deleteModalRef}
                                         id="deletePartModal"
                                         title="Are you sure?"
-                                        show={isDeleteModalOpen}
                                         onClose={() =>
-                                            setIsDeleteModalOpen(false)
+                                            deleteModalRef.current?.close()
                                         }
                                         className="max-w-lg"
                                     >
-                                        <p className="py-4">
+                                        <p className="px-2 pt-4">
                                             This action cannot be undone. Delete{" "}
                                             <span className="pl-1">
                                                 {selectedPart?.Partname ||
@@ -243,16 +243,27 @@ const PartNameList = () => {
                                             </span>
                                         </p>
 
-                                        <div className="flex justify-end gap-2">
+                                        <p
+                                            className="p-2 border rounded-lg bg-error/10 text-error"
+                                            style={{
+                                                visibility: mutateErrorMessage
+                                                    ? "visible"
+                                                    : "hidden",
+                                            }}
+                                        >
+                                            {mutateErrorMessage ||
+                                                "placeholder"}
+                                        </p>
+
+                                        <div className="flex justify-end gap-2 pt-4">
                                             <button
                                                 className="btn btn-error"
-                                                onClick={() => {
-                                                    handleDelete();
-                                                    deleteModalRef.current?.close();
+                                                onClick={async () => {
+                                                    await handleDelete();
                                                 }}
-                                                disabled={mutateLoading}
+                                                disabled={isMutateLoading}
                                             >
-                                                {mutateLoading ? (
+                                                {isMutateLoading ? (
                                                     <>
                                                         <span className="loading loading-spinner"></span>{" "}
                                                         Deleting
@@ -263,7 +274,7 @@ const PartNameList = () => {
                                             </button>
 
                                             <button
-                                                className="btn"
+                                                className="btn btn-outline"
                                                 onClick={() =>
                                                     deleteModalRef.current?.close()
                                                 }
@@ -272,56 +283,12 @@ const PartNameList = () => {
                                             </button>
                                         </div>
                                     </Modal>
-
-                                    {/* <dialog id="my_modal_3" className="modal">
-                                        <div className="modal-box">
-                                            <form method="dialog">
-                                                <button className="absolute btn btn-sm btn-circle btn-ghost right-2 top-2">
-                                                    ✕
-                                                </button>
-                                            </form>
-                                            <h3 className="flex items-center gap-2 text-lg font-semibold">
-                                                <FaExclamationTriangle className="text-red-400" />
-                                                <span>Are you sure?</span>
-                                            </h3>
-                                            <p className="py-4">
-                                                This action cannot be undone.
-                                                Delete
-                                                <span className="pl-1">
-                                                    {`${selectedPart?.Partname}?` ||
-                                                        "this?"}
-                                                </span>
-                                            </p>
-
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    className="btn btn-error"
-                                                    onClick={handleDelete}
-                                                >
-                                                    {mutateLoading ? (
-                                                        <>
-                                                            <span className="loading loading-spinner"></span>{" "}
-                                                            Deleting
-                                                        </>
-                                                    ) : (
-                                                        "Confirm Delete"
-                                                    )}
-                                                </button>
-                                                <form method="dialog">
-                                                    <button className="btn">
-                                                        Cancel
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </dialog> */}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
 
-                {/* Pagination */}
                 <div className="flex justify-between w-full mt-4">
                     <div className="content-center my-2 text-sm text-gray-600">
                         {`Showing ${start ?? 0} to ${
@@ -333,7 +300,6 @@ const PartNameList = () => {
                     </div>
                     <div className="join">
                         {serverPartNames.links.map((link, index) => {
-                            // Extract numeric page from URL
                             const page = link.url
                                 ? parseInt(
                                       new URL(link.url).searchParams.get("page")
@@ -343,10 +309,10 @@ const PartNameList = () => {
                             return (
                                 <button
                                     key={index}
-                                    className={`join-item btn rounded ${
+                                    className={`join-item btn ${
                                         link.active || page === currentPage
-                                            ? "bg-accent"
-                                            : ""
+                                            ? "text-white bg-primary"
+                                            : "bg-base-200/50"
                                     }`}
                                     dangerouslySetInnerHTML={{
                                         __html: link.label,

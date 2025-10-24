@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { FaSave } from "react-icons/fa";
 import { router, usePage } from "@inertiajs/react";
 import { useMutation } from "@/Hooks/useMutation";
-import toast from "react-hot-toast";
+import { useToast } from "@/Hooks/useToast";
 
 const PartNameUpsert = () => {
+    const toast = useToast();
     const { part } = usePage().props;
     const isEdit = !!part;
 
@@ -22,7 +23,8 @@ const PartNameUpsert = () => {
 
     const {
         mutate,
-        loading: mutateLoading,
+        isLoading: isMutateLoading,
+        errorMessage: mutateErrorMessage,
         cancel: mutateCancel,
     } = useMutation();
 
@@ -62,15 +64,8 @@ const PartNameUpsert = () => {
 
             router.visit(route("partname.index"));
         } catch (err) {
-            console.error("Upsert failed:", err);
-
-            if (err.response) {
-                alert(
-                    "Validation error: " + JSON.stringify(err.response.errors)
-                );
-            } else {
-                alert("Error saving data.");
-            }
+            console.error("Upsert failed:", mutateErrorMessage);
+            toast.error(mutateErrorMessage);
         }
     };
 
@@ -87,7 +82,7 @@ const PartNameUpsert = () => {
 
     return (
         <AuthenticatedLayout>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-base font-bold">
                 {isEdit ? "Edit Part" : "Add New Part"}
             </h1>
             <div>
@@ -215,15 +210,17 @@ const PartNameUpsert = () => {
                         <button
                             type="button"
                             onClick={handleReset}
-                            className="btn btn-outline btn-secondary"
+                            className="btn btn-outline btn-error"
                         >
                             Reset
                         </button>
                         <button type="submit" className="btn btn-primary">
-                            {mutateLoading ?? (
+                            {isMutateLoading ? (
                                 <span className="loading loading-spinner"></span>
+                            ) : (
+                                <FaSave />
                             )}
-                            <FaSave /> {isEdit ? "Edit" : "Add"}
+                            {isEdit ? "Edit" : "Add"}
                         </button>
                     </div>
                 </form>

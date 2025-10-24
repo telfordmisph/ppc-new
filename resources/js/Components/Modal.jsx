@@ -10,7 +10,6 @@ const Modal = forwardRef(
             children,
             buttonClass = "",
             className = "",
-            show = false,
             onClose = () => {},
         },
         ref
@@ -21,11 +20,6 @@ const Modal = forwardRef(
             open: () => modalRef.current?.showModal(),
             close: () => modalRef.current?.close(),
         }));
-
-        useEffect(() => {
-            if (show) modalRef.current?.showModal();
-            else modalRef.current?.close();
-        }, [show]);
 
         return (
             <>
@@ -44,7 +38,9 @@ const Modal = forwardRef(
                     ref={modalRef}
                     onClose={onClose}
                 >
-                    <div className={`modal-box ${className}`}>
+                    <div
+                        className={`border border-base-content/20 modal-box ${className}`}
+                    >
                         <form method="dialog">
                             <button
                                 type="button"
@@ -59,7 +55,7 @@ const Modal = forwardRef(
                         </form>
 
                         {title && (
-                            <h3 className="text-lg font-bold">{title}</h3>
+                            <h3 className="text-base font-bold">{title}</h3>
                         )}
 
                         <div>

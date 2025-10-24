@@ -78,6 +78,12 @@ const StackedBarChart = ({
                         stroke={colors.baseContent}
                         fill={colors.base300}
                     />
+                    <Bar
+                        dataKey="total_quantity"
+                        hide
+                        className="hidden"
+                        fill={colors.baseContent}
+                    />
                     {bars.map((bar, index) =>
                         visibleBars?.[bar.visibilityKey] ? (
                             <Bar
@@ -97,5 +103,4 @@ const StackedBarChart = ({
         </BaseChart>
     );
 };
-
 export default StackedBarChart;
