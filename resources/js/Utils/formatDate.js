@@ -7,15 +7,17 @@ export default function formatDate(date) {
 };
 
 export function buildDateRange(startDate, endDate) {
-    if (!startDate || !endDate) return "";
+  if (!startDate || !endDate) return '';
 
-    const formatDateTime = (date, isEnd = false) => {
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const year = date.getFullYear();
-        const time = isEnd ? "23:59:59" : "00:00:00";
-        return `${month}/${day}/${year} ${time}`;
-    };
+  const formatDateTime = (date) => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
+  };
 
-    return `${formatDateTime(startDate, false)} - ${formatDateTime(endDate, true)}`;
+  return `${formatDateTime(startDate)} - ${formatDateTime(endDate)}`;
 }
