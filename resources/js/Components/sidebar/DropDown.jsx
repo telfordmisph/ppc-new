@@ -3,6 +3,7 @@ import { usePage, Link } from "@inertiajs/react";
 import { Transition } from "@headlessui/react";
 import clsx from "clsx";
 import { useThemeStore } from "@/Store/themeStore";
+import { DARK_THEME_NAME } from "@/Constants/colors";
 
 export default function Dropdown({
     label,
@@ -36,10 +37,10 @@ export default function Dropdown({
     }, [hasActiveLink]);
 
     const hoverColor =
-        theme === "dark" ? "hover:bg-base-200" : "hover:bg-base-300";
+        theme === DARK_THEME_NAME ? "hover:bg-base-200" : "hover:bg-base-300";
 
     const activeColor =
-        theme === "dark" ? "bg-base-200" : "bg-base-300 text-primary";
+        theme === DARK_THEME_NAME ? "bg-base-200" : "bg-base-300 text-primary";
 
     return (
         <div className="relative w-full">
@@ -104,7 +105,7 @@ export default function Dropdown({
                                 key={`${normalizePath(link.href)}-${index}`}
                                 href={link.href}
                                 className={clsx(
-                                    "flex items-center h-8 justify-between pr-2 text-sm rounded-lgtransition-colors",
+                                    "flex items-center h-8 justify-between pr-2 text-sm rounded-r-lg transition-colors",
                                     !active && hoverColor,
                                     active && activeColor,
                                     active && "text-primary"

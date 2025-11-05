@@ -2,6 +2,7 @@ import React from "react";
 import { Link, usePage } from "@inertiajs/react";
 import clsx from "clsx";
 import { useThemeStore } from "@/Store/themeStore";
+import { DARK_THEME_NAME } from "@/Constants/colors";
 
 const SidebarLink = ({
     href,
@@ -16,7 +17,7 @@ const SidebarLink = ({
 
     const isActive = url === new URL(href, window.location.origin).pathname;
 
-    const isDark = theme === "dark";
+    const isDark = theme === DARK_THEME_NAME;
 
     const hoverColor = isDark ? "hover:bg-base-200" : "hover:bg-base-300";
 

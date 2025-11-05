@@ -54,8 +54,6 @@ const PartNameUpsert = () => {
                 body: formData,
             });
 
-            console.log("🚀 ~ handleUpsert ~ response:", response);
-
             toast.success(
                 isEdit
                     ? "Part updated successfully!"

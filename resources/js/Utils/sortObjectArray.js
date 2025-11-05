@@ -30,8 +30,6 @@ function sortObjectArray(
     compute = null,
   } = sorter;
 
-  console.log("🚀 ~ sortObjectArray ~ compute:", compute)
-
   return [...data].sort((a, b) => {
     let valA, valB;
 
@@ -40,7 +38,6 @@ function sortObjectArray(
       valA = compute(a);
       valB = compute(b);
     } else {
-      console.log("using ke y s s s s s s")
       // 2. Otherwise, compute value from one or more keys
       valA = keys.reduce((sum, key) => sum + Number(a[key] ?? 0), 0);
       valB = keys.reduce((sum, key) => sum + Number(b[key] ?? 0), 0);

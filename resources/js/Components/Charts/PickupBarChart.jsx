@@ -13,7 +13,7 @@ import BaseChart from "./BaseChart";
 export default function PickupBarChart({ data = [], isLoading = false }) {
     return (
         <BaseChart data={data} isLoading={isLoading}>
-            {({ colors, tooltip }) => (
+            {({ tooltip }) => (
                 <BarChart
                     data={data}
                     margin={{ top: 10, right: 50, left: 50, bottom: 5 }}
@@ -25,31 +25,31 @@ export default function PickupBarChart({ data = [], isLoading = false }) {
                     <YAxis
                         yAxisId="left"
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
-                        tick={{ fill: colors.primary }}
+                        tick={{ fill: "var(--color-primary)" }}
                     />
                     <YAxis
                         yAxisId="right"
                         orientation="right"
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
-                        tick={{ fill: colors.secondary }}
+                        tick={{ fill: "var(--color-secondary)" }}
                     />
 
                     <Legend />
                     <Bar
                         yAxisId="left"
                         dataKey="total_quantity"
-                        fill={colors.f1Color}
+                        fill={"var(--color-f1color)"}
                     />
                     <Bar
                         yAxisId="right"
                         dataKey="total_lots"
-                        fill={colors.f2Color}
+                        fill={"var(--color-f2color)"}
                     />
                     <Brush
                         dataKey="packageName"
                         height={20}
-                        stroke={colors.baseContent}
-                        fill={colors.base300}
+                        stroke={"var(--color-base-content)"}
+                        fill={"var(--color-base-300)"}
                     />
                 </BarChart>
             )}

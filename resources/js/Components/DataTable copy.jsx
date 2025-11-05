@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { router } from "@inertiajs/react";
 import { useThemeStore } from "@/Store/themeStore";
+import { DARK_THEME_NAME } from "@/Constants/colors";
 
 export default function DataTable({
     columns,
@@ -31,7 +32,7 @@ export default function DataTable({
     const [dateTo, setDateTo] = useState(extractDate(filters.end));
 
     const themeColor =
-        theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-100";
+        theme === DARK_THEME_NAME ? "hover:bg-gray-700" : "hover:bg-gray-100";
 
     const handleSearch = (e) => {
         e.preventDefault();

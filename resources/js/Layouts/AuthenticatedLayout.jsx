@@ -78,19 +78,16 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     return (
-        <div className="flex flex-col bg-base-300">
-            {/* <LoadingScreen text="Please wait..." /> */}
-            <div className="flex h-screen text-sm">
+        <div className="flex bg-base-200 h-screen text-sm">
                 <Sidebar />
-                <div className="flex flex-col flex-1 ">
+                <div className="h-full flex flex-col flex-1 overflow-y-hidden">
                     <NavBar />
-                    <main className="bg-base-300 relative w-full h-screen px-6 py-6 pb-[70px] overflow-y-auto">
+                    <main className="px-4 py-8 flex-1 w-full relative overflow-y-auto">
                         {isLoading && <LoadingScreen text="Please wait..." />}
-                        <div className="">{children}</div>
+                        <div className="w-full">{children}</div>
                     </main>
                     <Footer />
-                </div>
-            </div>
+                            </div>
         </div>
     );
 }

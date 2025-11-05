@@ -22,7 +22,7 @@ const BarChartSkeleton = ({ bars = 5, className = "" }) => {
                         className="flex flex-col justify-end flex-1 h-full"
                     >
                         <div
-                            className="w-full rounded-lg skeleton"
+                            className="w-full rounded-lg skeleton bg-base-content-dim/20"
                             style={{ height: `${pct}%` }}
                             aria-hidden="true"
                         />

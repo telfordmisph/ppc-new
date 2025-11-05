@@ -22,7 +22,7 @@ const StackedBarChart = ({
 }) => {
     return (
         <BaseChart data={data} isLoading={isLoading}>
-            {({ colors, tooltip }) => (
+            {({ tooltip }) => (
                 <BarChart
                     width={width}
                     height={height}
@@ -66,7 +66,10 @@ const StackedBarChart = ({
                         })}
                     </defs>
 
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid
+                        stroke={"var(--color-base-content-dim)"}
+strokeDasharray="2 3"
+/>
                     <XAxis dataKey="Package_Name" />
                     <YAxis
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
@@ -82,7 +85,7 @@ const StackedBarChart = ({
                         dataKey="total_quantity"
                         hide
                         className="hidden"
-                        fill={colors.baseContent}
+                        fill={"var(--color-neutral-content)"}
                     />
                     {bars.map((bar, index) =>
                         visibleBars?.[bar.visibilityKey] ? (

@@ -1,3 +1,4 @@
+import { DARK_THEME_NAME } from "@/Constants/colors";
 import { useThemeStore } from "@/Store/themeStore";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
@@ -19,7 +20,7 @@ export default forwardRef(function TextInput(
         }
     }, [isFocused]);
 
-    const themeColor = theme === "dark" ? "bg-gray-800" : "bg-white";
+    const themeColor = theme === DARK_THEME_NAME ? "bg-gray-800" : "bg-white";
 
     return (
         <input

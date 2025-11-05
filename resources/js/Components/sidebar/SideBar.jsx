@@ -15,7 +15,7 @@ export default function Sidebar() {
         .join(" ");
 
     return (
-        <div className="z-[1] flex w-0 shadow-lg md:w-64">
+        <div className="z-1 flex bg-base-100 w-0 shadow-lg md:w-64">
             {/* Mobile Hamburger */}
             <button
                 className="absolute p-2 rounded-lgtop-4 right-4 md:hidden"
@@ -38,11 +38,11 @@ export default function Sidebar() {
 
             <div
                 className={`
-                    w-full bg-base-100 fixed md:relative top-0 left-0 transition-transform transform
+                    fixed md:relative top-0 left-0 transition-transform transform
                     ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
                     md:translate-x-0
                     md:flex
-                    flex-col min-h-screen w-[270px] space-y-6 px-4 pb-6 pt-4
+                    flex-col min-h-screen w-[250px] space-y-6 px-4 pb-6 pt-4
                 `}
                 style={{
                     scrollbarWidth: "none",
@@ -51,9 +51,9 @@ export default function Sidebar() {
             >
                 <Link
                     href={route("dashboard")}
-                    className="flex items-center pl-[10px] text-lg font-bold"
+                    className="flex items-center pl-2.5 text-lg font-bold"
                 >
-                    <p className="pt-[2px] pl-1">PPC Portal</p>
+                    <p className="pt-0.5 pl-1">PPC Portal</p>
                 </Link>
 
                 <Navigation />

@@ -24,7 +24,7 @@
         @inertia
     </body>
     <script>
-        const theme = localStorage.getItem("theme") || "light";
+        const theme = localStorage.getItem("theme") || "lofi";
         document.documentElement.setAttribute("data-theme", theme);
     </script>
 

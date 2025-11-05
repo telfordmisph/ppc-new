@@ -1,19 +1,86 @@
-@import "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap";
+@import "https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700&display=swap";
 
-/* @plugin "daisyui"; */
 @import "tailwindcss";
-/* @plugin "daisyui"; */
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+     themes: "lofi", "lofi-dark";
 }
 
 @theme {
   --font-sans: "Poppins", sans-serif;
-  --color-f1color: #422ad5;
-  /* --color-f2color: #7a6ae2;
-  --color-f3color: #b3aaee; */
-  --color-f2color: #AE4DFF;
-  --color-f3color: #FF96EE;
+  
+  /* default custom values */
+  --color-base-100: #000000;
+  --color-base-200: #080808;
+  --color-base-300: #101010;
+  --color-base-content: #d6d6d6;
+  --color-base-content-dim: #d6d6d630;
+  --color-f1color: #FF6A83;
+  --color-f1color-dim: #EE86B880;
+  --color-f2color: #B987F5;
+  --color-f2color-dim: #B987F580;
+  --color-f3color: #A6BFF7;
+  --color-f3color-dim: #A6BFF780;
+  --color-info: #5AA9FA;         
+  --color-info-content: #192532; 
+  --color-success: #4CCB83;      
+  --color-success-content: #101f0d;
+  --color-warning: #FACC57;       
+  --color-warning-content: #332710;
+  --color-error: #E4474B;         
+  --color-error-content: #fceae8;
+}
+
+@plugin "daisyui/theme" {
+  name: "lofi";
+  color-scheme: "light";
+  --color-base-100: #ffffff;
+  --color-base-200: #f2f3f3;
+  --color-base-300: #f9fafb;
+  --color-base-content: #161616;
+  --color-base-content-dim: #16161630;
+  --color-primary: #FF6A83;
+  --color-primary-content: #3A000B;
+  --color-secondary: #6BD3FF;
+  --color-secondary-content: #002B38;
+  --color-accent: #ffff00;
+  --color-accent-content: #2C2A00;
+  --color-neutral: #1C1B22;      
+  --color-neutral-content: #d9dfe5;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.2075rem;
+  --size-field: 0.2075rem;
+  --border: 0.1px;
+  --noise: 1;
+}
+
+@plugin "daisyui/theme" {
+  name: "lofi-dark";
+  default: true;
+  color-scheme: "dark";
+  --color-base-100: #000000;
+  --color-base-200: #080808;
+  --color-base-300: #101010;
+  --color-base-content: #d6d6d6;
+  --color-base-content-dim: #d6d6d630;
+  --color-primary: #FF6A83;
+  --color-primary-content: #3A000B;
+  --color-secondary: #6BD3FF;
+  --color-secondary-content: #002B38;
+  --color-accent: #FFF86B;
+  --color-accent-content: #2C2A00;
+  --color-neutral: #1C1B22;      
+  --color-neutral-content: #d9dfe5;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.2075rem;
+  --size-field: 0.2075rem;
+  --border: 0.1px;
+  --noise: 1;
 }
 
 html {

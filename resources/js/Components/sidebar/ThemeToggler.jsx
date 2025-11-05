@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { LIGHT_THEME_NAME } from "@/Constants/colors";
 
 export default function ThemeToggler({ toggleTheme, theme }) {
     return (
@@ -6,7 +6,7 @@ export default function ThemeToggler({ toggleTheme, theme }) {
             <label className="swap swap-rotate">
                 <input
                     type="checkbox"
-                    checked={theme !== "light"}
+                    checked={theme !== LIGHT_THEME_NAME}
                     onChange={toggleTheme}
                     readOnly
                     className="hidden"

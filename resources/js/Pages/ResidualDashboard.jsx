@@ -71,7 +71,7 @@ const ResidualDashboard = () => {
     });
 
     const handleViewDetails = (chartStatus) => {
-                setSelectedChartStatus(chartStatus);
+        setSelectedChartStatus(chartStatus);
         residualSummaryFetch({
             dateRange: dateRange || "",
             chartStatus: chartStatus,
@@ -104,7 +104,7 @@ const ResidualDashboard = () => {
 
     const handleRefetch = () => {
         const newDateRange = buildDateRange(tempStartDate, tempEndDate);
-                setStartDate(tempStartDate);
+        setStartDate(tempStartDate);
         setEndDate(tempEndDate);
         overallResidualFetch({ dateRange: newDateRange });
     };
@@ -154,7 +154,7 @@ const ResidualDashboard = () => {
                                             "start"
                                         );
                                     }}
-                                                                    />
+                                />
                                 <FloatingLabelInput
                                     id="pickup_end_date_input"
                                     label="End date and time"
@@ -167,7 +167,7 @@ const ResidualDashboard = () => {
                                             "end"
                                         );
                                     }}
-                                                                        min={
+                                    min={
                                         tempStartDate instanceof Date &&
                                         !isNaN(tempStartDate)
                                             ? tempStartDate

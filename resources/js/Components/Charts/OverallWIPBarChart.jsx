@@ -83,7 +83,7 @@ const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
             </div>
 
             <BaseChart data={data} isLoading={isLoading}>
-                {({ colors, tooltip }) => (
+                {({ tooltip }) => (
                     <ReBarChart
                         width={700}
                         height={300}
@@ -110,35 +110,35 @@ const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
                             dataKey="total"
                             hide
                             className="hidden"
-                            fill={colors.baseContent}
+                            fill={"var(--color-neutral-content)"}
                         />
 
                         {visibleBars.f1 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f1"
-                                fill={colors.f1Color}
+                                fill={"var(--color-f1color)"}
                             />
                         )}
                         {visibleBars.f2 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f2"
-                                fill={colors.f2Color}
+                                fill={"var(--color-f2color)"}
                             />
                         )}
                         {visibleBars.f3 && (
                             <Bar
                                 yAxisId="left"
                                 dataKey="f3"
-                                fill={colors.f3Color}
+                                fill={"var(--color-f3color)"}
                             />
                         )}
                         <Line
                             yAxisId="right"
                             type="basis"
                             dataKey={windowSize > 1 ? "trendSmoothed" : "trend"}
-                            stroke={colors.accent}
+                            stroke={"var(--color-accent)"}
                             strokeWidth={2}
                             dot={{ r: 4 }}
                             activeDot={{ r: 12 }}
@@ -146,8 +146,8 @@ const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
                         <Brush
                             dataKey="date"
                             height={20}
-                            stroke={colors.baseContent}
-                            fill={colors.base300}
+                            stroke={"var(--color-base-content)"}
+                            fill={"var(--color-base-300)"}
                         />
                     </ReBarChart>
                 )}
