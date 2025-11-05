@@ -14,15 +14,15 @@ export default function NavBar() {
     };
 
     return (
-        <nav className="">
-            <div className="px-4 mx-auto sm:px-6 lg:px-8">
-                <div className="flex justify-end h-[50px] ">
-                    <div className="items-center hidden mr-5 space-x-1 font-semibold md:flex">
+        <nav className="sticky top-0 z-50 bg-base-300">
+            <div className="px-4 h-10 flex justify-end mx-auto sm:px-6 lg:px-4">
+                <div className="flex justify-end ">
+                    <div className="items-center hidden space-x-1 font-semibold md:flex">
                         <div className="dropdown dropdown-end">
                             <div
                                 tabIndex={0}
                                 role="button"
-                                className="flex items-center m-1 space-x-2 cursor-pointer select-none"
+                                className="flex items-center space-x-2 cursor-pointer select-none"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"

@@ -113,7 +113,6 @@ export default function Dashboard({ tableData, tableFilters }) {
                         title="Overall Factory WIP"
                         desc={latestWip ? `As of ${latestWip.date}` : "No data"}
                         textColor=""
-                        // className="row-span-1 col-span-6 md:col-span-12 text-white w-full bg-linear-to-tr from-HAHA/60 via-f2color/75 to-f3color"
                         className="row-span-1 col-span-6 md:col-span-12 text-white w-full bg-linear-to-tr from-f1color/60 via-f1color/75 to-f1color"
                         icon={<FaTasks size={32} />}
                         useDataHook={() => ({

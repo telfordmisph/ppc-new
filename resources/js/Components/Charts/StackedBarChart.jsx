@@ -27,8 +27,9 @@ const StackedBarChart = ({
                     width={width}
                     height={height}
                     data={data}
+barCategoryGap="3%"
                     margin={
-                        margin || { top: 20, right: 30, left: 20, bottom: 5 }
+                        margin || { top: 20, right: 20, left: 20, bottom: 20 }
                     }
                 >
                     {tooltip}
@@ -70,17 +71,24 @@ const StackedBarChart = ({
                         stroke={"var(--color-base-content-dim)"}
 strokeDasharray="2 3"
 />
-                    <XAxis dataKey="Package_Name" />
+                    <XAxis
+dataKey="Package_Name"
+                        tick={{ fontSize: 10 }}
+                        angle={-45}
+                        textAnchor="end"
+                        interval={0}
+                        height={80}
+/>
                     <YAxis
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
                     />
                     <Legend />
-                    <Brush
+{/* <Brush
                         dataKey="Package_Name"
                         height={20}
                         stroke={colors.baseContent}
                         fill={colors.base300}
-                    />
+                    /> */}
                     <Bar
                         dataKey="total_quantity"
                         hide
@@ -91,6 +99,7 @@ strokeDasharray="2 3"
                         visibleBars?.[bar.visibilityKey] ? (
                             <Bar
                                 key={index}
+radius={4}
                                 dataKey={bar.dataKey}
                                 stackId={bar.stackId || null}
                                 fill={
