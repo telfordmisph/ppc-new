@@ -12,10 +12,15 @@ import {
 import TogglerButton from "../TogglerButton";
 import BaseChart from "./BaseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
-import { TOGGLE_BUTTONS } from "@/Constants/toggleButtons";
+import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
 
-const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
-    console.log("🚀 ~ BarChart ~ data:", data);
+const BarChart = ({
+    data,
+    isLoading,
+    errorMessage,
+    windowSize,
+    setWindowSize,
+}) => {
     const [visibleBars, setVisibleBars] = useState({
         f1: true,
         f2: true,
@@ -74,7 +79,7 @@ const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
 
                 <div className="mt-4 lg:mt-0">
                     <TogglerButton
-                        toggleButtons={TOGGLE_BUTTONS}
+                        toggleButtons={TOGGLE_FACTORY_BUTTONS}
                         visibleBars={visibleBars}
                         toggleBar={toggleBar}
                         toggleAll={toggleAll}
@@ -82,7 +87,7 @@ const BarChart = ({ data, isLoading, windowSize, setWindowSize }) => {
                 </div>
             </div>
 
-            <BaseChart data={data} isLoading={isLoading}>
+            <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
                 {({ tooltip }) => (
                     <ReBarChart
                         width={700}

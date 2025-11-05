@@ -10,24 +10,27 @@ import {
 } from "recharts";
 import BaseChart from "./baseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
+import HoveredBar from "./HoverBar";
 
 const StackedBarChart = ({
     data,
     isLoading,
+    errorMessage,
     bars,
     visibleBars,
+    onBarClick = () => {},
     width = 500,
     height = 300,
     margin,
 }) => {
     return (
-        <BaseChart data={data} isLoading={isLoading}>
+        <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
             {({ tooltip }) => (
                 <BarChart
                     width={width}
                     height={height}
                     data={data}
-barCategoryGap="3%"
+                    barCategoryGap="3%"
                     margin={
                         margin || { top: 20, right: 20, left: 20, bottom: 20 }
                     }
@@ -69,21 +72,21 @@ barCategoryGap="3%"
 
                     <CartesianGrid
                         stroke={"var(--color-base-content-dim)"}
-strokeDasharray="2 3"
-/>
+                        strokeDasharray="2 3"
+                    />
                     <XAxis
-dataKey="Package_Name"
+                        dataKey="Package_Name"
                         tick={{ fontSize: 10 }}
                         angle={-45}
                         textAnchor="end"
                         interval={0}
                         height={80}
-/>
+                    />
                     <YAxis
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
                     />
                     <Legend />
-{/* <Brush
+                    {/* <Brush
                         dataKey="Package_Name"
                         height={20}
                         stroke={colors.baseContent}
@@ -99,7 +102,7 @@ dataKey="Package_Name"
                         visibleBars?.[bar.visibilityKey] ? (
                             <Bar
                                 key={index}
-radius={4}
+                                radius={4}
                                 dataKey={bar.dataKey}
                                 stackId={bar.stackId || null}
                                 fill={
@@ -107,6 +110,16 @@ radius={4}
                                         ? `url(#grad-${bar.dataKey})`
                                         : bar.fill
                                 }
+                                activeBar={(props) => (
+                                    <HoveredBar
+                                        barProps={props}
+                                        onClick={({ data, dataKey }) => {
+                                            if (onBarClick) {
+                                                onBarClick({ data, dataKey });
+                                            }
+                                        }}
+                                    />
+                                )}
                             />
                         ) : null
                     )}

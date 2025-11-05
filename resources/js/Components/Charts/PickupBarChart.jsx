@@ -10,9 +10,13 @@ import {
 } from "recharts";
 import BaseChart from "./BaseChart";
 
-export default function PickupBarChart({ data = [], isLoading = false }) {
+export default function PickupBarChart({
+    data = [],
+    isLoading = false,
+    errorMessage,
+}) {
     return (
-        <BaseChart data={data} isLoading={isLoading}>
+        <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
             {({ tooltip }) => (
                 <BarChart
                     data={data}

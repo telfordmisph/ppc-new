@@ -1,4 +1,4 @@
-export const TOGGLE_BUTTONS = [
+export const TOGGLE_FACTORY_BUTTONS = [
     {
         key: "f1",
         label: "F1",
@@ -21,3 +21,37 @@ export const TOGGLE_BUTTONS = [
             "border-f3color text-f3color hover:bg-f3color/50-content",
     },
 ];
+
+export const TOGGLE_PL_BUTTONS = [
+    {
+        key: "pl1",
+        label: "PL1",
+        activeClass: "bg-primary/20 border-primary text-base-content",
+        inactiveClass:
+            "border-base-content text-base-content hover:bg-base-content/50-content",
+    },
+    {
+        key: "pl6",
+        label: "PL6",
+        activeClass: "bg-primary/20 border-primary text-base-content",
+        inactiveClass:
+            "border-base-content text-base-content hover:bg-base-content/50-content",
+    },
+]
+
+export const TOGGLE_TOTAL_BUTTONS = [
+    {
+        key: "totalQuantity",
+        label: "Total Quantity",
+        activeClass: "bg-primary/20 border-primary text-base-content",
+        inactiveClass:
+            "border-base-content text-base-content hover:bg-base-content/50-content",
+    },
+    {
+        key: "totalLots",
+        label: "Total Lots",
+        activeClass: "bg-primary/20 border-primary text-base-content",
+        inactiveClass:
+            "border-base-content text-base-content hover:bg-base-content/50-content",
+    },
+]

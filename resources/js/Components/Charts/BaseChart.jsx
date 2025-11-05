@@ -6,20 +6,13 @@ import { DARK_THEME_NAME } from "@/Constants/colors";
 const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
 
-    const gradientKeys = new Set([
-        colors.accent,
-        colors.f1Color,
-        colors.f2Color,
-        colors.f3Color,
-    ]);
-
     return (
         <div className="flex flex-col gap-1 border border-base-content/20 rounded-lg shadow-lg border-opacity-30 bg-base-300">
             <div className="px-2 pt-2 font-semibold bg-neutral/20 rounded-t-lg text-accent">
-{label}
-</div>
+                {label}
+            </div>
             {payload.map((item, index) => {
-                                const baseColor = item.color;
+                const baseColor = item.color;
                 const background = `linear-gradient(to left, ${baseColor} 0%, transparent)`;
 
                 return (
@@ -31,17 +24,20 @@ const CustomTooltip = ({ active, payload, label }) => {
                         <div className="leading-none">
                             {(item?.name || "").replaceAll("_", " ")}
                         </div>
-                        <div className="font-mono leading-none">
+                        <div className="font-mono leading-none text-neutral">
                             {Number(item?.value || 0).toLocaleString()}
                         </div>
                     </div>
                 );
             })}
+            <div className="px-2 pb-2 text-xs opacity-50">
+                click for see details
+            </div>
         </div>
     );
 };
 
-export default function BaseChart({ data, isLoading, children }) {
+export default function BaseChart({ data, isLoading, error, children }) {
     const { theme } = useThemeStore();
 
     const isDark = theme === DARK_THEME_NAME;
@@ -55,6 +51,13 @@ export default function BaseChart({ data, isLoading, children }) {
             includeHidden
         />
     );
+
+    if (error)
+        return (
+            <div className="flex items-center border-error border bg-error/1 justify-center w-full rounded-lg h-full">
+                <p className="text-sm text-error">{error}</p>
+            </div>
+        );
 
     if (isLoading)
         return (
