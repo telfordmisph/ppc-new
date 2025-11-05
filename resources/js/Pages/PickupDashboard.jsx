@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { FaChartBar } from "react-icons/fa";
 import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
+import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
 
 const PickupDashboard = () => {
     const [startDate, setStartDate] = useState(() => {
@@ -50,34 +51,15 @@ const PickupDashboard = () => {
         auto: false,
     });
 
-    const verb = isOverallPickupLoading ? "Loading" : "Showing";
-
-    const filterType = dateRange ? "dateRange" : "today";
-
-    const filter = dateRange
-        ? `${formatFriendlyDate(startDate, true)} and ${formatFriendlyDate(
-              endDate,
-              true
-          )}`
-        : formatFriendlyDate(new Date());
-
-    const message =
-        filterType === "dateRange"
-            ? `${verb} Pickup between ${filter}`
-            : filterType === "workweek"
-            ? `${verb} Pickup on ${filter}`
-            : `${verb} Pickup on ${filter}`;
-
-    useEffect(() => {
-        if (isOverallPickupLoading) {
-            console.log("Loading Pickup Data...");
-        } else {
-            console.log("Pickup Data Loaded O K N A AAAAAAAAAA.");
-        }
-    }, [isOverallPickupLoading]);
+    const { message } = formatDataStatusMessage({
+        isLoading: isOverallPickupLoading,
+        label: "Pickup",
+        dateRange,
+        startDate,
+        endDate,
+    });
 
     const handleViewDetails = (chartStatus) => {
-        console.log("View details for:", chartStatus);
         setSelectedChartStatus(chartStatus);
         pickupSummaryFetch({
             dateRange: dateRange || "",
@@ -108,10 +90,6 @@ const PickupDashboard = () => {
         setTempStartDate(null);
         setTempEndDate(null);
     };
-
-    useEffect(() => {
-        console.log("date", startDate, endDate);
-    }, [startDate, endDate]);
 
     const handleRefetch = () => {
         const newDateRange = buildDateRange(tempStartDate, tempEndDate);
@@ -164,7 +142,6 @@ const PickupDashboard = () => {
                                             "start"
                                         );
                                     }}
-                                    labelClassName="bg-base-300"
                                 />
 
                                 <FloatingLabelInput
@@ -179,7 +156,6 @@ const PickupDashboard = () => {
                                             "end"
                                         );
                                     }}
-                                    labelClassName="bg-base-300"
                                     min={
                                         tempStartDate instanceof Date &&
                                         !isNaN(tempStartDate)
@@ -214,9 +190,7 @@ const PickupDashboard = () => {
                                 Reset
                             </button>
                             <button
-                                className={clsx(
-                                    "btn  btn-soft btn-primary flex-1"
-                                )}
+                                className={clsx("btn btn-primary flex-1")}
                                 onClick={handleRefetch}
                                 disabled={isFilterDisabled()}
                             >
@@ -261,6 +235,7 @@ const PickupDashboard = () => {
                 <PickupBarChart
                     data={pickupSummaryData?.data || []}
                     isLoading={isPickupSummaryLoading}
+                    error={pickupSummaryErrorMessage}
                 />
             </div>
         </AuthenticatedLayout>

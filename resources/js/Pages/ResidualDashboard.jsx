@@ -12,6 +12,7 @@ import clsx from "clsx";
 import { FaChartBar } from "react-icons/fa";
 import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
+import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
 
 const ResidualDashboard = () => {
     const [startDate, setStartDate] = useState(() => {
@@ -61,24 +62,16 @@ const ResidualDashboard = () => {
           )}`
         : formatFriendlyDate(new Date());
 
-    const message =
-        filterType === "dateRange"
-            ? `${verb} Residual between ${filter}`
-            : filterType === "workweek"
-            ? `${verb} Residual on ${filter}`
-            : `${verb} Residual on ${filter}`;
-
-    useEffect(() => {
-        if (isOverallResidualLoading) {
-            console.log("Loading Residual Data...");
-        } else {
-            console.log("Residual Data Loaded O K N A AAAAAAAAAA.");
-        }
-    }, [isOverallResidualLoading]);
+    const { message } = formatDataStatusMessage({
+        isLoading: isOverallResidualLoading,
+        label: "Residual",
+        dateRange,
+        startDate,
+        endDate,
+    });
 
     const handleViewDetails = (chartStatus) => {
-        console.log("View details for:", chartStatus);
-        setSelectedChartStatus(chartStatus);
+                setSelectedChartStatus(chartStatus);
         residualSummaryFetch({
             dateRange: dateRange || "",
             chartStatus: chartStatus,
@@ -109,14 +102,9 @@ const ResidualDashboard = () => {
         setTempEndDate(null);
     };
 
-    useEffect(() => {
-        console.log("date", startDate, endDate);
-    }, [startDate, endDate]);
-
     const handleRefetch = () => {
         const newDateRange = buildDateRange(tempStartDate, tempEndDate);
-        console.log("🚀 ~ handleRefetch ~ newDateRange:", newDateRange);
-        setStartDate(tempStartDate);
+                setStartDate(tempStartDate);
         setEndDate(tempEndDate);
         overallResidualFetch({ dateRange: newDateRange });
     };
@@ -166,8 +154,7 @@ const ResidualDashboard = () => {
                                             "start"
                                         );
                                     }}
-                                    labelClassName="bg-base-300"
-                                />
+                                                                    />
                                 <FloatingLabelInput
                                     id="pickup_end_date_input"
                                     label="End date and time"
@@ -180,8 +167,7 @@ const ResidualDashboard = () => {
                                             "end"
                                         );
                                     }}
-                                    labelClassName="bg-base-300"
-                                    min={
+                                                                        min={
                                         tempStartDate instanceof Date &&
                                         !isNaN(tempStartDate)
                                             ? tempStartDate
@@ -262,6 +248,7 @@ const ResidualDashboard = () => {
                 <PickupBarChart
                     data={residualSummaryData?.data || []}
                     isLoading={isResidualSummaryLoading}
+                    error={residualSummaryErrorMessage}
                 />
             </div>
         </AuthenticatedLayout>
