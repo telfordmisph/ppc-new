@@ -15,6 +15,7 @@ export default function FloatingLabelInput({
     color = "primary",
     className = "",
     labelClassName = "",
+    alwaysFloatLabel = false,
     ...props
 }) {
     const [hasValue, setHasValue] = useState(Boolean(value));
@@ -43,7 +44,7 @@ export default function FloatingLabelInput({
     }, [value]);
 
     const baseInputClass = clsx(
-        "block w-full text-sm disabled:cursor-not-allowed disabled:opacity-50 appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200",
+        "block text-sm disabled:cursor-not-allowed disabled:opacity-50 appearance-none focus:outline-none focus:ring-0 peer transition-colors duration-200",
         focusColor,
         {
             outlined:
@@ -64,26 +65,26 @@ export default function FloatingLabelInput({
     );
 
     const labelBaseClass =
-        "text-base-content absolute text-sm duration-300 transform origin-[0] transition-all";
+        " top-0 pointer-events-none leading-none text-base-content/75 absolute text-sm duration-300 origin-[0] transform transition-all";
 
     const variantClasses = {
         outlined: [
-            "px-2 top-6 left-2",
-            hasValue || isPickerType
-                ? "scale-75 -translate-y-9"
-                : "scale-100 -translate-y-1/2",
-            `peer-focus:scale-75 peer-focus:-translate-y-9`,
+            "px-2 mt-0.5 left-2",
+            hasValue || isPickerType || alwaysFloatLabel
+                ? "scale-75 top-0 pb-4 -translate-y-1/2"
+                : "top-1/2 -translate-y-1/2",
+            "peer-focus:scale-75 peer-focus:pb-4 peer-focus:top-0 peer-focus:-translate-y-1/2",
         ],
         filled: [
             "top-4 left-2.5",
-            hasValue || isPickerType
+            hasValue || isPickerType || alwaysFloatLabel
                 ? "scale-75 -translate-y-4"
                 : "scale-100 translate-y-0",
             `peer-focus:scale-75 peer-focus:-translate-y-4`,
         ],
         standard: [
             "top-3 left-0",
-            hasValue || isPickerType
+            hasValue || isPickerType || alwaysFloatLabel
                 ? "scale-75 -translate-y-6"
                 : "scale-100 translate-y-0",
             `peer-focus:scale-75 peer-focus:-translate-y-6`,
