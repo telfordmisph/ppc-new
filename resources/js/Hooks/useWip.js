@@ -28,9 +28,6 @@ export function useWip() {
           const error = new Error(json?.message || `HTTP error: ${response.status}`);
           error.status = response.status;
           error.data = json;
-          console.log("🚀 ~ feasdftchWip ~ xx:", error)
-          console.log("🚀 ~ feasdftchWip ~ xx:", error.status)
-          console.log("🚀 ~ feasdftchWip ~ xx:", error.data)
           throw error;
         }
 
@@ -72,7 +69,6 @@ export function useWip() {
           throw new Error("No WIP data available");
         }
       } catch (err) {
-        console.log("asdfasdfsda 🚀 ~ fetchWip ~ err:", err)
           setErrorMessage(err.message);
           setIsLoading(false);
       }

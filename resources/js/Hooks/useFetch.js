@@ -14,8 +14,6 @@ export function useFetch(url, options = {}) {
   };
   
   const fetchData = async (currentParams = params) => {
-    console.log("🚀 ~ fetchData ~ currentParams:", currentParams)
-    
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -28,6 +26,7 @@ export function useFetch(url, options = {}) {
     
     try {
       const fetchUrl = buildUrlWithParams(url, currentParams);
+      console.log("🚀 ~ fetchData ~ fetchUrl:", fetchUrl)
 
       const response = await fetch(fetchUrl, {
         method: "GET",
@@ -45,14 +44,15 @@ export function useFetch(url, options = {}) {
         error.status = response.status;
         throw error;
       }
-
+      
       if (!response.ok || (result && result.status === "error")) {
         const error = new Error(result?.message || `HTTP error: ${response.status}`);
         error.status = response.status;
         error.data = result;
         throw error;
       }
-
+      
+      console.log("🚀 ~ fetchData ~ result:", result)
       setData(result);
     } catch (error) {
       console.log("🚀 ~ fetchData ~ err:", error)
