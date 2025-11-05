@@ -59,7 +59,33 @@ class WipConstants
   // 624	4
   // 2500	2
   // <null> 2487
-
+  // GT general trias
+  // _T telford
+  // _B3 special unknown location
+  public const FACTORIES = ['F1', 'F2', 'F3'];
+  public const PRODUCTION_LINES = ['PL1', 'PL6'];
+  public const TODAY_WIP_INCLUDED_STATIONS = [
+    'GTTRES_T',
+    'GTREEL',
+    'CVDTRAN_GT',
+    'GTARCH_T',
+    'GTTRANS_BE',
+    'PITBOX_T',
+    'PITBOX1',
+    'PITFVI1',
+    'PITLABEL1',
+    'PITOQA',
+    'PITOQA1',
+    'Q-PITRANS1'
+  ];
+  public const TODAY_WIP_EXCLUDED_STATIONS = [
+    'GTSUBCON',
+    'GTGOUT',
+    'GTTBINLOC',
+    ...self::BRAND_TRANSFER_B3,
+    ...self::TRANSFER_QA,
+    ...self::FINAL_QA_STATION
+  ];
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];

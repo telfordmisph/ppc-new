@@ -1,17 +1,11 @@
 <?php
 
-use App\Exceptions\Handler as GenericHandler;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Support\Facades\Log;
-
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Exceptions\InvalidDateRangeException;
-
-// use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(

@@ -25,10 +25,10 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
     });
 
     Route::get("/", [DashboardController::class, 'index'])->name('dashboard');
-    Route::get("/wip-dashboard", [DashboardController::class, 'wipDashboardIndex'])->name('wip.dashboard');
+    Route::get("/wip-trend", [DashboardController::class, 'wipDashboardIndex'])->name('wip.trend');
     Route::get("/pickup-dashboard", [DashboardController::class, 'pickupDashboardIndex'])->name('pickup.dashboard');
     Route::get("/residual-dashboard", [DashboardController::class, 'residualDashboardIndex'])->name('residual.dashboard');
-    Route::get("/wip-table", [App\Http\Controllers\WipController::class, 'wipTable'])->name('wipTable');
+    Route::get("/wip-station", [App\Http\Controllers\WipController::class, 'wipTable'])->name('wipTable');
     Route::get("/profile", [ProfileController::class, 'index'])->name('profile.index');
     Route::post("/change-password", [ProfileController::class, 'changePassword'])->name('changePassword');
 });

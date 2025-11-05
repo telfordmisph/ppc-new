@@ -34,14 +34,14 @@ export default function NavLinks() {
                 icon={<LuListChecks className="w-5 h-5" />}
                 links={[
                     {
-                        href: route("wip.dashboard"),
-                        label: "WIP Dashboard",
+                        href: route("wip.trend"),
+                        label: "WIP Trend",
                         icon: <LuLayoutGrid className="w-5 h-5" />,
                         notification: false,
                     },
                     {
                         href: route("wipTable"),
-                        label: "WIP Table",
+                        label: "WIP Station",
                         icon: <LuTableOfContents className="w-5 h-5" />,
                         notification: false,
                     },

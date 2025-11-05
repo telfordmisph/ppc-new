@@ -17,7 +17,7 @@ class DashboardController extends Controller
 
     public function wipDashboardIndex(Request $request)
     {
-        return Inertia::render('WIPDashboard');
+        return Inertia::render('WIPTrend');
     }
 
     public function pickupDashboardIndex(Request $request)

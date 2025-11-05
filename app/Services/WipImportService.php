@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Cache;
 class WipImportService
 {
   protected $wipRepository;
-  protected string $csvFilePath = '\\\\192.168.1.13\\ftproot\\daily_backend_wip.csv';
+  protected string $WIP_QUANTITY_EXCEL_PATH = '\\\\192.168.1.13\\ftproot\\daily_backend_wip.csv';
+  protected string $WIP_OUTS_EXCEL_PATH = '\\\\192.168.1.13\\ftproot\\daily_telford_outs.csv';
 
   public function __construct(WipRepository $wipRepository)
   {
@@ -23,7 +24,7 @@ class WipImportService
   {
     date_default_timezone_set('Asia/Manila');
 
-    if (!file_exists($this->csvFilePath)) {
+    if (!file_exists($this->WIP_QUANTITY_EXCEL_PATH)) {
       return ['status' => 'error', 'message' => 'CSV file not found or inaccessible.'];
     }
 
@@ -37,7 +38,7 @@ class WipImportService
       $existingRecords = $this->prepareExistingRecords();
       [$countCustomer, $countF3, $ignored] = [0, 0, 0];
 
-      if (($handle = fopen($this->csvFilePath, 'r')) === false) {
+      if (($handle = fopen($this->WIP_QUANTITY_EXCEL_PATH, 'r')) === false) {
         throw new Exception('Failed to open the CSV file.');
       }
 

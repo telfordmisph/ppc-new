@@ -2,10 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Traits\TrendAggregation;
+
 use Illuminate\Support\Facades\DB;
+use App\Constants\WipConstants;
+use App\Helpers\WipTrendParser;
 
 class PickUpRepository
 {
+  use TrendAggregation;
+
   private const TABLE_NAME = 'ppc_pickupdb';
   private const PART_NAME_TABLE = 'ppc_partnamedb';
 
@@ -16,7 +22,7 @@ class PickUpRepository
       ->sum('QTY');
   }
 
-  public function getFactoryTotalQuantity($factory, $startDate, $endDate)
+  public function getFactoryTotalQuantityRanged($factory, $startDate, $endDate)
   {
     return DB::table(self::TABLE_NAME . ' as pickup')
       ->joinSub(
@@ -47,6 +53,12 @@ class PickUpRepository
       ->where('part.Factory', $factory)
       ->where('part.PL', $pl)
       ->sum('pickup.QTY');
+  }
+
+  public function filterByPackageName($query, ?string $packageNames)
+  {
+    if (!$packageNames) return $query;
+    return $query->where('pickup.PACKAGE', $packageNames);
   }
 
   public function getPackageSummary($chartStatus, $startDate, $endDate)
@@ -80,5 +92,40 @@ class PickUpRepository
     return $query->groupBy('pickup.PACKAGE')
       ->orderByDesc('total_quantity')
       ->get();
+  }
+  public function getPickUpTrend($packageName, $period, $lookBack, $offsetDays)
+  {
+    $trends = [];
+
+    foreach (WipConstants::FACTORIES as $factory) {
+      $key = strtolower($factory) . '_trend';
+
+      $query = DB::table(self::TABLE_NAME . ' as pickup')
+        ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_quantity, COUNT(DISTINCT pickup.LOTID) as total_lots');
+      $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
+        ->where('part.Factory', $factory);
+      $query->groupBy('pickup.PACKAGE')
+        ->orderByDesc('total_quantity');
+      $query = $this->filterByPackageName($query, $packageName);
+      $query = $this->applyTrendAggregation(
+        $query,
+        $period,
+        $lookBack,
+        $offsetDays,
+        'pickup.DATE_CREATED',
+        'pickup.QTY',
+        'pickup.LOTID'
+      )->get();
+
+      $trends[$key] = $query;
+    }
+
+    $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
+
+    return response()->json(array_merge($trends, [
+      'data' => $mergedTrends,
+      'status' => 'success',
+      'message' => 'Data retrieved successfully',
+    ]));
   }
 }

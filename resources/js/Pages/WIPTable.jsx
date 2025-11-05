@@ -1,159 +1,344 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
 import { useFetch } from "@/Hooks/useFetch";
+import SearchableDropdown from "@/Components/SearchableDropdown";
+import TrendLineChart from "@/Components/Charts/TrendLineChart";
+import FloatingLabelInput from "@/Components/FloatingLabelInput";
+import TogglerButton from "@/Components/TogglerButton";
+import {
+    formatPeriodLabel,
+    formatPeriodTrendMessage,
+} from "@/Utils/formatStatusMessage";
+import { periodOptions } from "@/Constants/periodOptions";
+import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { visibleLines } from "@/Utils/chartLines";
+import clsx from "clsx";
 
-function StatCard({ title, data, isLoading, errorMessage }) {
-    const renderContent = () => {
-        if (isLoading) {
-            return (
-                <div className="flex items-center justify-center flex-1">
-                    <span className="loading loading-spinner loading-xs"></span>
-                </div>
-            );
-        }
+const WIPTable = () => {
+    const {
+        packageName: savedSelectedPackage,
+        lookBack: savedLookBack,
+        period: savedPeriod,
+        factory: savedFactory,
+        offset: savedOffset,
+        setSelectedPackage: setSavedSelectedPackage,
+        setSelectedLookBack: setSavedSelectedLookBack,
+        setSelectedPeriod: setSavedSelectedPeriod,
+        setSelectedFactory: setSavedSelectedFactory,
+        setSelectedOffset: setSavedSelectedOffset,
+    } = useSelectedFilteredStore();
+    const [fullLabel, setFullLabel] = useState("");
+    const [selectedFilterType, setSelectedFilterType] = useState(savedFactory);
+    const [selectedPackageName, setSelectedPackageName] =
+        useState(savedSelectedPackage);
+    const [selectedPeriod, setSelectedPeriod] = useState(savedPeriod);
+    const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
+    const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
+        useState(savedOffset);
+    const [factoryVisibleBars, setFactoryVisibleBars] = useState({
+        f1: true,
+        f2: true,
+        f3: true,
+        always: true,
+    });
 
-        if (errorMessage) {
-            return (
-                <div className="flex-1 text-sm text-center text-error">
-                    {errorMessage || "Error"}
-                </div>
-            );
-        }
+    const {
+        data: packagesData,
+        isLoading: packagesryLoading,
+        errorMessage: packagesErrorMessage,
+        // fetch: packagesFetch,
+    } = useFetch(route("api.wip.distinctPackages"));
 
-        if (data && (data.final_total_qty || data.final_total_lots)) {
-            return (
-                <>
-                    <div className="flex flex-col items-center justify-center flex-1">
-                        <div className="text-base font-bold text-primary">
-                            {(
-                                Number(data.final_total_qty) || 0
-                            ).toLocaleString()}
-                        </div>
-                        <div className="text-xs opacity-70">total quantity</div>
-                    </div>
-                    <div className="flex flex-col items-center justify-center flex-1">
-                        <div className="text-base font-bold text-secondary">
-                            {(
-                                Number(data.final_total_lots) || 0
-                            ).toLocaleString()}
-                        </div>
-                        <div className="text-xs opacity-70">total lots</div>
-                    </div>
-                </>
-            );
-        }
+    const commonBaseParams = useMemo(
+        () => ({
+            packageName: selectedPackageName,
+            period: selectedPeriod,
+            lookBack: selectedLookBack,
+            offsetDays: selectedOffsetPeriod,
+        }),
+        [
+            selectedPackageName,
+            selectedPeriod,
+            selectedLookBack,
+            selectedOffsetPeriod,
+        ]
+    );
 
-        return (
-            <div className="flex items-center justify-center flex-1 text-sm text-center opacity-50">
-                N/A
-            </div>
+    const makeFetch = (condition) =>
+        useFetch(route("api.wip.filterSummaryTrend"), {
+            params: { ...commonBaseParams, filteringCondition: condition },
+            auto: false,
+        });
+
+    const fetches = {
+        All: makeFetch("All"),
+        Hold: makeFetch("Hold"),
+        Pipeline: makeFetch("Pipeline"),
+        Bake: makeFetch("Bake"),
+        Processable: makeFetch("Processable"),
+        Detapesegregation: makeFetch("Detapesegregation"),
+        Lpi: makeFetch("Lpi"),
+        Brand: makeFetch("Brand"),
+        Lli: makeFetch("Lli"),
+        Sort: makeFetch("Sort"),
+    };
+
+    const handleSearch = () => {
+        Object.values(fetches).forEach(({ abort, fetch }) => {
+            abort();
+            fetch();
+        });
+
+        setFullLabel(
+            formatPeriodTrendMessage(
+                anyLoading,
+                selectedPeriod,
+                selectedLookBack,
+                selectedOffsetPeriod
+            )
         );
     };
 
-    return (
-        <div className="flex flex-col justify-between h-32 p-4 rounded-lg bg-base-200 border border-base-content/10">
-            {title && (
-                <div className="mb-2 text-sm font-semibold opacity-70">
-                    {title}
-                </div>
-            )}
-            <div className="flex items-center justify-between flex-1">
-                {renderContent()}
-            </div>
-        </div>
-    );
-}
+    const xAxis = "label";
 
-const WIPTable = () => {
-    const [selectedFilterType, setSelectedFilterType] = useState("F1");
-    const [selectedDate, setSelectedDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
+    const datePeriod = formatPeriodLabel(selectedPeriod);
+
+    const allFetchStates = Object.keys(fetches).map((type) => {
+        const { data, isLoading, errorMessage } = fetches[type];
+        return { type, data, isLoading, errorMessage };
     });
 
-    const filteringConditions = [
-        "All",
-        "Hold",
-        "Pipeline",
-        "Bake",
-        "Processable",
-        "Detapesegregation",
-        "Lpi",
-        "Brand",
-        "Lli",
-        "Sort",
-    ];
+    useEffect(() => {
+        console.log(
+            "---------------------------------------------------------"
+        );
+        setFullLabel("");
+    }, [
+        selectedPackageName,
+        selectedPeriod,
+        selectedLookBack,
+        selectedOffsetPeriod,
+        selectedFilterType,
+    ]);
 
-    const fetches = filteringConditions.reduce((acc, type) => {
-        const commonParams = {
-            date: selectedDate,
-            filterType: selectedFilterType,
-            filteringCondition: type,
-        };
+    const anyLoading = allFetchStates.some((f) => f.isLoading);
+    console.log("🚀 ~ WIPTable ~ anyLoading:", anyLoading);
+    const anyError = allFetchStates.find((f) => f.errorMessage);
 
-        acc[type] = useFetch(route("api.wip.filterSummary"), {
-            params: commonParams,
+    const handleToggleBar = (name, key) => {
+        if (name === "factory") {
+            setFactoryVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
+        }
+
+        if (name === "production_line") {
+            setPLVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
+        }
+    };
+
+    const toggleAllFactory = () => {
+        const allVisible = Object.values(factoryVisibleBars).every(Boolean);
+        setFactoryVisibleBars({
+            f1: !allVisible,
+            f2: !allVisible,
+            f3: !allVisible,
+            always: true,
         });
-        return acc;
-    }, {});
-    console.log("🚀 ~ WIPTable ~ fetches:", fetches);
+    };
 
-    const handleSearch = () => {
-        Object.values(fetches).forEach(({ abort: abort, fetch: refetch }) => {
-            abort();
-            refetch();
-        });
+    const handleSearchableDropdownSelect = (packageName) => {
+        setSelectedPackageName(packageName);
+        setSavedSelectedPackage(packageName);
+    };
+
+    const handlePeriodSelect = (period) => {
+        setSelectedPeriod(period);
+        setSavedSelectedPeriod(period);
+    };
+
+    const handleLookBackChange = (lookBack) => {
+        setSelectedLookBack(lookBack);
+        setSavedSelectedLookBack(lookBack);
+    };
+
+    const handleOffsetChange = (offset) => {
+        setSelectedOffsetPeriod(Number(offset));
+        setSavedSelectedOffset(Number(offset));
+    };
+
+    const handleFactorySelect = (factory) => {
+        setSelectedFilterType(factory);
+        setSavedSelectedFactory(factory);
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="WIP Table" />
-            <h1 className="text-base font-bold mb-4">WIP Table</h1>
-            <div className="flex items-center gap-2 mb-2">
-                <div className="w-20 dropdown dropdown-hover">
-                    <div tabIndex={0} role="button" className="m-1 btn">
-                        {selectedFilterType}
-                    </div>
-                    <ul
-                        tabIndex={-1}
-                        className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
-                    >
-                        {["F1", "F2", "PL1", "PL6"].map((type) => (
-                            <li key={type}>
-                                <a onClick={() => setSelectedFilterType(type)}>
-                                    {type}
-                                </a>
-                            </li>
-                        ))}
-                    </ul>
+            <Head title="WIP Station" />
+            <h1 className="text-base font-bold mb-4">WIP Station</h1>
+            <div className="flex flex-wrap w-full items-center gap-x-2 gap-y-4 mb-2">
+                <div className="join items-center">
+                    <span className="join-item btn btn-disabled font-medium">
+                        Package Name
+                    </span>
+                    <SearchableDropdown
+                        selectedItem={selectedPackageName}
+                        onSelectItem={(packageName) => {
+                            handleSearchableDropdownSelect(packageName);
+                        }}
+                        items={packagesData?.data || []}
+                        isLoading={packagesryLoading}
+                        errorMessage={packagesErrorMessage}
+                        buttonClassName="rounded-r-lg m-0 border-base-content/10 w-30"
+                    />
                 </div>
-                <input
-                    type="date"
-                    className="input"
-                    value={selectedDate || ""}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+
+                <div className="join items-center">
+                    <span className="join-item btn btn-disabled font-medium">
+                        Factory
+                    </span>
+                    <div className="dropdown dropdown-hover">
+                        <div
+                            tabIndex={0}
+                            role="button"
+                            className="btn rounded-r-lg border-base-content/10 w-20"
+                        >
+                            {selectedFilterType}
+                        </div>
+                        <ul
+                            tabIndex={-1}
+                            className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
+                        >
+                            {["All", "F1", "F2", "PL1", "PL6"].map((type) => (
+                                <li key={type}>
+                                    <a
+                                        onClick={() => {
+                                            handleFactorySelect(type);
+                                        }}
+                                    >
+                                        {type}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="join items-center">
+                    <span className="join-item btn btn-disabled font-medium">
+                        Period
+                    </span>
+                    <div className="dropdown dropdown-hover">
+                        <div
+                            tabIndex={0}
+                            role="button"
+                            className="join-item btn rounded-r-lg border-base-content/10 w-20"
+                        >
+                            {selectedPeriod}
+                        </div>
+                        <ul
+                            tabIndex="-1"
+                            className="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
+                        >
+                            {periodOptions.map((option) => (
+                                <li
+                                    key={option.value}
+                                    onClick={() => {
+                                        handlePeriodSelect(option.value);
+                                    }}
+                                >
+                                    <a>{option.label}</a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                <FloatingLabelInput
+                    id="lookBack"
+                    label={`Look back ${datePeriod}`}
+                    value={selectedLookBack}
+                    type="number"
+                    onChange={(e) => {
+                        handleLookBackChange(e.target.value);
+                    }}
+                    className="h-9 w-44"
+                    labelClassName="bg-base-200"
                 />
-                <button
-                    className="btn btn-outline btn-primary"
-                    onClick={handleSearch}
-                >
+
+                <FloatingLabelInput
+                    id="offset"
+                    label={`Offset ${datePeriod}`}
+                    value={selectedOffsetPeriod}
+                    type="number"
+                    onChange={(e) => {
+                        handleOffsetChange(e.target.value);
+                    }}
+                    className="h-9 w-44"
+                    labelClassName="bg-base-200"
+                    alwaysFloatLabel
+                />
+
+                <TogglerButton
+                    id="factory"
+                    toggleButtons={TOGGLE_FACTORY_BUTTONS}
+                    visibleBars={factoryVisibleBars}
+                    toggleBar={handleToggleBar}
+                    toggleAll={toggleAllFactory}
+                />
+
+                <button className="btn btn-primary h-9" onClick={handleSearch}>
                     Search
                 </button>
             </div>
-            <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
-                {filteringConditions.map((type) => {
-                    const { data, isLoading, errorMessage } = fetches[type];
-                    return (
-                        <StatCard
-                            key={type}
-                            title={type}
-                            data={data}
-                            isLoading={isLoading}
-                            errorMessage={errorMessage}
-                        />
-                    );
-                })}
+            <div
+                className={clsx(
+                    "mt-4",
+                    fullLabel ? "opacity-100" : "opacity-0"
+                )}
+            >
+                {fullLabel}
+            </div>
+            <div
+                className={clsx(
+                    "text-error-content bg-error/10 border border-error rounded-lg p-4 mt-4",
+                    anyError ? "block" : "hidden"
+                )}
+            >
+                {anyError ? anyError.errorMessage : ""}
+            </div>
+            <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
+                {allFetchStates.map(
+                    ({ type, data, isLoading, errorMessage }) => {
+                        console.log("🚀 ~ WIPTable ~ data:", data);
+
+                        return (
+                            <div>
+                                <div className="font-semibold pt-4 pb-2 pl-2">
+                                    {type}
+                                </div>
+                                <div className="p-4 border bg-base-300 border-base-content/10 rounded-lg">
+                                    <TrendLineChart
+                                        key={type}
+                                        data={data?.data || []}
+                                        xKey={xAxis}
+                                        isLoading={isLoading}
+                                        errorMessage={errorMessage}
+                                        lines={visibleLines({
+                                            showQuantities: true,
+                                            showLots: false,
+                                            showFactories: {
+                                                f1: factoryVisibleBars.f1,
+                                                f2: factoryVisibleBars.f2,
+                                                f3: factoryVisibleBars.f3,
+                                            },
+                                        })}
+                                    />
+                                </div>
+                            </div>
+                        );
+                    }
+                )}
             </div>
         </AuthenticatedLayout>
     );

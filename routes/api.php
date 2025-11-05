@@ -14,8 +14,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('wip')->name('api.wip.')->group(function () {
   Route::get('/today', [WipController::class, 'getTodayWip'])->name('today');
   Route::get('/overall', [WipController::class, 'getOverallWip'])->name('overall');
-  Route::get('/filter-summary', [WipController::class, 'getWIPFilterSummary'])->name('filterSummary');
+  Route::get('/distinct-packages', [WipController::class, 'getDistinctPackages'])->name('distinctPackages');
+  Route::get('/overall-package', [WipController::class, 'getOverallWipByPackage'])->name('overallByPackage');
+  Route::get('/filter-summary-trend', [WipController::class, 'getWIPStationTrend'])->name('filterSummaryTrend');
   Route::get('/pickup', [WipController::class, 'getOverallPickUp'])->name('pickup');
+  Route::get('/pickup-summary-trend', [WipController::class, 'getPackagePickUpTrend'])->name('pickupSummaryTrend');
   Route::get('/residual', [WipController::class, 'getOverallResidual'])->name('residual');
   Route::get('/residual-summary', [WipController::class, 'getPackageResidualSummary'])->name('residualSummary');
   Route::get('/package-pickup-summary', [WipController::class, 'getPackagePickUpSummary'])->name('packagePickupSummary');
