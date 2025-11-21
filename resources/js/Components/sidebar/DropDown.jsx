@@ -11,8 +11,10 @@ export default function Dropdown({
     links = [],
     notification = null,
 }) {
-    const { url } = usePage();
+    const { appName } = usePage().props;
     const { theme } = useThemeStore();
+    const currentPath = window.location.pathname.replace(`/${appName}`, "");
+
     const normalizePath = (href) => {
         try {
             const urlObj = new URL(href, window.location.origin);
@@ -23,12 +25,19 @@ export default function Dropdown({
     };
 
     const isActiveLink = (href) => {
-        return url === new URL(href, window.location.origin).pathname;
+        const firstSegmentFrom = currentPath.split("/")[1];
+        const firstSegmentTo = new URL(href, window.location.origin).pathname
+            .replace(`/${appName}`, "")
+            .split("/")[1];
+        // console.log("🚀 ~ isActiveLink ~ firstSegmentFrom:", firstSegmentFrom);
+        // console.log("🚀 ~ isActiveLink ~ firstSegmentTo:", firstSegmentTo);
+
+        return firstSegmentFrom === firstSegmentTo;
     };
 
     const hasActiveLink = useMemo(() => {
         return links.some((link) => isActiveLink(link.href));
-    }, [url, links]);
+    }, [currentPath, links]);
 
     const [open, setOpen] = useState(false);
 

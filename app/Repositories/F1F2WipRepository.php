@@ -3,22 +3,73 @@
 namespace App\Repositories;
 
 use App\Models\CustomerDataWip;
-use App\Models\F3DataWip;
+use App\Models\F3Wip;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use App\Constants\WipConstants;
+use Log;
 
-class WipRepository
+class F1F2WipRepository
 {
-  // TODO: either use wip alias consistently or not use it at all
-
   private const F1F2_TABLE = "customer_data_wip";
   private const DISTINCT_PACKAGE_CACHE_KEY = 'distinct_packages';
   private const CACHE_HOURS = 26;
   private const F3_TABLE = "f3_data_wip";
   private const PPC_TABLE = "ppc_productionline_packagereference";
+
+  private const KEYS = [
+    'Plant',
+    'Part_Name',
+    'Lead_Count',
+    'Package_Name',
+    'Lot_Id',
+    'Station',
+    'Qty',
+    'Lot_Type',
+    'Prod_Area',
+    'Lot_Status',
+    'Date_Loaded',
+    'Start_Time',
+    'Part_Type',
+    'Part_Class',
+    'Date_Code',
+    'Focus_Group',
+    'Process_Group',
+    'Bulk',
+    'Reqd_Time',
+    'Lot_Entry_Time',
+    'Stage',
+    'Stage_Start_Time',
+    'CCD',
+    'Stage_Run_Days',
+    'Lot_Entry_Time_Days',
+    'Tray',
+    'Backend_Leadtime',
+    'OSL_Days',
+    'BE_Group',
+    'Strategy_Code',
+    'CR3',
+    'BE_Starttime',
+    'BE_OSL_Days',
+    'Body_Size',
+    'Auto_Part',
+    'Ramp_Time',
+    'End_Customer',
+    'Bake',
+    'Bake_Count',
+    'Test_Lot_Id',
+    'Stock_Position',
+    'Assy_Site',
+    'Bake_Time_Temp',
+    'imported_by'
+  ];
+
+  public static function getKeys(): array
+  {
+    return self::KEYS;
+  }
 
   public function getExistingRecords()
   {
@@ -40,7 +91,12 @@ class WipRepository
 
   public function insertF3(array $data)
   {
-    F3DataWip::create($data);
+    F3Wip::create($data);
+  }
+
+  public function insertManyCustomers(array $data)
+  {
+    CustomerDataWip::insert($data);
   }
 
   public function applyStationFilter($query, array $includeStations = [], array $excludeStations = []): Builder
@@ -62,7 +118,7 @@ class WipRepository
       ->where('wip.Focus_Group', 'F3');
 
     if ($joinPpc) {
-      $query->join(self::PPC_TABLE . ' as plref', 'wip.Package_Name', '=', 'plref.Package');
+      $query->join(self::PPC_TABLE . ' as plref', 'wip.Package_Name', '=', 'plref.Package'); // TODO: TO BE CHANGED
     }
 
     return $query;
@@ -118,91 +174,16 @@ class WipRepository
     return $query;
   }
 
-  public function filterByPackageName($query, ?string $packageNames): Builder
+  public function filterByPackageName($query, ?array $packageNames): Builder
   {
-    if (!$packageNames) return $query;
-    return $query->where('wip.Package_Name', $packageNames);
-  }
-
-  /**
-   * Get trend data aggregated by period (weekly, monthly, quarterly, yearly)
-   *
-   * @param string $period         'weekly' | 'monthly' | 'quarterly' | 'yearly'
-   * @param int    $lookBack       How many periods to look back (weeks, months, etc.)
-   * @param int    $offsetDays     Optional offset from today
-   * @param string $column         Column to aggregate (default 'Date_Loaded')
-   * @param string $quantityColumn Column to sum (default 'Qty')
-   *
-   * @return \Illuminate\Database\Query\Builder
-   */
-  public function getTrend(
-    Builder $query,
-    string $period = 'weekly',
-    int $lookBack = 3,
-    int $offsetDays = 0,
-    string $column = 'Date_Loaded',
-    string $quantityColumn = 'Qty'
-  ) {
-    $now = Carbon::now()->subDays($offsetDays)->endOfDay();
-
-    // TODO: covers the current date even partial???
-
-    // Determine start date based on period
-    switch (strtolower($period)) {
-      case 'daily':
-        $startDate = (clone $now)->subDays($lookBack)->startOfDay();
-        break;
-      case 'weekly':
-        $startDate = (clone $now)->subWeeks($lookBack)->startOfWeek();
-        break;
-      case 'monthly':
-        $startDate = (clone $now)->subMonths($lookBack)->startOfMonth();
-        break;
-      case 'quarterly':
-        $startDate = (clone $now)->subMonths($lookBack * 3)->startOfQuarter();
-        break;
-      case 'yearly':
-        $startDate = (clone $now)->subYears($lookBack)->startOfYear();
-        break;
-      default:
-        throw new \InvalidArgumentException("Invalid period: {$period}");
+    if (is_string($packageNames)) {
+      $packageNames = explode(',', $packageNames);
     }
+    $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
 
-    $query->whereBetween($column, [$startDate, $now]);
+    if (empty($packageNames)) return $query;
 
-    // Apply grouping and aggregation
-    switch (strtolower($period)) {
-      case 'daily':
-        $query->selectRaw("DATE({$column}) as day, SUM({$quantityColumn}) as total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots")
-          ->groupBy('day')
-          ->orderBy('day');
-        break;
-      case 'weekly':
-        $query->selectRaw("YEAR({$column}) as year, WEEK({$column}, 1) as week, SUM({$quantityColumn}) as total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots")
-          ->groupBy('year', 'week')
-          ->orderBy('year')
-          ->orderBy('week');
-        break;
-      case 'monthly':
-        $query->selectRaw("YEAR({$column}) as year, MONTH({$column}) as month, SUM({$quantityColumn}) as total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots")
-          ->groupBy('year', 'month')
-          ->orderBy('year')
-          ->orderBy('month');
-        break;
-      case 'quarterly':
-        $query->selectRaw("YEAR({$column}) as year, QUARTER({$column}) as quarter, SUM({$quantityColumn}) as total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots")
-          ->groupBy('year', 'quarter')
-          ->orderBy('year')
-          ->orderBy('quarter');
-        break;
-      case 'yearly':
-        $query->selectRaw("YEAR({$column}) as year, SUM({$quantityColumn}) as total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots")
-          ->groupBy('year')
-          ->orderBy('year');
-        break;
-    }
-
-    return $query;
+    return $query->whereIn('wip.Package_Name', $packageNames);
   }
 
   public function refreshDistinctPackagesCache(): void
@@ -219,7 +200,11 @@ class WipRepository
 
   public function getDistinctPackages()
   {
+    // sleep(5);
+
     return Cache::remember(self::DISTINCT_PACKAGE_CACHE_KEY, now()->addHours(self::CACHE_HOURS), function () {
+      // sleep(5);
+
       return DB::table(self::F1F2_TABLE)
         ->whereNotNull('Package_Name')
         ->where('Package_Name', '!=', '')

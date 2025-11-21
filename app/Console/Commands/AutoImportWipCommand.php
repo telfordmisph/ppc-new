@@ -20,7 +20,7 @@ class AutoImportWipCommand extends Command
   public function handle()
   {
     $userId = $this->option('user_id');
-    $result = $this->importService->autoImportWIP($userId);
+    $result = $this->importService->autoImportF1F2WIP($userId);
 
     $this->info($result['message']);
     return $result['status'] === 'success' ? 0 : 1;

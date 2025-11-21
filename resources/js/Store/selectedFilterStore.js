@@ -1,11 +1,30 @@
 import { create } from "zustand";
+import { debounce } from "lodash";
+import { setSeconds } from "date-fns";
 
-export const useSelectedFilteredStore = create((set) => {
-  const packageStorageName = "selectedPackage";
-  const lookBackStorageName = "selectedLookBackPeriod";
-  const periodStorageName = "selectedPeriod";
-  const factoryStorageName = "selectedFactory";
-  const offsetStorageName = "selectedOffset";
+export const useSelectedFilteredStore = create((set, get) => {
+  const storageKeys = {
+    packageNames: "selectedPackageNames",
+    packageName: "selectedPackageName",
+    workWeeks: "selectedWorkWeeks",
+    lookBack: "selectedLookBackPeriod",
+    period: "selectedPeriod",
+    factory: "selectedFactory",
+    offset: "selectedOffset",
+  };
+
+  const getJSON = (key, fallback) => {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const setJSON = (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  };
 
   const getNumber = (key, defaultValue) => {
     const val = localStorage.getItem(key);
@@ -13,36 +32,62 @@ export const useSelectedFilteredStore = create((set) => {
     return isNaN(num) ? defaultValue : num;
   };
 
+  const debouncedSet = {};
+  const createDebouncedSetter = (key, delay = 500) => {
+    debouncedSet[key] = debounce((value) => setJSON(key, value), delay);
+  };
+
+  createDebouncedSetter(storageKeys.packageNames);
+  createDebouncedSetter(storageKeys.workWeeks);
+  createDebouncedSetter(storageKeys.lookBack);
+  createDebouncedSetter(storageKeys.offset);
+
   return {
-    packageName: localStorage.getItem(packageStorageName) || "",
-    lookBack: getNumber(lookBackStorageName, 4),
-    period: localStorage.getItem(periodStorageName) || "weekly",
-    factory: localStorage.getItem(factoryStorageName) || "All",
-    offset: getNumber(offsetStorageName, 0),
-  
-    setSelectedPackage: (packageName) => {
-      localStorage.setItem(packageStorageName, packageName);
-      set({ packageName: packageName });
+    packageNames: getJSON(storageKeys.packageNames, []),
+    packageName: localStorage.getItem(storageKeys.packageName) || "",
+    workWeeks: getJSON(storageKeys.workWeeks, []),
+    lookBack: getNumber(storageKeys.lookBack, 4),
+    period: localStorage.getItem(storageKeys.period) || "weekly",
+    factory: localStorage.getItem(storageKeys.factory) || "All",
+    offset: getNumber(storageKeys.offset, 0),
+
+    setSelectedPackageNames: (packageNames) => {
+      set({ packageNames });
+      debouncedSet[storageKeys.packageNames](packageNames);
+    },
+
+    setSelectedPackageName: (packageName) => {
+      set({ packageName });
+      localStorage.setItem(storageKeys.packageName, packageName);
+    },
+
+    setSelectedWorkWeeks: (workWeeks) => {
+      set({ workWeeks });
+      debouncedSet[storageKeys.workWeeks](workWeeks);
     },
 
     setSelectedLookBack: (lookBack) => {
-      localStorage.setItem(lookBackStorageName, lookBack);
-      set({ lookBack: lookBack });
+      set({ lookBack });
+      debouncedSet[storageKeys.lookBack](lookBack);
     },
 
     setSelectedPeriod: (period) => {
-      localStorage.setItem(periodStorageName, period);
-      set({ period: period });
+      set({ period });
+      localStorage.setItem(storageKeys.period, period);
     },
 
     setSelectedFactory: (factory) => {
-      localStorage.setItem(factoryStorageName, factory);
-      set({ factory: factory });
+      set({ factory });
+      localStorage.setItem(storageKeys.factory, factory);
     },
 
     setSelectedOffset: (offset) => {
-      localStorage.setItem(offsetStorageName, offset);
-      set({ offset: offset });
-    }
-  }
+      set({ offset });
+      debouncedSet[storageKeys.offset](offset);
+    },
+
+    flushDebounced: () => {
+      Object.values(debouncedSet).forEach((fn) => fn.flush && fn.flush());
+    },
+  };
 });

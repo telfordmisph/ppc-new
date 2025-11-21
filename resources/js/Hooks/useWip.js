@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { router } from "@inertiajs/react";
+import { set } from "date-fns";
 
 export function useWip() {
   const [wip, setWip] = useState({});
@@ -7,13 +9,22 @@ export function useWip() {
   const [trend, setTrend] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     async function fetchWip() {
       try {
-        const response = await fetch(route("api.wip.today"));
+        const response = await fetch(route("api.wip.today"), {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+        });
 
         let json;
         try {
@@ -54,8 +65,6 @@ export function useWip() {
 
           if (mounted) {
             setWip(wipObject);
-            console.log("🚀 ~ fetchWip ~ wipObject:", wipObject)
-
             const todayData = withTrend[withTrend.length - 1];
             const yesterdayData = withTrend.length > 1 ? withTrend[withTrend.length - 2] : null;
 
@@ -69,15 +78,29 @@ export function useWip() {
           throw new Error("No WIP data available");
         }
       } catch (err) {
+          if (err.name === "AbortError") return;
           setErrorMessage(err.message);
+      } finally {
+        if (mounted) {
           setIsLoading(false);
+        }
       }
     }
 
     fetchWip();
 
+    const handleInertiaStart = () => {
+      if (abortControllerRef.current) { 
+        abortControllerRef.current.abort();
+      }
+    };
+    // https://chatgpt.com/c/690c533b-0340-8324-9c77-fa7f4ada4884 continue...
+    const removeInertiaListener = router.on('start', handleInertiaStart); 
+    
     return () => {
+      removeInertiaListener(); 
       mounted = false;
+      abortControllerRef.current?.abort(); 
     };
   }, []);
 

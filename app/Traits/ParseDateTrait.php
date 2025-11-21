@@ -6,10 +6,51 @@ namespace App\Traits;
 use Carbon\Carbon;
 use Exception;
 use App\Exceptions\InvalidDateRangeException;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Facades\Log;
 
 trait ParseDateTrait
 {
+  private const AMBIGUOUS_DATE_FORMATS = ['d/m/Y H:i:s', 'm/d/Y H:i:s'];
+
+  protected function parseDate($value, $fallback = null)
+  {
+    if ($value === null || $value === '') {
+      return $fallback;
+    }
+
+    if (is_numeric($value)) {
+      try {
+        $value = Date::excelToDateTimeObject($value);
+      } catch (Exception $e) {
+        return $fallback;
+      }
+    }
+
+    if ($value instanceof \DateTimeInterface) {
+      return Carbon::instance($value)->format('Y-m-d H:i:s');
+    }
+
+    $value = trim($value);
+    $value = preg_replace('/\.\d+$/', '', $value);
+
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})/', $value, $matches)) {
+      [$full, $part1, $part2, $year] = $matches;
+      $format = ((int)$part1 > 12) ? 'd/m/Y H:i:s' : 'm/d/Y H:i:s';
+
+      try {
+        return Carbon::createFromFormat($format, $value)->format('Y-m-d H:i:s');
+      } catch (Exception $e) {
+      }
+    }
+
+    try {
+      return Carbon::parse($value)->format('Y-m-d H:i:s');
+    } catch (Exception $e) {
+      return $fallback;
+    }
+  }
+
   protected function parseDateRange(?string $dateRange = ''): array
   {
     $dateRange = trim($dateRange ?? '');

@@ -28,7 +28,7 @@ function formatFriendlyDate(date, includeTime = false) {
     if (includeTime) {
         return d.toLocaleString(undefined, {
             year: "numeric",
-            month: "long",
+            month: "short",
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
@@ -39,7 +39,7 @@ function formatFriendlyDate(date, includeTime = false) {
 
     return d.toLocaleDateString(undefined, {
         year: "numeric",
-        month: "long",
+        month: "short",
         day: "numeric",
     });
 }

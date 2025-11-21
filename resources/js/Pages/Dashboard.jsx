@@ -1,13 +1,11 @@
-import BarChartSkeleton from "@/Components/Charts/BarChartSkeleton";
-import ReferenceLineChart from "@/Components/Charts/TrendLineChart";
 import BarChart from "@/Components/Charts/OverallWIPBarChart";
-import { useWip } from "@/Hooks/useWip";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, usePage } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import { Head } from "@inertiajs/react";
+import { useState } from "react";
 import { FaMinus, FaTasks, FaIndustry } from "react-icons/fa";
 import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
 import clsx from "clsx";
+import { useWipStore } from "@/Store/overallDailyWipTrendStore";
+import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
 
 function StatCard({
     icon,
@@ -63,16 +61,14 @@ function StatCard({
 }
 
 export default function Dashboard({ tableData, tableFilters }) {
-    const props = usePage().props;
-    const [windowSize, setWindowSize] = useState(1);
+    const [windowSize, setWindowSize] = useState(2);
 
     const {
         wip: wipData,
         isLoading: isWipLoading,
         errorMessage: wipErrorMessage,
         latest: latestWip,
-        yesterday: yesterdayWip,
-    } = useWip(windowSize);
+    } = useWipStore();
 
     const trendValue = latestWip?.trend ?? 0;
     const trendIcon =
@@ -92,19 +88,23 @@ export default function Dashboard({ tableData, tableFilters }) {
             : "text-gray-500";
 
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="Dashboard" />
 
             <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-            <div className="grid md:h-[600px] grid-cols-2 grid-rows-12 md:grid-rows-1 gap-4 h-[800px] md:grid-cols-12">
+            <div className="w-full">
+                <WipOutTrendByPackage isVisible noChartTable={true} />
+            </div>
+
+            <div className="mt-4 grid md:h-[600px] grid-cols-2 grid-rows-12 md:grid-rows-1 gap-4 h-[800px] md:grid-cols-12">
                 <div className="order-2 col-span-2 row-span-8 md:order-1 md:row-span-1 md:col-span-8 border border-base-content/10 items-center justify-center w-full h-full p-4 rounded-lg shadow-lg bg-base-300">
                     <BarChart
                         data={wipData}
                         isLoading={isWipLoading}
                         errorMessage={wipErrorMessage}
                         windowSize={windowSize}
-                        setWindowSize={setWindowSize}
+                        // setWindowSize={setWindowSize}
                     />
                 </div>
 
@@ -179,6 +179,6 @@ export default function Dashboard({ tableData, tableFilters }) {
                     />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }

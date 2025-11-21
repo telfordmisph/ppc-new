@@ -1,7 +1,6 @@
 import { useMutation } from "@/Hooks/useMutation";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
-import { usePage, router } from "@inertiajs/react";
+import { usePage, router, Link } from "@inertiajs/react";
 import { useEffect, useState, useRef } from "react";
 import { FaEdit, FaExclamationTriangle, FaTrash } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
@@ -29,6 +28,7 @@ const PartNameList = () => {
     const [currentPage, setCurrentPage] = useState(
         serverPartNames.current_page || 1
     );
+    const partNameIndexRoute = route("partname.index");
 
     const {
         mutate,
@@ -39,11 +39,10 @@ const PartNameList = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.visit(route("partname.index"), {
+            router.reload({
                 data: { search: searchInput, perPage: maxItem, page: 1 },
                 preserveState: true,
                 preserveScroll: true,
-                replace: true,
             });
             setCurrentPage(1);
         }, 700);
@@ -52,31 +51,28 @@ const PartNameList = () => {
     }, [searchInput]);
 
     const goToPage = (page) => {
-        router.visit(route("partname.index"), {
+        router.reload({
             data: { search: searchInput, perPage: maxItem, page },
             preserveState: true,
             preserveScroll: true,
-            replace: true,
         });
         setCurrentPage(page);
     };
 
     const changeMaxItemPerPage = (maxItem) => {
-        router.visit(route("partname.index"), {
+        router.reload({
             data: { search: searchInput, perPage: maxItem, page: 1 },
             preserveState: true,
             preserveScroll: true,
-            replace: true,
         });
         setMaxItem(maxItem);
     };
 
     const refresh = () => {
-        router.visit(route("partname.index"), {
+        router.reload({
             data: { search: searchInput, perPage: maxItem, currentPage },
             preserveState: true,
             preserveScroll: true,
-            replace: true,
         });
     };
 
@@ -102,16 +98,16 @@ const PartNameList = () => {
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <div className="w-full px-4">
                 <div className="flex items-center justify-between text-center">
                     <h1 className="text-base font-bold">Part Names</h1>
-                    <a
+                    <Link
                         href={route("partname.create")}
                         className="btn btn-primary"
                     >
                         <FaPlus /> Add PartName
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="flex justify-between py-4">
@@ -205,7 +201,7 @@ const PartNameList = () => {
                                     )}
                                 </td>
                                 <td className="flex flex-col lg:flex-row">
-                                    <a
+                                    <Link
                                         href={route("partname.edit", {
                                             id: part.ppc_partnamedb_id,
                                             search: searchInput,
@@ -215,7 +211,7 @@ const PartNameList = () => {
                                         className="btn btn-ghost btn-sm btn-primary"
                                     >
                                         <FaEdit />
-                                    </a>
+                                    </Link>
                                     <a
                                         className="btn btn-ghost btn-sm text-error"
                                         onClick={() => {
@@ -329,7 +325,7 @@ const PartNameList = () => {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 

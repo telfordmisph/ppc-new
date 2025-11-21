@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useMemo } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage } from "@inertiajs/react";
 import { useFetch } from "@/Hooks/useFetch";
 import SearchableDropdown from "@/Components/SearchableDropdown";
@@ -11,26 +10,26 @@ import {
     formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
 import { periodOptions } from "@/Constants/periodOptions";
-import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
+import {
+    TOGGLE_F1F2_BUTTONS,
+    TOGGLE_FACTORY_BUTTONS,
+} from "@/Constants/toggleButtons";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 import { visibleLines } from "@/Utils/chartLines";
 import clsx from "clsx";
 
-const WIPTable = () => {
+const WIPStation = () => {
     const {
         packageName: savedSelectedPackage,
         lookBack: savedLookBack,
         period: savedPeriod,
-        factory: savedFactory,
         offset: savedOffset,
-        setSelectedPackage: setSavedSelectedPackage,
+        setSelectedPackageName: setSavedSelectedPackageName,
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
-        setSelectedFactory: setSavedSelectedFactory,
         setSelectedOffset: setSavedSelectedOffset,
     } = useSelectedFilteredStore();
     const [fullLabel, setFullLabel] = useState("");
-    const [selectedFilterType, setSelectedFilterType] = useState(savedFactory);
     const [selectedPackageName, setSelectedPackageName] =
         useState(savedSelectedPackage);
     const [selectedPeriod, setSelectedPeriod] = useState(savedPeriod);
@@ -120,11 +119,9 @@ const WIPTable = () => {
         selectedPeriod,
         selectedLookBack,
         selectedOffsetPeriod,
-        selectedFilterType,
     ]);
 
     const anyLoading = allFetchStates.some((f) => f.isLoading);
-    console.log("🚀 ~ WIPTable ~ anyLoading:", anyLoading);
     const anyError = allFetchStates.find((f) => f.errorMessage);
 
     const handleToggleBar = (name, key) => {
@@ -142,14 +139,13 @@ const WIPTable = () => {
         setFactoryVisibleBars({
             f1: !allVisible,
             f2: !allVisible,
-            f3: !allVisible,
             always: true,
         });
     };
 
     const handleSearchableDropdownSelect = (packageName) => {
         setSelectedPackageName(packageName);
-        setSavedSelectedPackage(packageName);
+        setSavedSelectedPackageName(packageName);
     };
 
     const handlePeriodSelect = (period) => {
@@ -167,13 +163,8 @@ const WIPTable = () => {
         setSavedSelectedOffset(Number(offset));
     };
 
-    const handleFactorySelect = (factory) => {
-        setSelectedFilterType(factory);
-        setSavedSelectedFactory(factory);
-    };
-
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="WIP Station" />
             <h1 className="text-base font-bold mb-4">WIP Station</h1>
             <div className="flex flex-wrap w-full items-center gap-x-2 gap-y-4 mb-2">
@@ -191,37 +182,6 @@ const WIPTable = () => {
                         errorMessage={packagesErrorMessage}
                         buttonClassName="rounded-r-lg m-0 border-base-content/10 w-30"
                     />
-                </div>
-
-                <div className="join items-center">
-                    <span className="join-item btn btn-disabled font-medium">
-                        Factory
-                    </span>
-                    <div className="dropdown dropdown-hover">
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className="btn rounded-r-lg border-base-content/10 w-20"
-                        >
-                            {selectedFilterType}
-                        </div>
-                        <ul
-                            tabIndex={-1}
-                            className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
-                        >
-                            {["All", "F1", "F2", "PL1", "PL6"].map((type) => (
-                                <li key={type}>
-                                    <a
-                                        onClick={() => {
-                                            handleFactorySelect(type);
-                                        }}
-                                    >
-                                        {type}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
                 </div>
 
                 <div className="join items-center">
@@ -268,7 +228,7 @@ const WIPTable = () => {
 
                 <FloatingLabelInput
                     id="offset"
-                    label={`Offset ${datePeriod}`}
+                    label={`Offset days`}
                     value={selectedOffsetPeriod}
                     type="number"
                     onChange={(e) => {
@@ -281,7 +241,7 @@ const WIPTable = () => {
 
                 <TogglerButton
                     id="factory"
-                    toggleButtons={TOGGLE_FACTORY_BUTTONS}
+                    toggleButtons={TOGGLE_F1F2_BUTTONS}
                     visibleBars={factoryVisibleBars}
                     toggleBar={handleToggleBar}
                     toggleAll={toggleAllFactory}
@@ -310,8 +270,6 @@ const WIPTable = () => {
             <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
                 {allFetchStates.map(
                     ({ type, data, isLoading, errorMessage }) => {
-                        console.log("🚀 ~ WIPTable ~ data:", data);
-
                         return (
                             <div>
                                 <div className="font-semibold pt-4 pb-2 pl-2">
@@ -340,8 +298,8 @@ const WIPTable = () => {
                     }
                 )}
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 
-export default WIPTable;
+export default WIPStation;

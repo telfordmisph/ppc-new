@@ -86,6 +86,50 @@ class WipConstants
     ...self::TRANSFER_QA,
     ...self::FINAL_QA_STATION
   ];
+  public const FACTORY_TREND_CONFIG = [
+    "F1" => [
+      "dateColumn" => "wip.Date_Loaded",
+      "selectColumns" => "",
+      "aggregateColumns" => [
+        'SUM(wip.Qty)' => 'total_quantity',
+        'COUNT(wip.Lot_Id)' => 'total_lots'
+      ],
+    ],
+    "F2" => [
+      "dateColumn" => "wip.Date_Loaded",
+      "selectColumns" => "",
+      "aggregateColumns" => [
+        'SUM(wip.Qty)' => 'total_quantity',
+        'COUNT(wip.Lot_Id)' => 'total_lots'
+      ],
+    ],
+    "F1F2" => [
+      "dateColumn" => "wip.Date_Loaded",
+      "selectColumns" => "",
+      "aggregateColumns" => [
+        'SUM(wip.Qty)' => 'total_quantity',
+        'COUNT(wip.Lot_Id)' => 'total_lots'
+      ],
+    ],
+    "All" => [
+      "dateColumn" => "wip.date_loaded",
+      "selectColumns" => "",
+      "aggregateColumns" => [
+        'SUM(wip.qty)' => 'total_quantity',
+        'COUNT(wip.lot_id)' => 'total_lots'
+      ],
+    ],
+    "F3" => [
+      "dateColumn" => "f3_wip.date_received",
+      "selectColumns" => "",
+      "aggregateColumns" => [
+        'SUM(f3_wip.qty)' => 'total_quantity',
+        'COUNT(f3_wip.lot_number)' => 'total_lots'
+      ],
+    ],
+  ];
+  public const F2_WIP_OUT_FOCUS_GROUP_INCLUSION = ['CV', 'LT', 'LTCL', 'LTI'];
+  public const F1_WIP_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];
@@ -127,5 +171,398 @@ class WipConstants
     'ADXL313WACPZ-RL7',
     'ADXL180WCPZA-RL',
     'ADXL314WBCPZ-RL',
+  ];
+
+  public const IMPORT_F3_WIP_EXPECTED_HEADERS = [
+    'running_ct' => [
+      'running ct',
+      'run ct',
+      'running_count',
+      'run_count',
+      'RUNNING CT',
+      'RUN CT'
+    ],
+    'date_received' => [
+      'date received',
+      'received date',
+      'recv date',
+      'date_recv',
+      'DATE RECEIVED'
+    ],
+    'packing_list_srf' => [
+      'packing list srf#',
+      'packing list srf',
+      'srf number',
+      'srf#',
+      'packing_list_srf',
+      'SRF#'
+    ],
+    'po_number' => [
+      'p.o number',
+      'po number',
+      'purchase order number',
+      'po#',
+      'PO NUMBER'
+    ],
+    'machine_number' => [
+      'machine #',
+      'machine number',
+      'machine_no',
+      'MACHINE NUMBER'
+    ],
+    'part_number' => [
+      'part number',
+      'part_no',
+      'part#',
+      'PART NUMBER'
+    ],
+    'package_code' => [
+      'pkg code',
+      'package code',
+      'package_code',
+      'PKG CODE'
+    ],
+    'package' => [
+      'package',
+      'pkg',
+      'PACKAGE'
+    ],
+    'lot_number' => [
+      'lot number',
+      'lot_no',
+      'LOT NUMBER',
+      'lot id',
+      'lot_id',
+      'LOT ID'
+    ],
+    'process_req' => [
+      'process req.',
+      'process requirement',
+      'process_req',
+      'PROCESS REQ'
+    ],
+    'qty' => [
+      'qty',
+      'quantity',
+      'total qty',
+      'total quantity',
+      'QUANTITY'
+    ],
+    'good' => [
+      'good',
+      'ok',
+      'accepted',
+      'GOOD'
+    ],
+    'rej' => [
+      'rej',
+      'rejected',
+      'reject',
+      'REJ'
+    ],
+    'res' => [
+      'res',
+      'reserved',
+      'RES'
+    ],
+    'date_commit' => [
+      'date commit',
+      'commit date',
+      'date_committed',
+      'DATE COMMIT'
+    ],
+    'actual_date_time' => [
+      'actual date/time',
+      'actual datetime',
+      'act date time',
+      'ACTUAL DATE/TIME'
+    ],
+    'status' => [
+      'status',
+      'STATUS'
+    ],
+    'do_number' => [
+      'd.o#',
+      'do number',
+      'delivery order #',
+      'DO#'
+    ],
+    'remarks' => [
+      'remarks',
+      'note',
+      'comments',
+      'REMARKS'
+    ],
+    'doable' => [
+      'doable',
+      'can do',
+      'DOABLE'
+    ],
+    'focus_group' => [
+      'focus group',
+      'group',
+      'FOCUS GROUP'
+    ],
+    'gap_analysis' => [
+      'gap analysis',
+      'gap',
+      'GAP ANALYSIS'
+    ],
+    'cycle_time' => [
+      'cycle time',
+      'ct',
+      'CYCLE TIME'
+    ]
+  ];
+
+  public const IMPORT_F3_OUT_EXPECTED_HEADERS = [
+    'date_received' => [
+      'date received',
+      'received date',
+      'recv date',
+      'date_recv',
+      'DATE RECEIVED',
+      'Date Received'
+    ],
+    'packing_list_srf' => [
+      'packing list srf#',
+      'packing list srf',
+      'srf number',
+      'srf#',
+      'packing_list_srf',
+      'SRF#'
+    ],
+    'po_number' => [
+      'p.o number',
+      'po number',
+      'purchase order number',
+      'po#',
+      'PO NUMBER'
+    ],
+    'machine_number' => [
+      'machine #',
+      'machine number',
+      'machine_no',
+      'MACHINE NUMBER'
+    ],
+    'part_number' => [
+      'part number',
+      'part_no',
+      'part#',
+      'PART NUMBER'
+    ],
+    'package_code' => [
+      'pkg code',
+      'package code',
+      'package_code',
+      'PKG CODE'
+    ],
+    'package' => [
+      'package',
+      'pkg',
+      'PACKAGE'
+    ],
+    'lot_number' => [
+      'lot number',
+      'lot_no',
+      'LOT NUMBER',
+      'lot id',
+      'lot_id',
+      'LOT ID'
+    ],
+    'process_req' => [
+      'process req.',
+      'process RQMT',
+      'process requirement',
+      'process_req',
+      'PROCESS REQ'
+    ],
+    'qty' => [
+      'qty',
+      'good qty',
+      'quantity',
+      'total qty',
+      'total quantity',
+      'QUANTITY'
+    ],
+    'good' => [
+      'good',
+      'ok',
+      'accepted',
+      'GOOD'
+    ],
+    'rej' => [
+      'rej',
+      'rejected',
+      'reject',
+      'REJ'
+    ],
+    'res' => [
+      'res',
+      'reserved',
+      'RES'
+    ],
+    'date_commit' => [
+      'date commit',
+      'commit date',
+      'date_committed',
+      'DATE COMMIT'
+    ],
+    'actual_date_time' => [
+      'actual date/time',
+      'actual datetime',
+      'act date time',
+      'ACTUAL DATE/TIME',
+      'actual date/time shipped',
+      'actual date/time shipped'
+    ],
+    'status' => [
+      'status',
+      'STATUS'
+    ],
+    'do_number' => [
+      'd.o#',
+      'do number',
+      'delivery order #',
+      'DO#'
+    ],
+    'remarks' => [
+      'remarks',
+      'note',
+      'comments',
+      'REMARKS'
+    ],
+    'doable' => [
+      'doable',
+      'DOABLE'
+    ],
+    'gap_analysis' => [
+      'gap analysis',
+      'gap',
+      'GAP ANALYSIS'
+    ],
+    'cycle_time' => [
+      'cycle time',
+      'ct',
+      'CYCLE TIME'
+    ]
+  ];
+
+  public const IMPORT_WIP_OUTS_EXPECTED_HEADERS = [
+    'package' => [
+      'package name',
+      'pkg name',
+      'pkg_name',
+      'package',
+      'pkg',
+      'package_name',
+      'PACKAGE NAME'
+    ],
+    'qty' => [
+      'quantity',
+      'qty',
+      'total quantity',
+      'total_qty',
+      'qty_total',
+      'QUANTITY'
+    ],
+    'part_name' => [
+      'part name',
+      'part',
+      'part_name',
+      'PART NAME'
+    ],
+    'lot_id' => [
+      'lot_id',
+      'lot id',
+      'lot number',
+      'lot_no',
+      'lot_num',
+      'LOT ID'
+    ],
+    'out_date' => [
+      'out date',
+      'output date',
+      'date out',
+      'out_date',
+      'date_out',
+      'OUT DATE'
+    ],
+    'residual' => [
+      'residual',
+      'residual qty',
+      'RESIDUAL'
+    ],
+    'test_part' => [
+      'test part',
+      'test_part',
+      'tested part',
+      'TEST PART'
+    ],
+    'test_lot_id' => [
+      'test lot id',
+      'test_lot_id',
+      'test lot',
+      'lot test',
+      'tested lot',
+      'TEST LOT ID'
+    ],
+    'focus_group' => [
+      'focus group',
+      'focus_group',
+      'group',
+      'focus',
+      'test group',
+      'FOCUS GROUP'
+    ],
+    'process_site' => [
+      'process site',
+      'process_site',
+      'site',
+      'proc site',
+      'manufacturing site',
+      'PROCESS SITE'
+    ],
+    'test_site' => [
+      'test site',
+      'test_site',
+      'site test',
+      'testing site',
+      'test location',
+      'TEST SITE'
+    ],
+    'tray' => [
+      'tray',
+      'TRAY',
+      'Tray',
+    ],
+    'bulk' => [
+      'bulk',
+      'BULK',
+      'Bulk',
+    ],
+    'date_loaded' => [
+      'date loaded',
+      'loaded date',
+      'date_loaded',
+      'load date',
+      'loading date',
+      'DATE LOADED'
+    ],
+    'process_group' => [
+      'process group',
+      'process_group',
+      'proc group',
+      'process_grp',
+      'PROCESS GROUP'
+    ],
+    'ramp_time' => [
+      'ramp time',
+      'ramp_time',
+      'ramptime',
+      'ramp duration',
+      'ramp_time_sec',
+      'RAMP TIME'
+    ],
   ];
 }

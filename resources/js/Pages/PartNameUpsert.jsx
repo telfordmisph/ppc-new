@@ -1,4 +1,3 @@
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import React, { useState } from "react";
 import { FaSave } from "react-icons/fa";
 import { router, usePage } from "@inertiajs/react";
@@ -79,7 +78,7 @@ const PartNameUpsert = () => {
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <h1 className="text-base font-bold">
                 {isEdit ? "Edit Part" : "Add New Part"}
             </h1>
@@ -223,7 +222,7 @@ const PartNameUpsert = () => {
                     </div>
                 </form>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 

@@ -1,0 +1,64 @@
+import React, { useState, useEffect } from "react";
+import Tabs from "@/Components/Tabs";
+import { router } from "@inertiajs/react";
+import Collapse from "@/Components/Collapse";
+import { TbAlertCircle } from "react-icons/tb";
+
+const excelInstructions = [
+    "Ensure all data is in the correct columns without any misplaced entries.",
+    "Use only the correct, recognized header names—unknown headers are not allowed.",
+    "Include all required headers; missing headers may cause import errors.",
+    "Do not include summary rows such as totals or grand totals.",
+    "Keep all rows consistent in format and structure.",
+    "On Uploads: File size must not exceed 20 MB.",
+];
+
+const ImportPageLayout = ({ pageName = "F1/F2", children }) => {
+    const [selectedFactory, setSelectedFactory] = useState(pageName);
+
+    const handleFactoryChange = (selectedFactory) => {
+        setSelectedFactory(selectedFactory);
+
+        if (selectedFactory === "F1/F2") {
+            router.visit(route("import.index"));
+        }
+
+        if (selectedFactory === "F3") {
+            router.visit(route("import.f3.index"));
+        }
+    };
+
+    return (
+        <>
+            <h1 className="font-semibold mb-4">Import {pageName} Data</h1>
+            <Tabs
+                options={["F1/F2", "F3"]}
+                selectedFactory={selectedFactory}
+                handleFactoryChange={handleFactoryChange}
+                tabClassName={"mb-2"}
+            />
+            <Collapse
+                title={
+                    <div className="flex items-center gap-2">
+                        <TbAlertCircle />
+                        <div>Important Excel File Format</div>
+                    </div>
+                }
+                className={"mb-2 rounded-lg"}
+            >
+                <ul className="list">
+                    {excelInstructions.map((instruction, index) => (
+                        <li key={index} className="list-row h-8 leading-none">
+                            {instruction}
+                        </li>
+                    ))}
+                </ul>
+            </Collapse>
+            <div className="flex-1">
+                {React.cloneElement(children, { pageName })}
+            </div>
+        </>
+    );
+};
+
+export default ImportPageLayout;

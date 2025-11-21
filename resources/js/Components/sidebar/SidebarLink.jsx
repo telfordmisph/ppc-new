@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, usePage } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import clsx from "clsx";
 import { useThemeStore } from "@/Store/themeStore";
 import { DARK_THEME_NAME } from "@/Constants/colors";
@@ -11,11 +11,23 @@ const SidebarLink = ({
     notifications = 0,
     // activeColor = "text-blue-600",
 }) => {
-    const { url } = usePage();
+    const { appName } = usePage().props;
 
     const { theme } = useThemeStore();
+    const currentPath = window.location.pathname.replace(`/${appName}`, "");
 
-    const isActive = url === new URL(href, window.location.origin).pathname;
+    const pathTo = new URL(href, window.location.origin).pathname.replace(
+        `/${appName}`,
+        ""
+    );
+    const firstSegmentFrom = currentPath.split("/")[1];
+    const firstSegmentTo = pathTo.split("/")[1];
+    const isActive = firstSegmentFrom === firstSegmentTo;
+
+    // console.log("🚀 ~ SidebarLink ~ firstSegmentFrom:", firstSegmentFrom);
+    // console.log("🚀 ~ SidebarLink ~ firstSegmentTo:", firstSegmentTo);
+
+    // console.log("🚀 ~ SidebarLink ~ isActive:", isActive);
 
     const isDark = theme === DARK_THEME_NAME;
 

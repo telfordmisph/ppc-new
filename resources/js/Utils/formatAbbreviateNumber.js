@@ -92,6 +92,6 @@ const testCases = [
   1_000_000_000_000_000
 ];
 
-testCases.forEach((num, index) => {
-  console.log(`${index + 1}. ${num.toLocaleString()} => ${formatAbbreviateNumber(num)}`);
-});
+// testCases.forEach((num, index) => {
+//   console.log(`${index + 1}. ${num.toLocaleString()} => ${formatAbbreviateNumber(num)}`);
+// });

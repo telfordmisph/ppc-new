@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -110,7 +109,7 @@ const PickupDashboard = () => {
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="Pickup Dashboard" />
             <div className="flex items-center justify-between">
                 <h1 className="w-3/12 text-base font-bold">Pickup Dashboard</h1>
@@ -238,7 +237,7 @@ const PickupDashboard = () => {
                     error={pickupSummaryErrorMessage}
                 />
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 

@@ -1,4 +1,3 @@
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import InputError from "@/Components/InputError";
@@ -36,7 +35,7 @@ export default function Profile({ profile, errors }) {
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="Profile" />
 
             <div className="max-w-3xl p-6 mx-auto border-[1px] rounded-lg">
@@ -205,7 +204,7 @@ export default function Profile({ profile, errors }) {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 }
 

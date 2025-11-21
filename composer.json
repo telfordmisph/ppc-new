@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^5.2",
+        "predis/predis": "^3.2",
         "tightenco/ziggy": "*"
     },
     "require-dev": {

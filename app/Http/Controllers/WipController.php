@@ -6,7 +6,7 @@ use App\Traits\ParseDateTrait;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\WipService;
-use App\Repositories\WipRepository;
+use App\Repositories\F1F2WipRepository;
 use Illuminate\Support\Facades\Log;
 
 class WipController extends Controller
@@ -16,18 +16,60 @@ class WipController extends Controller
   protected $wipService;
   protected $wipRepository;
 
-  public function __construct(WipService $wipService, WipRepository $wipRepository)
+  private const CATEGORY_FILTER = ['all', 'F1', 'F2', 'F3', 'PL1', 'PL6'];
+
+  public function __construct(WipService $wipService, F1F2WipRepository $wipRepository)
   {
     $this->wipService = $wipService;
     $this->wipRepository = $wipRepository;
   }
 
-  private const CATEGORY_FILTER = ['all', 'F1', 'F2', 'F3', 'PL1', 'PL6'];
+  // ------------------------
+  // Helper Methods
+  // ------------------------
+  private function parsePackageName(Request $request, string $inputName = 'packageName'): array
+  {
+    $input = $request->input($inputName, '') ?? '';
+    $packages = explode(',', $input);
+    return array_filter($packages, fn($p) => !empty($p));
+  }
 
+  private function parsePeriodParams(Request $request, int $defaultLookBack = 20): array
+  {
+    return [
+      'period' => $request->input('period', 'daily') ?? 'daily',
+      'lookBack' => $request->input('lookBack', $defaultLookBack) ?? $defaultLookBack,
+      'offsetDays' => $request->input('offsetDays', 0) ?? 0,
+    ];
+  }
+
+  private function parseWorkweek(Request $request): array
+  {
+    $workweek = $request->input('workweek', '') ?? '';
+    return [
+      'workweek' => $workweek,
+      'useWorkweek' => !empty($workweek),
+    ];
+  }
+
+  private function parseDateRangeFromRequest(Request $request): array
+  {
+    return $this->parseDateRange($request->input('dateRange', '')) ?? '';
+  }
+
+  private function validateChartStatus(string $status): bool
+  {
+    return in_array($status, self::CATEGORY_FILTER);
+  }
+
+  // ------------------------
+  // API Methods
+  // ------------------------
   public function getDistinctPackages()
   {
+    Log::info("Fetching getWipOutTrend ...");
+
     $results = $this->wipRepository->getDistinctPackages();
-    Log::info('Distinct Packages: ' . print_r($results, true));
 
     return response()->json([
       'data' => $results,
@@ -38,13 +80,17 @@ class WipController extends Controller
 
   public function getWIPStationTrend(Request $request)
   {
-    $filteringCondition = trim($request->input('filteringCondition', ''));
-    $packageName = $request->input('packageName', ''); // empty for all
-    $period = $request->input('period', 'daily');
-    $lookBack = $request->input('lookBack', 20);
-    $offsetDays = $request->input('offsetDays', 0);
+    $filteringCondition = trim($request->input('filteringCondition', '') ?? '');
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
 
-    return $this->wipService->getWIPFilterSummaryTrend($packageName, $period, $lookBack, $offsetDays, $filteringCondition);
+    return $this->wipService->getWIPStationSummaryTrend(
+      $packageName,
+      $periodParams['period'],
+      $periodParams['lookBack'],
+      $periodParams['offsetDays'],
+      $filteringCondition
+    );
   }
 
   public function getTodayWip()
@@ -54,95 +100,141 @@ class WipController extends Controller
 
   public function getOverallWip(Request $request)
   {
-    $workweek = $request->input('workweek', '');
-    $useWorkweek = !empty($workweek);
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
+    $workweekParams = $this->parseWorkweek($request);
+    $dates = $this->parseDateRangeFromRequest($request);
 
-    return $this->wipService->getOverallWip($startDate, $endDate, $useWorkweek, $workweek);
+    return $this->wipService->getOverallWip(
+      $dates['start'],
+      $dates['end'],
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek']
+    );
   }
 
   public function getOverallWipByPackage(Request $request)
   {
-    $workweek = $request->input('workweek', '');
-    $packageName = $request->input('packageName', ''); // empty for all
-    $period = $request->input('period', 'daily');
-    $lookBack = $request->input('lookBack', 3);
-    $offsetDays = $request->input('offsetDays', 0);
-
-    $useWorkweek = !empty($workweek);
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
-
-    return $this->wipService->getOverallWipByPackage($startDate, $endDate, $useWorkweek, $workweek, $packageName, $period, $lookBack, $offsetDays);
+    $workweekParams = $this->parseWorkweek($request);
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request, 3);
+    $dates = $this->parseDateRangeFromRequest($request);
+    Log::info("Overall WIP By Package Trefasdfasfsdsdfsdfnd: ");
+    return $this->wipService->getOverallWipByPackage(
+      $dates['start'],
+      $dates['end'],
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek'],
+      $packageName,
+      $periodParams['period'],
+      $periodParams['lookBack'],
+      $periodParams['offsetDays']
+    );
   }
 
   public function getOverallPickUp(Request $request)
   {
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
-
-    return $this->wipService->getOverallPickUp($startDate, $endDate);
+    $dates = $this->parseDateRangeFromRequest($request);
+    return $this->wipService->getOverallPickUp($dates['start'], $dates['end']);
   }
 
   public function getOverallResidual(Request $request)
   {
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
-
-    return $this->wipService->getOverallResidual($startDate, $endDate);
+    $dates = $this->parseDateRangeFromRequest($request);
+    return $this->wipService->getOverallResidual($dates['start'], $dates['end']);
   }
 
   public function getPackageResidualSummary(Request $request)
   {
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
+    $dates = $this->parseDateRangeFromRequest($request);
+    $chartStatus = $request->input('chartStatus', 'all') ?? 'all';
 
-    $chartStatus = $request->input('chartStatus', 'all');
-
-    if (!in_array($chartStatus, self::CATEGORY_FILTER)) {
+    if (!$this->validateChartStatus($chartStatus)) {
       return response()->json([
-        'status'  => 'error',
+        'status' => 'error',
         'message' => 'Invalid chart status: ' . $chartStatus,
       ], 400);
     }
 
-    return $this->wipService->getPackageResidualSummary($chartStatus, $startDate, $endDate);
+    return $this->wipService->getPackageResidualSummary($chartStatus, $dates['start'], $dates['end']);
   }
 
   public function getPackagePickUpSummary(Request $request)
   {
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
+    $dates = $this->parseDateRangeFromRequest($request);
+    $chartStatus = $request->input('chartStatus', 'all') ?? 'all';
 
-    $chartStatus = $request->input('chartStatus', 'all');
-
-    if (!in_array($chartStatus, self::CATEGORY_FILTER)) {
+    if (!$this->validateChartStatus($chartStatus)) {
       return response()->json([
-        'status'  => 'error',
+        'status' => 'error',
         'message' => 'Invalid chart status: ' . $chartStatus,
       ], 400);
     }
 
-    return $this->wipService->getPackagePickUpSummary($chartStatus, $startDate, $endDate);
+    return $this->wipService->getPackagePickUpSummary($chartStatus, $dates['start'], $dates['end']);
   }
 
   public function getPackagePickUpTrend(Request $request)
   {
-    $packageName = $request->input('packageName', ''); // empty for all
-    $period = $request->input('period', 'daily');
-    $lookBack = $request->input('lookBack', 20);
-    $offsetDays = $request->input('offsetDays', 0);
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
 
-    return $this->wipService->getPackagePickUpTrend($packageName, $period, $lookBack, $offsetDays);
+    return $this->wipService->getPackagePickUpTrend(
+      $packageName,
+      $periodParams['period'],
+      $periodParams['lookBack'],
+      $periodParams['offsetDays']
+    );
   }
 
   public function getWIPQuantityAndLotsTotal(Request $request)
   {
-    $workweek  = $request->input('workweek', '');
-    $useWorkweek = !empty($workweek);
-    ['start' => $startDate, 'end' => $endDate] = $this->parseDateRange($request->input('dateRange', ''));
-    $includePL = $request->input('includePL', true);
+    $workweekParams = $this->parseWorkweek($request);
+    $dates = $this->parseDateRangeFromRequest($request);
+    $includePL = $request->input('includePL', true) ?? true;
 
-    return $this->wipService->getWIPQuantityAndLotsTotal($useWorkweek, $workweek, $startDate, $endDate, $includePL);
+    return $this->wipService->getWIPQuantityAndLotsTotal(
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek'],
+      $dates['start'],
+      $dates['end'],
+      $includePL
+    );
   }
 
-  public function wipTable()
+  public function getWIPQuantityAndLotsTotalNew(Request $request)
   {
-    return Inertia::render('WIPTable');
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    $workweek = $request->input('workweek', '') ?? '';
+
+    return $this->wipService->getWIPQuantityAndLotsTotalNew(
+      $packageName,
+      $periodParams['period'],
+      $periodParams['lookBack'],
+      $periodParams['offsetDays'],
+      $workweek
+    );
+  }
+
+  public function getWipOutTrend(Request $request)
+  {
+
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    $workweeks = $this->parseWorkweek($request);
+
+    Log::info("Fetching getWipOutTrend ..." . json_encode($workweeks['workweek']));
+
+    return $this->wipService->getWipOutCapacitySummaryTrend(
+      $packageName,
+      $periodParams['period'],
+      $periodParams['lookBack'],
+      $periodParams['offsetDays'],
+      $workweeks['workweek']
+    );
+  }
+
+  public function wipStation()
+  {
+    return Inertia::render('WIPStation');
   }
 }

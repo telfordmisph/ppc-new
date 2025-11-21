@@ -15,7 +15,7 @@ export default function Sidebar() {
         .join(" ");
 
     return (
-        <div className="z-1 flex bg-base-100 w-0 shadow-lg md:w-64">
+        <div className="flex bg-base-100 w-0 shadow-lg md:w-64">
             {/* Mobile Hamburger */}
             <button
                 className="absolute p-2 rounded-lgtop-4 right-4 md:hidden"

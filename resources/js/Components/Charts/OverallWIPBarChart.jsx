@@ -62,7 +62,7 @@ const BarChart = ({
     return (
         <div className="w-full flex flex-col gap-4 h-full">
             <div className="items-center justify-between block w-full lg:space-x-2 lg:flex">
-                <div className="flex items-center content-center gap-2">
+                {/* <div className="flex items-center content-center gap-2">
                     <legend className="">Smooth</legend>
                     <input
                         type="number"
@@ -75,7 +75,7 @@ const BarChart = ({
                         max={Object.keys(data).length}
                         title="Must be between be 1 to 10"
                     />
-                </div>
+                </div> */}
 
                 <div className="mt-4 lg:mt-0">
                     <TogglerButton
@@ -114,7 +114,7 @@ const BarChart = ({
                         <Bar
                             dataKey="total"
                             hide
-                            className="hidden"
+                            // className="hidden"
                             fill={"var(--color-neutral-content)"}
                         />
 

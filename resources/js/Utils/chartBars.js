@@ -5,7 +5,7 @@ export const getBarConfigs = (metric = "quantity", stackId = "a") => {
     visibilityKey: key,
     dataKey: `${key}_total_${metric}`,
     stackId,
-    fill: colorVar,
+    fill: colorVar[metric],
   }));
 };
 

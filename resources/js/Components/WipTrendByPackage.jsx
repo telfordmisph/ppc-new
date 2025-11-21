@@ -3,7 +3,10 @@ import React, { useEffect, useState } from "react";
 import TrendLineChart from "./Charts/TrendLineChart";
 import FloatingLabelInput from "./FloatingLabelInput";
 import TogglerButton from "./TogglerButton";
-import { TOGGLE_TOTAL_BUTTONS } from "@/Constants/toggleButtons";
+import {
+    TOGGLE_TOTAL_BUTTONS,
+    TOGGLE_FACTORY_BUTTONS,
+} from "@/Constants/toggleButtons";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import TableChart from "./Charts/TableChart";
 import { periodOptions } from "@/Constants/periodOptions";
@@ -12,16 +15,52 @@ import {
     formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
 import { visibleLines as chartLines } from "@/Utils/chartLines";
+import clsx from "clsx";
+import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 
-const WipTrendByPackage = ({ isVisible, packageName = null }) => {
-    const [isChartTableVisible, setIsChartTableVisible] = useState(true);
-    const [selectPeriod, setSelectedPeriod] = useState("weekly");
-    const [selectedLookBack, setSelectedLookBack] = useState(20);
-    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(0);
+const WipTrendByPackage = ({
+    isVisible,
+    packageName = null,
+    noChartTable = false,
+}) => {
+    const {
+        workWeeks: savedWorkWeeks,
+        lookBack: savedLookBack,
+        period: savedPeriod,
+        offset: savedOffset,
+        setSelectedWorkWeeks: setSavedWorkWeeks,
+        setSelectedLookBack: setSavedSelectedLookBack,
+        setSelectedPeriod: setSavedSelectedPeriod,
+        setSelectedOffset: setSavedSelectedOffset,
+    } = useSelectedFilteredStore();
+
+    // TODO: workweek not using the saved :(
+    const [isChartTableVisible, setIsChartTableVisible] = useState(
+        !noChartTable ? true : false
+    );
+    const [selectPeriod, setSelectedPeriod] = useState(savedPeriod || "weekly");
+    const [selectedLookBack, setSelectedLookBack] = useState(
+        savedLookBack || 20
+    );
+    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(
+        savedOffset || 0
+    );
+    const [selectedWorkWeek, setSelectedWorkWeek] = useState(
+        savedWorkWeeks || []
+    );
     const [visibleLines, setVisibleLines] = useState({
         totalQuantity: true,
         totalLots: true,
     });
+
+    const {
+        data: workWeekData,
+        isLoading: isWorkWeekLoading,
+        errorMessage: WorkWeekErrorMessage,
+    } = useWorkweekStore();
 
     const toggleLine = (name, key) => {
         setVisibleLines((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -32,6 +71,7 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
         period: selectPeriod,
         lookBack: selectedLookBack,
         offsetDays: selectedOffsetPeriod,
+        workweek: selectedWorkWeek.join(","),
     };
 
     const {
@@ -54,7 +94,13 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
         };
 
         fetchData();
-    }, [selectPeriod, selectedLookBack, selectedOffsetPeriod, packageName]);
+    }, [
+        selectPeriod,
+        selectedLookBack,
+        selectedOffsetPeriod,
+        packageName,
+        selectedWorkWeek,
+    ]);
 
     const datePeriod = formatPeriodLabel(selectPeriod);
 
@@ -64,6 +110,26 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
         selectedLookBack,
         selectedOffsetPeriod
     );
+
+    const lines = [
+        {
+            dataKey: `overall_total_quantity`,
+            yAxisId: "right",
+            stroke: "var(--color-neutral-content)",
+            hide: true,
+        },
+        {
+            dataKey: `overall_total_lots`,
+            yAxisId: "right",
+            stroke: "var(--color-neutral-content)",
+            hide: true,
+        },
+        ...chartLines({
+            showQuantities: visibleLines.totalQuantity,
+            showLots: visibleLines.totalLots,
+            showFactories: { f1: true, f2: true, f3: true },
+        }),
+    ];
 
     return (
         <div
@@ -103,6 +169,7 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
                                     key={option.value}
                                     onClick={() => {
                                         setSelectedPeriod(option.value);
+                                        setSavedSelectedPeriod(option.value);
                                     }}
                                 >
                                     <a>{option.label}</a>
@@ -112,27 +179,64 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
                     </div>
                 </div>
 
-                <div className="flex">
+                <div
+                    className={clsx(
+                        "flex",
+                        selectPeriod === "weekly" ? "hidden" : ""
+                    )}
+                >
                     <FloatingLabelInput
                         id="lookBack"
                         label={`Look back ${datePeriod}`}
                         value={selectedLookBack}
                         type="number"
-                        onChange={(e) => setSelectedLookBack(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedLookBack(e.target.value);
+                            setSavedSelectedLookBack(e.target.value);
+                        }}
                         className="h-9 m-1 w-34"
                         labelClassName="bg-base-300"
                     />
                     <FloatingLabelInput
                         id="offset"
-                        label={`Offset ${datePeriod}`}
+                        label={`Offset days`}
                         value={selectedOffsetPeriod}
                         type="number"
-                        onChange={(e) =>
-                            setSelectedOffsetPeriod(Number(e.target.value))
-                        }
+                        onChange={(e) => {
+                            setSelectedOffsetPeriod(Number(e.target.value));
+                            setSavedSelectedOffset(Number(e.target.value));
+                        }}
                         className="h-9 m-1 w-34"
                         labelClassName="bg-base-300"
                         alwaysFloatLabel
+                    />
+                </div>
+
+                <div
+                    className={clsx(selectPeriod === "weekly" ? "" : "hidden")}
+                >
+                    <MultiSelectSearchableDropdown
+                        options={
+                            workWeekData?.data.map((item) => ({
+                                value: String(item.cal_workweek),
+                                label: `${formatFriendlyDate(
+                                    item.startDate
+                                )} - ${formatFriendlyDate(item.endDate)}`,
+                            })) || []
+                        }
+                        onChange={(value) => {
+                            console.log(
+                                "🚀 ~ WipOutTrendByPackage ~ value:",
+                                value
+                            );
+                            setSelectedWorkWeek(value);
+                            setSavedWorkWeeks(value);
+                        }}
+                        isLoading={isWorkWeekLoading}
+                        itemName="Workweek List"
+                        prompt="Select Workweek"
+                        debounceDelay={500}
+                        contentClassName="w-72 h-120"
                     />
                 </div>
 
@@ -143,20 +247,22 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
                     buttonClassName="h-8"
                 />
 
-                <button
-                    className="btn btn-sm btn-outline h-8 btn-secondary px-4"
-                    onClick={() => setIsChartTableVisible((prev) => !prev)}
-                >
-                    {}
-                    {isChartTableVisible ? (
-                        <FaEye className="mr-2" />
-                    ) : (
-                        <FaEyeSlash className="mr-2" />
-                    )}
-                    <span className="w-18">
-                        {isChartTableVisible ? "Show Table" : "Hide Table"}
-                    </span>
-                </button>
+                {!noChartTable && (
+                    <button
+                        className="btn btn-sm btn-outline h-8 btn-secondary px-4"
+                        onClick={() => setIsChartTableVisible((prev) => !prev)}
+                    >
+                        {}
+                        {isChartTableVisible ? (
+                            <FaEye className="mr-2" />
+                        ) : (
+                            <FaEyeSlash className="mr-2" />
+                        )}
+                        <span className="w-18">
+                            {isChartTableVisible ? "Show Table" : "Hide Table"}
+                        </span>
+                    </button>
+                )}
             </div>
             <div className="text-sm opacity-80">{fullLabel}</div>
             <div className="w-full">
@@ -165,11 +271,7 @@ const WipTrendByPackage = ({ isVisible, packageName = null }) => {
                     xKey={xAxis}
                     isLoading={isOveraByPackagellWipLoading}
                     errorMessage={overallByPackageWipErrorMessage}
-                    lines={chartLines({
-                        showQuantities: visibleLines.totalQuantity,
-                        showLots: visibleLines.totalLots,
-                        showFactories: { f1: true, f2: true, f3: true },
-                    })}
+                    lines={lines}
                 />
                 {isChartTableVisible && !isOveraByPackagellWipLoading && (
                     <TableChart

@@ -55,11 +55,18 @@ class PickUpRepository
       ->sum('pickup.QTY');
   }
 
-  public function filterByPackageName($query, ?string $packageNames)
+  public function filterByPackageName($query, ?array $packageNames)
   {
-    if (!$packageNames) return $query;
-    return $query->where('pickup.PACKAGE', $packageNames);
+    if (is_string($packageNames)) {
+      $packageNames = explode(',', $packageNames);
+    }
+    $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
+
+    if (empty($packageNames)) return $query;
+
+    return $query->whereIn('pickup.PACKAGE', $packageNames);
   }
+
 
   public function getPackageSummary($chartStatus, $startDate, $endDate)
   {
@@ -113,8 +120,10 @@ class PickUpRepository
         $lookBack,
         $offsetDays,
         'pickup.DATE_CREATED',
-        'pickup.QTY',
-        'pickup.LOTID'
+        [
+          'SUM(pickup.QTY)' => 'total_quantity',
+          'COUNT(DISTINCT pickup.LOTID)' => 'total_lots'
+        ]
       )->get();
 
       $trends[$key] = $query;

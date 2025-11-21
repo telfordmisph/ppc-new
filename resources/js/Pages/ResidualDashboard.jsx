@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -121,7 +120,7 @@ const ResidualDashboard = () => {
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="Residual Dashboard" />
             <div className="flex items-center justify-between mb-4">
                 <h1 className="w-3/12 text-base font-bold">
@@ -251,7 +250,7 @@ const ResidualDashboard = () => {
                     error={residualSummaryErrorMessage}
                 />
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 

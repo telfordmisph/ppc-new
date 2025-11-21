@@ -14,12 +14,22 @@
   --color-base-300: #101010;
   --color-base-content: #d6d6d6;
   --color-base-content-dim: #d6d6d630;
+
   --color-f1color: #FF6A83;
+  --color-f1color-15: #ff766a;
+  --color-f1color-30: #ff9b6a;
   --color-f1color-dim: #EE86B880;
+
   --color-f2color: #B987F5;
+  --color-f2color-15: #d486f5;
+  --color-f2color-30: #f086f5;
   --color-f2color-dim: #B987F580;
+
   --color-f3color: #A6BFF7;
+  --color-f3color-15: #a5aaf7;
+  --color-f3color-30: #b5a5f7;
   --color-f3color-dim: #A6BFF780;
+  
   --color-info: #5AA9FA;         
   --color-info-content: #192532; 
   --color-success: #4CCB83;      
@@ -33,16 +43,16 @@
 @plugin "daisyui/theme" {
   name: "lofi";
   color-scheme: "light";
-  --color-base-100: #ffffff;
-  --color-base-200: #f2f3f3;
-  --color-base-300: #f9fafb;
+  --color-base-100: #ffffff; /* pure white */
+  --color-base-200: #f0f2f5; /* cool light gray */
+  --color-base-300: #e4e7eb; /* medium-light gray */
   --color-base-content: #161616;
   --color-base-content-dim: #16161630;
   --color-primary: #FF6A83;
   --color-primary-content: #3A000B;
   --color-secondary: #6BD3FF;
   --color-secondary-content: #002B38;
-  --color-accent: #ffff00;
+  --color-accent: #9B6BFF;
   --color-accent-content: #2C2A00;
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
@@ -69,7 +79,7 @@
   --color-primary-content: #3A000B;
   --color-secondary: #6BD3FF;
   --color-secondary-content: #002B38;
-  --color-accent: #FFF86B;
+  --color-accent: #9B6BFF;
   --color-accent-content: #2C2A00;
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
@@ -81,6 +91,13 @@
   --size-field: 0.2075rem;
   --border: 0.1px;
   --noise: 1;
+}
+
+.custom-tooltip {
+  border-radius: 0.4rem !important; /* Adjust as needed */
+  z-index: 50 !important;
+  max-width: 200px !important;
+  padding: 4px 4px !important;
 }
 
 html {

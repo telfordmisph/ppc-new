@@ -1,8 +1,12 @@
+import { set } from "date-fns";
 import { useState, useRef, useEffect } from "react";
+import { useToast } from "./useToast";
 
 export function useMutation() {
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [errorData, setErrorData] = useState(null);
   const [data, setData] = useState(null);
   const abortControllerRef = useRef(null);
 
@@ -18,16 +22,16 @@ export function useMutation() {
     setErrorMessage(null);
 
     try {
-      const { method = "POST", body } = options;
+      const { method = "POST", body, isFormData = false, isContentTypeInclude = true } = options;
 
       const response = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          ...(isContentTypeInclude && { "Content-Type": "application/json" }),
           "Accept": "application/json",
           "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? isFormData ? body : JSON.stringify(body) : undefined,
         signal: controller.signal,
       });
 
@@ -43,6 +47,7 @@ export function useMutation() {
       if (!response.ok || (result && result.status === "error")) {
         const error = new Error(result?.message || `HTTP error: ${response.status}`);
         error.status = response.status;
+        console.log("🚀 ~ mutate ~ result:", result)
         error.data = result;
         throw error;
       }
@@ -50,7 +55,9 @@ export function useMutation() {
       setData(result);
       return result;
     } catch (error) {
+      console.log("🚀 ~ mutate ~ error:", error.data)
       if (error.name !== "AbortError") {
+        setErrorData(error.data);
         setErrorMessage(error.message);
         throw error;
       }
@@ -70,5 +77,5 @@ export function useMutation() {
     abortControllerRef.current?.abort();
   };
 
-  return { mutate, data, errorMessage, isLoading, cancel };
+  return { mutate, data, errorMessage, errorData, isLoading, cancel };
 }

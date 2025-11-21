@@ -2,30 +2,33 @@ import { ResponsiveContainer, Tooltip } from "recharts";
 import { useThemeStore } from "@/Store/themeStore";
 import BarChartSkeleton from "./BarChartSkeleton";
 import { DARK_THEME_NAME } from "@/Constants/colors";
+import { FaDotCircle } from "react-icons/fa";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
 
     return (
-        <div className="flex flex-col gap-1 border border-base-content/20 rounded-lg shadow-lg border-opacity-30 bg-base-300">
-            <div className="px-2 pt-2 font-semibold bg-neutral/20 rounded-t-lg text-accent">
-                {label}
-            </div>
+        <div className="flex flex-col gap-1 border border-base-content/20 rounded-lg shadow-xs shadow-accent border-opacity-30 bg-base-300">
+            <div className="px-2 pt-2 font-semibold rounded-t-lg">{label}</div>
             {payload.map((item, index) => {
                 const baseColor = item.color;
-                const background = `linear-gradient(to left, ${baseColor} 0%, transparent)`;
 
                 return (
                     <div
                         key={index}
                         className="px-2 flex items-center justify-between gap-8 py-0.5"
-                        style={{ background }}
                     >
                         <div className="leading-none">
                             {(item?.name || "").replaceAll("_", " ")}
                         </div>
-                        <div className="font-mono leading-none text-neutral">
-                            {Number(item?.value || 0).toLocaleString()}
+                        <div className="flex items-center gap-2">
+                            <div className="font-mono leading-none">
+                                {Number(item?.value || 0).toLocaleString()}
+                            </div>
+                            <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ background: baseColor }}
+                            ></span>
                         </div>
                     </div>
                 );

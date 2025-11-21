@@ -65,3 +65,42 @@ export function formatPeriodTrendMessage(isOveraByPackagellWipLoading, periodVal
 
     return fullLabel;
 }
+
+
+// export function formatPeriodTrendMessage(
+//     isLoading,
+//     periodValue,
+//     selectedLookBack,
+//     selectedOffsetPeriod
+// ) {
+//     const offsetLabel = (offset, period) => {
+//         if (offset === 0) return "today";
+
+//         const periodMap = {
+//             daily: "day",
+//             weekly: "week",
+//             monthly: "month",
+//             quarterly: "quarter",
+//             yearly: "year",
+//         };
+
+//         const unit = periodMap[period] || "day";
+
+//         if (offset === 1) return `a ${unit} ago`;
+
+//         if (period === "daily" && offset === 7) return "a week ago";
+//         if (period === "daily" && offset === 30) return "a month ago";
+//         if (period === "daily" && offset === 365) return "a year ago";
+
+//         return `${offset} ${pluralize(unit, offset)} ago`;
+//     };
+
+//     const fullLabel = `${
+//         isLoading ? "Loading" : "Showing"
+//     } the last ${selectedLookBack} ${pluralize(
+//         formatPeriodLabel(periodValue),
+//         selectedLookBack
+//     )}, starting from ${offsetLabel(selectedOffsetPeriod, periodValue)}`;
+
+//     return fullLabel;
+// }

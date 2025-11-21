@@ -1,18 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import MultiSelectDropdown from "@/Components/MultiSelectDropdown";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 import { useFetch } from "@/Hooks/useFetch";
 import formatDate from "@/Utils/formatDate";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import TogglerButton from "@/Components/TogglerButton";
 import sortObjectArray from "@/Utils/sortObjectArray";
-import Modal from "@/Components/Modal";
 import { useMutation } from "@/Hooks/useMutation";
-import toast from "react-hot-toast";
-import clsx from "clsx";
 import {
     TOGGLE_FACTORY_BUTTONS,
     TOGGLE_PL_BUTTONS,
@@ -283,106 +279,13 @@ const WIPTrend = () => {
         [filteredData, sortKeys, compute]
     );
 
-    const handleManualWIPImport = async () => {
-        const promise = importWip(route("import.manual"));
-        const toastId = "import-toast";
-
-        const toastTransition = (t) =>
-            clsx(
-                "transition-all duration-300",
-                t.visible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-2"
-            );
-
-        toast.custom(
-            (t) => (
-                <div
-                    className={clsx(
-                        "flex items-center gap-2 p-4 m-2 rounded-lg shadow-lg bg-base-100",
-                        toastTransition(t)
-                    )}
-                >
-                    <span className="loading loading-spinner loading-xs" />
-                    <span>Importing WIP data...</span>
-                </div>
-            ),
-            { id: toastId, duration: Infinity, removeDelay: 400 }
-        );
-
-        try {
-            const result = await promise;
-            toast.dismiss(toastId);
-
-            toast.custom(
-                (t) => (
-                    <div
-                        className={clsx(
-                            "m-2 p-4 rounded-lg shadow-lg bg-base-100",
-                            toastTransition(t)
-                        )}
-                    >
-                        <div className="mb-2 font-bold text-success">
-                            Successfully imported!
-                        </div>
-
-                        <div className="flex justify-between">
-                            <span className="font-light">
-                                new f1/f2 entries:
-                            </span>
-                            <span className="font-bold">
-                                {Number(result?.f1f2 ?? 0).toLocaleString()}
-                            </span>
-                        </div>
-
-                        <div className="flex justify-between">
-                            <span className="font-light">new f3 entries:</span>
-                            <span className="font-bold">
-                                {Number(result?.f3 ?? 0).toLocaleString()}
-                            </span>
-                        </div>
-
-                        <button
-                            className="mt-3 btn btn-wide btn-sm"
-                            onClick={() => toast.dismiss(t.id)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                ),
-                { duration: Infinity, removeDelay: 400 }
-            );
-        } catch (error) {
-            toast.dismiss(toastId);
-
-            toast.custom(
-                (t) => (
-                    <div
-                        className={clsx(
-                            "p-4 m-2 rounded-lg shadow-lg text-error-content bg-error",
-                            toastTransition(t)
-                        )}
-                    >
-                        <div className="mb-1 font-bold">
-                            Failed to import WIP.
-                        </div>
-                        <div className="text-sm opacity-80">
-                            {importWipErrorMessage}
-                        </div>
-                    </div>
-                ),
-                { duration: 4000, removeDelay: 400 }
-            );
-        }
-    };
-
     const handleShowTrendByPackage = ({ data, dataKey }) => {
         setIsTrendByPackageVisible(true);
         setSelectedPackageName(data?.Package_Name || null);
     };
 
     return (
-        <AuthenticatedLayout>
+        <>
             <Head title="WIP Trend" />
             <div className="flex justify-between">
                 <h1 className="w-3/12 text-xl font-bold mb-4">WIP Trend</h1>
@@ -421,7 +324,7 @@ const WIPTrend = () => {
                         </div>
 
                         {isWorkweek ? (
-                            <MultiSelectDropdown
+                            <MultiSelectSearchableDropdown
                                 options={Array.from(
                                     { length: 552 - 401 + 1 },
                                     (_, i) => (401 + i).toString()
@@ -471,54 +374,6 @@ const WIPTrend = () => {
                                 Apply Filter
                             </button>
                         </div>
-                    </div>
-
-                    <div className="">
-                        <button
-                            className="shadow-lg btn btm-active btn-primary btn-wide"
-                            onClick={() => manualWIPImportRef.current?.open()}
-                        >
-                            Refresh auto daily WIP import
-                        </button>
-                        <Modal
-                            ref={manualWIPImportRef}
-                            id="deletePartModal"
-                            title="Refresh auto daily WIP import"
-                            onClose={() => manualWIPImportRef.current?.close()}
-                            className="max-w-lg"
-                        >
-                            <p className="py-4">
-                                Are you sure? This will start the WIP import.
-                                Current import progress (if any) will block this
-                                action.
-                            </p>
-
-                            <div className="flex justify-end gap-2">
-                                <button
-                                    className="btn btn-soft btn-warning"
-                                    onClick={async () => {
-                                        manualWIPImportRef.current?.close();
-                                        handleManualWIPImport();
-                                    }}
-                                    disabled={isImportWipLoading}
-                                >
-                                    {isImportWipLoading && (
-                                        <span className="loading loading-spinner"></span>
-                                    )}
-                                    Proceed
-                                </button>
-
-                                <button
-                                    className="btn"
-                                    onClick={() =>
-                                        manualWIPImportRef.current?.close()
-                                    }
-                                    disabled={isImportWipLoading}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </Modal>
                     </div>
                 </div>
 
@@ -600,7 +455,7 @@ const WIPTrend = () => {
                     />
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
     );
 };
 

@@ -74,7 +74,7 @@ class WipTrendParser
       $keyPrefix = str_replace('_trend', '', $factoryKey);
 
       foreach ($data as $item) {
-        $item = (array)$item;
+        $item = (array) $item;
 
         $dateKey = '';
         $readableLabel = '';
@@ -94,16 +94,24 @@ class WipTrendParser
           $readableLabel = "Q{$item['quarter']} {$item['year']}";
           $dateKey = "{$item['year']}-Q{$item['quarter']}";
         } elseif (isset($item['year'])) {
-          $readableLabel = (string)$item['year'];
-          $dateKey = (string)$item['year'];
+          $readableLabel = (string) $item['year'];
+          $dateKey = (string) $item['year'];
+        }
+
+        $metrics = [];
+        foreach ($item as $field => $value) {
+          if (in_array($field, ['day', 'week', 'month', 'quarter', 'year'])) {
+            continue;
+          }
+
+          if (is_numeric($value)) {
+            $metrics["{$keyPrefix}_{$field}"] = $value;
+          }
         }
 
         $merged[$dateKey] = array_merge(
           $merged[$dateKey] ?? ['dateKey' => $dateKey, 'label' => $readableLabel],
-          [
-            "{$keyPrefix}_total_quantity" => $item['total_quantity'] ?? 0,
-            "{$keyPrefix}_total_lots" => $item['total_lots'] ?? 0,
-          ]
+          $metrics
         );
       }
     }

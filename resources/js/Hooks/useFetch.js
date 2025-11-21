@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import { router } from "@inertiajs/react";
 
 export function useFetch(url, options = {}) {
+  const fetchIdRef = useRef(0);
   const { params = {}, auto = true } = options;
   
   const [data, setData] = useState(null);
@@ -14,6 +16,8 @@ export function useFetch(url, options = {}) {
   };
   
   const fetchData = async (currentParams = params) => {
+    const id = ++fetchIdRef.current;
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -60,19 +64,37 @@ export function useFetch(url, options = {}) {
         setErrorMessage(error.message);
       }
     } finally {
-      setIsLoading(false);
+      if (id === fetchIdRef.current) {
+        setIsLoading(false);
+      }
     }
-  };  
+  };
 
   useEffect(() => {
     if (auto) {
       fetchData(params);
     }
 
+    const handleInertiaStart = () => {
+      // 2. Abort the fetch when a new Inertia navigation starts
+      // This will run *before* the component unmounts on navigation.
+      if (abortControllerRef.current) {
+        console.log("Inertia Navigation started: Aborting fetch!");
+        abortControllerRef.current.abort();
+      }
+    };
+    
+    
+    const removeInertiaListener = router.on('start', handleInertiaStart); 
+    return () => {
+      removeInertiaListener(); 
+      abortControllerRef.current?.abort();
+    };
+
     return () => {
       abortControllerRef.current?.abort();
     };
-  }, [auto]);
+  }, [url, auto]);
 
   return {
     data, 

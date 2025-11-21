@@ -8,11 +8,17 @@ import {
     LuLayoutList,
     LuTrash,
     LuList,
+    LuPackage,
 } from "react-icons/lu";
+
+import { BiImport } from "react-icons/bi";
 
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { usePage } from "@inertiajs/react";
+import { FaLayerGroup } from "react-icons/fa6";
+import { FaBatteryHalf } from "react-icons/fa";
+import { TbSettings } from "react-icons/tb";
 
 export default function NavLinks() {
     const { emp_data } = usePage().props;
@@ -61,6 +67,39 @@ export default function NavLinks() {
                 notification={false}
             />
 
+            <Dropdown
+                label="Maintenance"
+                icon={<TbSettings className="w-5 h-5" />}
+                links={[
+                    {
+                        href: route("package.group.index"),
+                        label: "F1/F2 Package Group",
+                        icon: <FaLayerGroup className="w-5 h-5" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("f3.raw.package.index"),
+                        label: "F3 Packages",
+                        icon: <LuPackage className="w-5 h-5" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("package.capacity.index"),
+                        label: "Capacity",
+                        icon: <FaBatteryHalf className="w-5 h-5" />,
+                        notification: false,
+                    },
+                ]}
+                notification={false}
+            />
+
+            <SidebarLink
+                href={route("import.index")}
+                label="Import Data"
+                icon={<BiImport className="w-5 h-5" />}
+                notifications={0}
+            />
+
             <SidebarLink
                 href={route("partname.index")}
                 label="Partname List"
@@ -78,7 +117,6 @@ export default function NavLinks() {
         </nav>
     );
 }
-
 // import Dropdown from "@/Components/sidebar/Dropdown";
 // import SidebarLink from "@/Components/sidebar/SidebarLink";
 // import { usePage } from "@inertiajs/react";
