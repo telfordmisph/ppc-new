@@ -19,22 +19,40 @@ class AnalogCalendarController extends Controller
     $this->analogCalendarRepository = $analogCalendarRepository;
   }
 
+  // public function getWorkWeek()
+  // {
+  //   $workweeks = Cache::remember(self::WORKWEEK_CACHE_KEY, now()->addHours(self::CACHE_HOURS), function () {
+  //     return DB::table(self::ANALOG_CALENDAR_TABLE)
+  //       ->whereNotNull('cal_workweek')
+  //       ->groupBy('cal_workweek')
+  //       ->select(
+  //         'cal_workweek',
+  //         DB::raw('MIN(cal_date) as startDate'),
+  //         DB::raw('MAX(cal_date) as endDate')
+  //       )
+  //       ->orderBy('cal_workweek', 'desc')
+  //       ->get();
+  //   });
+
+  //   return response()->json([
+  //     'data' => $workweeks,
+  //     'status' => 'success',
+  //     'message' => 'Data retrieved successfully',
+  //   ]);
+  // }
+
   public function getWorkWeek()
   {
-    \Log::info("Fetching workweek ...");
-
-    $workweeks = Cache::remember(self::WORKWEEK_CACHE_KEY, now()->addHours(self::CACHE_HOURS), function () {
-      return DB::table(self::ANALOG_CALENDAR_TABLE)
-        ->whereNotNull('cal_workweek')
-        ->groupBy('cal_workweek')
-        ->orderBy('cal_workweek')
-        ->select(
-          'cal_workweek',
-          DB::raw('MIN(cal_date) as startDate'),
-          DB::raw('MAX(cal_date) as endDate')
-        )
-        ->get();
-    });
+    $workweeks = DB::table(self::ANALOG_CALENDAR_TABLE)
+      ->whereNotNull('cal_workweek')
+      ->groupBy('cal_workweek')
+      ->select(
+        'cal_workweek',
+        DB::raw('MIN(cal_date) as startDate'),
+        DB::raw('MAX(cal_date) as endDate')
+      )
+      ->orderBy('cal_workweek', 'desc')
+      ->get();
 
     return response()->json([
       'data' => $workweeks,
@@ -42,6 +60,7 @@ class AnalogCalendarController extends Controller
       'message' => 'Data retrieved successfully',
     ]);
   }
+
 
   public function getDatesByWorkWeekRange($workweek)
   {

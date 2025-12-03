@@ -115,7 +115,7 @@ class F3RawPackageController extends Controller
   public function index(Request $request)
   {
     $search = $request->input('search', '');
-    $perPage = $request->input('perPage', 10);
+    $perPage = $request->input('perPage', 50);
     $totalEntries = F3RawPackage::count();
 
     $f3RawPackages = F3RawPackage::query()

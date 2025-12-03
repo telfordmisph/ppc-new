@@ -15,7 +15,7 @@ const F3RawPackageUpsert = () => {
         selectedRawPackage?.raw_package || ""
     );
     const [packageName, setPackageName] = useState(
-        selectedRawPackage?.f3_package_name.package_name || "asdfasdfsdaf"
+        selectedRawPackage?.f3_package_name.package_name || ""
     );
     console.log("🚀 ~ F3RawPackageUpsert ~ packageName:", packageName);
     const [leadCount, setLeadCount] = useState(
@@ -170,7 +170,11 @@ const F3RawPackageUpsert = () => {
                         >
                             Reset
                         </button>
-                        <button type="submit" className="btn btn-primary">
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={isMutateLoading}
+                        >
                             {isMutateLoading ? (
                                 <span className="loading loading-spinner"></span>
                             ) : (

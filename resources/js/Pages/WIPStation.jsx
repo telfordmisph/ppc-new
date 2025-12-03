@@ -17,14 +17,27 @@ import {
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 import { visibleLines } from "@/Utils/chartLines";
 import clsx from "clsx";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+
+function useFetchByType(type, commonBaseParams) {
+    return useFetch(route("api.wip.filterSummaryTrend"), {
+        params: { ...commonBaseParams, filteringCondition: type },
+        auto: false,
+    });
+}
 
 const WIPStation = () => {
     const {
         packageName: savedSelectedPackage,
+        workWeeks: savedWorkWeeks,
         lookBack: savedLookBack,
         period: savedPeriod,
         offset: savedOffset,
         setSelectedPackageName: setSavedSelectedPackageName,
+        setSelectedWorkWeeks: setSavedWorkWeeks,
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
         setSelectedOffset: setSavedSelectedOffset,
@@ -32,6 +45,9 @@ const WIPStation = () => {
     const [fullLabel, setFullLabel] = useState("");
     const [selectedPackageName, setSelectedPackageName] =
         useState(savedSelectedPackage);
+    const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(
+        savedWorkWeeks || []
+    );
     const [selectedPeriod, setSelectedPeriod] = useState(savedPeriod);
     const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
     const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
@@ -44,11 +60,23 @@ const WIPStation = () => {
     });
 
     const {
+        data: workWeekData,
+        isLoading: isWorkWeekLoading,
+        errorMessage: WorkWeekErrorMessage,
+    } = useWorkweekStore();
+
+    const {
         data: packagesData,
-        isLoading: packagesryLoading,
+        isLoading: isPackagesLoading,
         errorMessage: packagesErrorMessage,
-        // fetch: packagesFetch,
-    } = useFetch(route("api.wip.distinctPackages"));
+    } = useF1F2PackagesStore();
+
+    // const {
+    //     data: packagesData,
+    //     isLoading: packagesryLoading,
+    //     errorMessage: packagesErrorMessage,
+    //     // fetch: packagesFetch,
+    // } = useFetch(route("api.wip.distinctPackages"));
 
     const commonBaseParams = useMemo(
         () => ({
@@ -56,6 +84,7 @@ const WIPStation = () => {
             period: selectedPeriod,
             lookBack: selectedLookBack,
             offsetDays: selectedOffsetPeriod,
+            workweek: selectedWorkWeeks.join(","),
         }),
         [
             selectedPackageName,
@@ -65,27 +94,35 @@ const WIPStation = () => {
         ]
     );
 
-    const makeFetch = (condition) =>
-        useFetch(route("api.wip.filterSummaryTrend"), {
-            params: { ...commonBaseParams, filteringCondition: condition },
-            auto: false,
-        });
+    const allFetch = useFetchByType("All", commonBaseParams);
+    const holdFetch = useFetchByType("Hold", commonBaseParams);
+    const pipelineFetch = useFetchByType("Pipeline", commonBaseParams);
+    const bakeFetch = useFetchByType("Bake", commonBaseParams);
+    const processableFetch = useFetchByType("Processable", commonBaseParams);
+    const detapesegregationFetch = useFetchByType(
+        "Detapesegregation",
+        commonBaseParams
+    );
+    const lpiFetch = useFetchByType("Lpi", commonBaseParams);
+    const brandFetch = useFetchByType("Brand", commonBaseParams);
+    const lliFetch = useFetchByType("Lli", commonBaseParams);
+    const sortFetch = useFetchByType("Sort", commonBaseParams);
 
-    const fetches = {
-        All: makeFetch("All"),
-        Hold: makeFetch("Hold"),
-        Pipeline: makeFetch("Pipeline"),
-        Bake: makeFetch("Bake"),
-        Processable: makeFetch("Processable"),
-        Detapesegregation: makeFetch("Detapesegregation"),
-        Lpi: makeFetch("Lpi"),
-        Brand: makeFetch("Brand"),
-        Lli: makeFetch("Lli"),
-        Sort: makeFetch("Sort"),
-    };
+    const allFetchStates = [
+        { type: "All", ...allFetch },
+        { type: "Hold", ...holdFetch },
+        { type: "Pipeline", ...pipelineFetch },
+        { type: "Bake", ...bakeFetch },
+        { type: "Processable", ...processableFetch },
+        { type: "Detapesegregation", ...detapesegregationFetch },
+        { type: "Lpi", ...lpiFetch },
+        { type: "Brand", ...brandFetch },
+        { type: "Lli", ...lliFetch },
+        { type: "Sort", ...sortFetch },
+    ];
 
     const handleSearch = () => {
-        Object.values(fetches).forEach(({ abort, fetch }) => {
+        allFetchStates.forEach(({ abort, fetch }) => {
             abort();
             fetch();
         });
@@ -95,7 +132,8 @@ const WIPStation = () => {
                 anyLoading,
                 selectedPeriod,
                 selectedLookBack,
-                selectedOffsetPeriod
+                selectedOffsetPeriod,
+                selectedWorkWeeks
             )
         );
     };
@@ -103,24 +141,6 @@ const WIPStation = () => {
     const xAxis = "label";
 
     const datePeriod = formatPeriodLabel(selectedPeriod);
-
-    const allFetchStates = Object.keys(fetches).map((type) => {
-        const { data, isLoading, errorMessage } = fetches[type];
-        return { type, data, isLoading, errorMessage };
-    });
-
-    useEffect(() => {
-        console.log(
-            "---------------------------------------------------------"
-        );
-        setFullLabel("");
-    }, [
-        selectedPackageName,
-        selectedPeriod,
-        selectedLookBack,
-        selectedOffsetPeriod,
-    ]);
-
     const anyLoading = allFetchStates.some((f) => f.isLoading);
     const anyError = allFetchStates.find((f) => f.errorMessage);
 
@@ -143,9 +163,9 @@ const WIPStation = () => {
         });
     };
 
-    const handleSearchableDropdownSelect = (packageName) => {
-        setSelectedPackageName(packageName);
-        setSavedSelectedPackageName(packageName);
+    const handleWorkWeekChange = (selectedWorkWeek) => {
+        setSelectedWorkWeeks(selectedWorkWeek);
+        setSavedWorkWeeks(selectedWorkWeek);
     };
 
     const handlePeriodSelect = (period) => {
@@ -163,6 +183,25 @@ const WIPStation = () => {
         setSavedSelectedOffset(Number(offset));
     };
 
+    const handlePackageNamesChange = (selectedPackages) => {
+        setSelectedPackageName(selectedPackages);
+        setSavedSelectedPackageName(selectedPackages);
+    };
+
+    const lines = useMemo(
+        () =>
+            visibleLines({
+                showQuantities: true,
+                showLots: false,
+                showFactories: {
+                    f1: factoryVisibleBars.f1,
+                    f2: factoryVisibleBars.f2,
+                    f3: factoryVisibleBars.f3,
+                },
+            }),
+        [factoryVisibleBars.f1, factoryVisibleBars.f2, factoryVisibleBars.f3]
+    );
+
     return (
         <>
             <Head title="WIP Station" />
@@ -172,15 +211,20 @@ const WIPStation = () => {
                     <span className="join-item btn btn-disabled font-medium">
                         Package Name
                     </span>
-                    <SearchableDropdown
-                        selectedItem={selectedPackageName}
-                        onSelectItem={(packageName) => {
-                            handleSearchableDropdownSelect(packageName);
-                        }}
-                        items={packagesData?.data || []}
-                        isLoading={packagesryLoading}
-                        errorMessage={packagesErrorMessage}
-                        buttonClassName="rounded-r-lg m-0 border-base-content/10 w-30"
+                    <MultiSelectSearchableDropdown
+                        options={
+                            packagesData?.data.map((opt) => ({
+                                value: opt,
+                                label: null,
+                            })) || []
+                        }
+                        onChange={handlePackageNamesChange}
+                        defaultSelectedOptions={[selectedPackageName]}
+                        isLoading={isPackagesLoading}
+                        itemName="Package List"
+                        prompt="Select packages"
+                        contentClassName="w-52 h-70"
+                        singleSelect
                     />
                 </div>
 
@@ -214,30 +258,63 @@ const WIPStation = () => {
                     </div>
                 </div>
 
-                <FloatingLabelInput
-                    id="lookBack"
-                    label={`Look back ${datePeriod}`}
-                    value={selectedLookBack}
-                    type="number"
-                    onChange={(e) => {
-                        handleLookBackChange(e.target.value);
-                    }}
-                    className="h-9 w-44"
-                    labelClassName="bg-base-200"
-                />
+                <div
+                    className={clsx(
+                        "flex",
+                        selectedPeriod === "weekly" ? "hidden" : ""
+                    )}
+                >
+                    <FloatingLabelInput
+                        id="lookBack"
+                        label={`Look back ${datePeriod}`}
+                        value={selectedLookBack}
+                        type="number"
+                        onChange={(e) => {
+                            handleLookBackChange(e.target.value);
+                        }}
+                        className="h-9 w-44"
+                        labelClassName="bg-base-200"
+                    />
 
-                <FloatingLabelInput
-                    id="offset"
-                    label={`Offset days`}
-                    value={selectedOffsetPeriod}
-                    type="number"
-                    onChange={(e) => {
-                        handleOffsetChange(e.target.value);
-                    }}
-                    className="h-9 w-44"
-                    labelClassName="bg-base-200"
-                    alwaysFloatLabel
-                />
+                    <FloatingLabelInput
+                        id="offset"
+                        label={`Offset days`}
+                        value={selectedOffsetPeriod}
+                        type="number"
+                        onChange={(e) => {
+                            handleOffsetChange(e.target.value);
+                        }}
+                        className="h-9 w-44"
+                        labelClassName="bg-base-200"
+                        alwaysFloatLabel
+                    />
+                </div>
+
+                <div
+                    className={clsx(
+                        selectedPeriod === "weekly" ? "" : "hidden"
+                    )}
+                >
+                    <MultiSelectSearchableDropdown
+                        options={
+                            workWeekData?.data.map((item) => ({
+                                value: String(item.cal_workweek),
+                                label: `${formatFriendlyDate(
+                                    item.startDate
+                                )} - ${formatFriendlyDate(item.endDate)}`,
+                            })) || []
+                        }
+                        defaultSelectedOptions={selectedWorkWeeks}
+                        onChange={(value) => {
+                            handleWorkWeekChange(value);
+                        }}
+                        isLoading={isWorkWeekLoading}
+                        itemName="Workweek List"
+                        prompt="Select Workweek"
+                        debounceDelay={500}
+                        contentClassName="w-72 h-120"
+                    />
+                </div>
 
                 <TogglerButton
                     id="factory"
@@ -271,7 +348,7 @@ const WIPStation = () => {
                 {allFetchStates.map(
                     ({ type, data, isLoading, errorMessage }) => {
                         return (
-                            <div>
+                            <div key={type}>
                                 <div className="font-semibold pt-4 pb-2 pl-2">
                                     {type}
                                 </div>
@@ -282,15 +359,7 @@ const WIPStation = () => {
                                         xKey={xAxis}
                                         isLoading={isLoading}
                                         errorMessage={errorMessage}
-                                        lines={visibleLines({
-                                            showQuantities: true,
-                                            showLots: false,
-                                            showFactories: {
-                                                f1: factoryVisibleBars.f1,
-                                                f2: factoryVisibleBars.f2,
-                                                f3: factoryVisibleBars.f3,
-                                            },
-                                        })}
+                                        lines={lines}
                                     />
                                 </div>
                             </div>

@@ -29,11 +29,11 @@ Route::prefix('wip')->name('api.wip.')->group(function () {
   Route::get('/residual-summary', [WipController::class, 'getPackageResidualSummary'])->name('residualSummary');
   Route::get('/package-pickup-summary', [WipController::class, 'getPackagePickUpSummary'])->name('packagePickupSummary');
   Route::get('/quantity-lot-totals', [WipController::class, 'getWIPQuantityAndLotsTotal'])->name('quantityLotTotals');
-  Route::get('/quantity-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('quantityLotTotalsNew');
+  // Route::get('/quantity-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('quantityLotTotalsNew');
 });
 
 Route::prefix('wip-out')->name('api.wip.')->group(function () {
-  Route::get('/trend', [WipController::class, 'getWipOutTrend'])->name('out.trend');
+  Route::get('/trend', [WipController::class, 'getWipOutCapacitySummaryTrend'])->name('out.trend');
 });
 
 
@@ -58,7 +58,8 @@ Route::prefix('f3-package-names')->name('api.f3.package.names.')->group(function
 
 Route::prefix('package')->name('api.package.')->group(function () {
   Route::get('/package-groups', [PackageGroupController::class, 'index'])->name('packageGroups');
-  Route::patch('/{id}', [PackageGroupController::class, 'update'])->name('update');
+  Route::post('/', [PackageGroupController::class, 'saveGroup'])->name('store');
+  Route::patch('/{id}', [PackageGroupController::class, 'saveGroup'])->name('update');
   Route::delete('/{id}', [PackageGroupController::class, 'destroy'])->name('delete');
 });
 
@@ -74,6 +75,7 @@ Route::prefix('analog-calendar')->name('api.analog.calendar.')->group(function (
 
 Route::prefix('package-capacity')->name('api.package.capacity')->group(function () {
   Route::get('/insert', [PackageCapacityController::class, 'storeCapacity'])->name('insert');
+  Route::get('/get-trend', [PackageCapacityController::class, 'getTrend'])->name('getTrend');
   Route::patch('/{id}/edit', [PackageCapacityController::class, 'updateCapacity'])->name('update');
 });
 

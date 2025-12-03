@@ -3,11 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\PackageGroup;
+use App\Traits\ParseRequestTrait;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use App\Repositories\PackageGroupRepository;
 
 class PackageGroupController extends Controller
 {
+  use ParseRequestTrait;
+  protected $packageGroupRepo;
+
+  public function __construct(PackageGroupRepository $packageGroupRepo)
+  {
+    $this->packageGroupRepo = $packageGroupRepo;
+  }
+
   public function index(Request $request)
   {
     $perPage = $request->input('perPage', 50);
@@ -16,7 +27,7 @@ class PackageGroupController extends Controller
     $packageGroups = PackageGroup::with('packages')->paginate($perPage);
     // return response()->json($packageGroups);
 
-    return Inertia::render('F1F2PackageGroupList', [
+    return Inertia::render('PackageGroupList', [
       'packageGroups' => $packageGroups,
       // 'search' => $search,
       'perPage' => $perPage,
@@ -24,7 +35,55 @@ class PackageGroupController extends Controller
     ]);
   }
 
-  public function upsert($id = null) {}
+  private function validatePackageGroup(Request $request, $id = null)
+  {
+    return $request->validate([
+      'factory' => 'required|string|max:20',
+      'group_name' => 'nullable|string|max:45',
+      'package_names.*' => 'string|max:45',
+      'package_names' => 'array|distinct',
+    ]);
+  }
 
-  public function destroy($id) {}
+  public function upsert($id = null)
+  {
+    $packageGroup = $id ? PackageGroup::with('packages')->findOrFail($id) : null;
+    $packageMembers = $packageGroup ? $packageGroup->packages : [];
+
+    Log::info("Package Members: " . json_encode($packageMembers));
+
+    return Inertia::render('PackageGroupUpsert', [
+      'packageGroup' => $packageGroup,
+      'packageMembers' => $packageMembers
+    ]);
+  }
+
+  public function saveGroup(Request $request)
+  {
+    $validated = $this->validatePackageGroup($request);
+
+    $id = $request->input('id');
+    $factory = $request->input('factory');
+    $groupName = $request->input('group_name') ?? null;
+    $packageNames = $this->parsePackageName($request);
+
+    Log::info("id: " . json_encode($id));
+    Log::info('Factory: ' . json_encode($factory));
+    Log::info('Package Names: ' . json_encode($packageNames));
+    Log::info('Group Name: ' . json_encode($groupName));
+
+    $packageGroup = $this->packageGroupRepo->saveGroup($id, $factory, $groupName, $packageNames);
+    return response()->json($packageGroup);
+  }
+
+  public function destroy($id)
+  {
+    $f3RawPackage = PackageGroup::findOrFail($id);
+    $f3RawPackage->delete();
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Package deleted successfully',
+    ]);
+  }
 }

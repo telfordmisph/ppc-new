@@ -51,7 +51,7 @@ class F3PackageNamesController extends Controller
     $f3PackageName = $id ? F3PackageName::findOrFail($id) : null;
 
     return Inertia::render('F3PackageNameUpsert', [
-      'part' => $f3PackageName,
+      'packageName' => $f3PackageName,
     ]);
   }
 
@@ -69,7 +69,7 @@ class F3PackageNamesController extends Controller
   public function index(Request $request)
   {
     $search = $request->input('search', '');
-    $perPage = $request->input('perPage', 10);
+    $perPage = $request->input('perPage', 50);
     $totalEntries = F3PackageName::count();
 
     $f3PackageNames = F3PackageName::query()

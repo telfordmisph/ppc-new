@@ -46,7 +46,24 @@ export function formatPeriodLabel(periodValue) {
 
 const pluralize = (word, count) => (count === 1 ? word : `${word}s`);
 
-export function formatPeriodTrendMessage(isOveraByPackagellWipLoading, periodValue, selectedLookBack, selectedOffsetPeriod) {
+export function formatPeriodTrendMessage(
+    isOveraByPackagellWipLoading, 
+    periodValue, 
+    selectedLookBack, 
+    selectedOffsetPeriod,
+    selectedWorkWeek = [],
+) {
+    if (periodValue === "weekly" && selectedWorkWeek.length === 0) {
+        return `Please select at least one workweek.`;
+    }
+
+    if (selectedLookBack === 0) {
+        return `Please select at least more than one lookback period.`;
+    }
+
+    const hasWorkWeek = periodValue === "weekly" &&
+        Array.isArray(selectedWorkWeek) && selectedWorkWeek.length > 0;
+
     const offsetLabel = (offset) => {
         if (offset === 0) return "today";
         if (offset === 1) return "yesterday";
@@ -56,9 +73,24 @@ export function formatPeriodTrendMessage(isOveraByPackagellWipLoading, periodVal
         return `${offset} days ago`;
     };
 
-    const fullLabel = `${
-        isOveraByPackagellWipLoading ? "Loading" : "Showing"
-    } the last ${selectedLookBack} ${pluralize(
+    const label = isOveraByPackagellWipLoading ? "Loading" : "Showing";
+
+    if (hasWorkWeek) {
+        const weeks = selectedWorkWeek;
+        let weekText = "";
+
+        if (weeks.length === 1) {
+            weekText = weeks[0];
+        } else if (weeks.length === 2) {
+            weekText = weeks.join(" and ");
+        } else {
+            weekText = weeks.slice(0, -1).join(", ") + ", and " + weeks[weeks.length - 1];
+        }
+
+        return `${label} ${weekText} workweeks`;
+    }
+
+    const fullLabel = `${label} the last ${selectedLookBack} ${pluralize(
         formatPeriodLabel(periodValue),
         selectedLookBack
     )}, starting from ${offsetLabel(selectedOffsetPeriod)}`;

@@ -12,6 +12,7 @@ import { FaChartBar } from "react-icons/fa";
 import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
 import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
+import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
 
 const PickupDashboard = () => {
     const [startDate, setStartDate] = useState(() => {
@@ -111,8 +112,24 @@ const PickupDashboard = () => {
     return (
         <>
             <Head title="Pickup Dashboard" />
-            <div className="flex items-center justify-between">
-                <h1 className="w-3/12 text-base font-bold">Pickup Dashboard</h1>
+
+            <div>
+                <WipOutTrendByPackage
+                    isVisible
+                    title="PickUp Trend by Packages"
+                    dataAPI={route("api.wip.pickupSummaryTrend")}
+                    showLines={{
+                        showQuantities: true,
+                        showLots: true,
+                        showOuts: false,
+                        showCapacities: false,
+                    }}
+                />
+            </div>
+
+            <div className="divider"></div>
+            <div className="flex items-center mt-8 justify-between">
+                <h1 className="w-3/12">Pickup Dashboard</h1>
                 <h1 className="text-sm text-right sm:text-md">
                     {!isOverallPickupLoading ? message : "Empty"}
                 </h1>

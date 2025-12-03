@@ -1,16 +1,16 @@
-import React from "react";
+import React, { memo } from "react";
 import { FaCheck } from "react-icons/fa6";
 import { FaTimes } from "react-icons/fa";
 import clsx from "clsx";
 
-const TogglerButton = ({
+const TogglerButton = memo(function TogglerButton({
     id,
     toggleButtons,
     visibleBars,
     toggleBar,
     toggleAll = null,
     buttonClassName = "",
-}) => {
+}) {
     return (
         <div className="join rounded-lg font-medium">
             {toggleButtons.map(({ key, label, activeClass, inactiveClass }) => (
@@ -38,6 +38,6 @@ const TogglerButton = ({
             )}
         </div>
     );
-};
+});
 
 export default TogglerButton;

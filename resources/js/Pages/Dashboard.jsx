@@ -1,24 +1,22 @@
 import BarChart from "@/Components/Charts/OverallWIPBarChart";
 import { Head } from "@inertiajs/react";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { FaMinus, FaTasks, FaIndustry } from "react-icons/fa";
 import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
 import clsx from "clsx";
 import { useWipStore } from "@/Store/overallDailyWipTrendStore";
 import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
 
-function StatCard({
+const StatCard = memo(function StatCard({
     icon,
     title,
     desc,
     textColor = "text-primary",
-    useDataHook,
+    data,
+    loading,
+    error,
     className = "",
 }) {
-    const { data, loading, error } = useDataHook
-        ? useDataHook()
-        : { data: null, loading: false, error: null };
-
     return (
         <div
             className={`border border-base-content/10 rounded-lg shadow-lg bg-base-300 stat ${className}`}
@@ -58,7 +56,7 @@ function StatCard({
             )}
         </div>
     );
-}
+});
 
 export default function Dashboard({ tableData, tableFilters }) {
     const [windowSize, setWindowSize] = useState(2);
@@ -94,7 +92,17 @@ export default function Dashboard({ tableData, tableFilters }) {
             <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
             <div className="w-full">
-                <WipOutTrendByPackage isVisible noChartTable={true} />
+                <WipOutTrendByPackage
+                    isVisible
+                    title="Wip/Out/Capacity Trend by Packages"
+                    dataAPI={route("api.wip.out.trend")}
+                    showLines={{
+                        showQuantities: true,
+                        showLots: false,
+                        showOuts: true,
+                        showCapacities: true,
+                    }}
+                />
             </div>
 
             <div className="mt-4 grid md:h-[600px] grid-cols-2 grid-rows-12 md:grid-rows-1 gap-4 h-[800px] md:grid-cols-12">
@@ -104,7 +112,6 @@ export default function Dashboard({ tableData, tableFilters }) {
                         isLoading={isWipLoading}
                         errorMessage={wipErrorMessage}
                         windowSize={windowSize}
-                        // setWindowSize={setWindowSize}
                     />
                 </div>
 
@@ -115,26 +122,20 @@ export default function Dashboard({ tableData, tableFilters }) {
                         textColor=""
                         className="row-span-1 col-span-6 md:col-span-12 text-white w-full bg-linear-to-tr from-f1color/60 via-f1color/75 to-f1color"
                         icon={<FaTasks size={32} />}
-                        useDataHook={() => ({
-                            data: latestWip?.total || 0,
-                            loading: isWipLoading,
-                            error: wipErrorMessage,
-                        })}
+                        data={latestWip?.total || 0}
+                        loading={isWipLoading}
+                        error={wipErrorMessage}
                     />
-
                     <StatCard
                         title="Trend Today"
                         desc="Since Yesterday"
                         textColor={trendColor}
                         icon={trendIcon}
-                        useDataHook={() => ({
-                            data: `${trendValue.toFixed(2)}%`,
-                            loading: isWipLoading,
-                            error: wipErrorMessage,
-                        })}
+                        data={`${trendValue.toFixed(2)}%`}
+                        loading={isWipLoading}
+                        error={wipErrorMessage}
                         className="row-span-1 col-span-6 md:col-span-12"
                     />
-
                     <StatCard
                         title="F1 WIP"
                         desc={`As of ${latestWip?.date || "No data"}`}
@@ -142,11 +143,9 @@ export default function Dashboard({ tableData, tableFilters }) {
                         icon={
                             <FaIndustry size={32} className="hidden md:block" />
                         }
-                        useDataHook={() => ({
-                            data: latestWip?.f1 || 0,
-                            loading: isWipLoading,
-                            error: wipErrorMessage,
-                        })}
+                        data={latestWip?.f1 || 0}
+                        loading={isWipLoading}
+                        error={wipErrorMessage}
                         className="row-span-1 col-span-4 md:col-span-12"
                     />
                     <StatCard
@@ -156,11 +155,9 @@ export default function Dashboard({ tableData, tableFilters }) {
                         icon={
                             <FaIndustry size={32} className="hidden md:block" />
                         }
-                        useDataHook={() => ({
-                            data: latestWip?.f2 || 0,
-                            loading: isWipLoading,
-                            error: wipErrorMessage,
-                        })}
+                        data={latestWip?.f2 || 0}
+                        loading={isWipLoading}
+                        error={wipErrorMessage}
                         className="row-span-1 col-span-4 md:col-span-12"
                     />
                     <StatCard
@@ -170,11 +167,9 @@ export default function Dashboard({ tableData, tableFilters }) {
                         icon={
                             <FaIndustry size={32} className="hidden md:block" />
                         }
-                        useDataHook={() => ({
-                            data: latestWip?.f3 || 0,
-                            loading: isWipLoading,
-                            error: wipErrorMessage,
-                        })}
+                        data={latestWip?.f3 || 0}
+                        loading={isWipLoading}
+                        error={wipErrorMessage}
                         className="row-span-1 col-span-4 md:col-span-12"
                     />
                 </div>

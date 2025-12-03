@@ -1,6 +1,7 @@
+import { useState, memo } from "react";
 import { Rectangle } from "recharts";
 
-export default function HoveredBar({
+const HoveredBar = memo(function HoveredBar({
     barProps,
     onClick,
     stroke = "var(--color-accent)",
@@ -9,6 +10,7 @@ export default function HoveredBar({
     hoverHeight = 999,
     radius = 4,
 }) {
+    const [isHovered, setIsHovered] = useState(false);
     const { fill, x, y, width, height, payload, dataKey } = barProps || {};
 
     const handleClick = (e) => {
@@ -16,7 +18,13 @@ export default function HoveredBar({
     };
 
     return (
-        <g onClick={handleClick} className="group cursor-pointer">
+        <g
+            onClick={handleClick}
+            // TODO: not working hover effects
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="group cursor-pointer hover:bg-red-500"
+        >
             {/* Transparent hover zone */}
             <Rectangle
                 width={width}
@@ -35,18 +43,23 @@ export default function HoveredBar({
                 y={y}
                 radius={radius}
                 fill={fill}
-                strokeWidth={strokeWidth}
+                strokeWidth={isHovered ? strokeWidth * 2 : 0}
             />
 
             {/* Overlay */}
-            <Rectangle
-                width={width}
-                height={height}
-                x={x}
-                y={y}
-                radius={radius}
-                fill={overlayColor}
-            />
+            {/* {isHovered && (
+                <Rectangle
+                    width={width}
+                    height={height}
+                    x={x}
+                    y={y}
+                    radius={radius}
+                    fill={overlayColor}
+                />
+            )} */}
         </g>
     );
-}
+});
+
+HoveredBar.displayName = "HoveredBar";
+export default HoveredBar;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, memo, useMemo, useCallback } from "react";
 import {
     BarChart as ReBarChart,
     Bar,
@@ -14,31 +14,41 @@ import BaseChart from "./BaseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
 
-const BarChart = ({
+const BarChart = memo(function BarChart({
     data,
     isLoading,
     errorMessage,
     windowSize,
-    setWindowSize,
-}) => {
+}) {
     const [visibleBars, setVisibleBars] = useState({
         f1: true,
         f2: true,
         f3: true,
     });
 
-    const toggleBar = (key) => {
-        setVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
-    };
-
-    const toggleAll = () => {
-        const allVisible = Object.values(visibleBars).every(Boolean);
-        setVisibleBars({
-            f1: !allVisible,
-            f2: !allVisible,
-            f3: !allVisible,
+    const toggleBar = useCallback((key) => {
+        setVisibleBars((prev) => {
+            if (prev[key] === undefined) return prev;
+            const newState = { ...prev, [key]: !prev[key] };
+            if (newState[key] === prev[key]) return prev;
+            return newState;
         });
-    };
+    }, []);
+
+    const toggleAll = useCallback(() => {
+        setVisibleBars((prev) => {
+            const allVisible = Object.values(prev).every(Boolean);
+            const newState = {
+                f1: !allVisible,
+                f2: !allVisible,
+                f3: !allVisible,
+            };
+            if (Object.keys(prev).every((k) => prev[k] === newState[k])) {
+                return prev;
+            }
+            return newState;
+        });
+    }, []);
 
     const chartData = useMemo(() => {
         const sorted = Object.values(data).sort(
@@ -77,14 +87,14 @@ const BarChart = ({
                     />
                 </div> */}
 
-                <div className="mt-4 lg:mt-0">
-                    <TogglerButton
-                        toggleButtons={TOGGLE_FACTORY_BUTTONS}
-                        visibleBars={visibleBars}
-                        toggleBar={toggleBar}
-                        toggleAll={toggleAll}
-                    />
-                </div>
+                {/* <div className="mt-4 lg:mt-0"> */}
+                <TogglerButton
+                    toggleButtons={TOGGLE_FACTORY_BUTTONS}
+                    visibleBars={visibleBars}
+                    toggleBar={toggleBar}
+                    toggleAll={toggleAll}
+                />
+                {/* </div> */}
             </div>
 
             <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
@@ -148,17 +158,17 @@ const BarChart = ({
                             dot={{ r: 4 }}
                             activeDot={{ r: 12 }}
                         />
-                        <Brush
+                        {/* <Brush
                             dataKey="date"
                             height={20}
                             stroke={"var(--color-base-content)"}
                             fill={"var(--color-base-300)"}
-                        />
+                        /> */}
                     </ReBarChart>
                 )}
             </BaseChart>
         </div>
     );
-};
+});
 
 export default BarChart;

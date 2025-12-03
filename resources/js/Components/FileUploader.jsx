@@ -1,45 +1,57 @@
-import { useState } from "react";
+import { useState, forwardRef, useImperativeHandle, useRef } from "react";
 
-export default function ExcelUploader({
-    legend,
-    onFileValid,
-    acceptedTypes = ".xlsx",
-}) {
-    const [error, setError] = useState("");
+const ExcelUploader = forwardRef(
+    ({ legend, onFileValid, acceptedTypes = ".xlsx" }, ref) => {
+        const [error, setError] = useState("");
+        const fileInputRef = useRef(null);
 
-    const handleFileChange = async (e) => {
-        const selectedFile = e.target.files[0];
-        if (!selectedFile) {
-            setError("No file selected.");
-            onFileValid(null);
-            return;
-        }
+        useImperativeHandle(ref, () => ({
+            reset: () => {
+                setError("");
+                onFileValid(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = null;
+                }
+            },
+        }));
 
-        const allowedExtensions = [".xlsx"];
-        const fileExtension = selectedFile.name.slice(
-            selectedFile.name.lastIndexOf(".")
+        const handleFileChange = (e) => {
+            const selectedFile = e.target.files[0];
+            if (!selectedFile) {
+                setError("No file selected.");
+                onFileValid(null);
+                return;
+            }
+
+            const allowedExtensions = [".xlsx"];
+            const fileExtension = selectedFile.name.slice(
+                selectedFile.name.lastIndexOf(".")
+            );
+
+            if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
+                setError("Only .xlsx files are allowed.");
+                onFileValid(null);
+                return;
+            }
+
+            setError("");
+            onFileValid(selectedFile);
+        };
+
+        return (
+            <fieldset className="fieldset">
+                <legend className="fieldset-legend">{legend}</legend>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={acceptedTypes}
+                    className="file-input"
+                    onChange={handleFileChange}
+                />
+                {error && <label className="label text-error">{error}</label>}
+            </fieldset>
         );
+    }
+);
 
-        if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
-            setError("Only .xlsx files are allowed.");
-            onFileValid(null);
-            return;
-        }
-
-        setError("");
-        onFileValid(selectedFile);
-    };
-
-    return (
-        <fieldset className="fieldset">
-            <legend className="fieldset-legend">{legend}</legend>
-            <input
-                type="file"
-                accept={acceptedTypes}
-                className="file-input"
-                onChange={handleFileChange}
-            />
-            {error && <label className="label text-error">{error}</label>}
-        </fieldset>
-    );
-}
+export default ExcelUploader;

@@ -20,12 +20,12 @@
 
 function sortObjectArray(
   data = [],
-  sorter = { keys: ['total_quantity'], order: 'asc', compute: null }
+  sorter = { keys: ['total quantity'], order: 'asc', compute: null }
 ) {
   if (!Array.isArray(data)) return [];
 
   const {
-    keys = ['total_quantity'],
+    keys = ['total quantity'],
     order = 'asc',
     compute = null,
   } = sorter;

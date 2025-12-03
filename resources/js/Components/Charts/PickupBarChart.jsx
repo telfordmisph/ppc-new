@@ -43,18 +43,20 @@ export default function PickupBarChart({
                         yAxisId="left"
                         dataKey="total_quantity"
                         fill={"var(--color-f1color)"}
+                        radius={4}
                     />
                     <Bar
                         yAxisId="right"
                         dataKey="total_lots"
                         fill={"var(--color-f2color)"}
+                        radius={4}
                     />
-                    <Brush
+                    {/* <Brush
                         dataKey="packageName"
                         height={20}
                         stroke={"var(--color-base-content)"}
                         fill={"var(--color-base-300)"}
-                    />
+                    /> */}
                 </BarChart>
             )}
         </BaseChart>

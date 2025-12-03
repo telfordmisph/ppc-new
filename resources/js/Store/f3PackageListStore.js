@@ -9,10 +9,44 @@ export const useF3PackagesStore = create((set, get) => {
   };
 
   return {
-    data: null,
+    data: [],
     isLoading: false,
     isLoaded: false,
     errorMessage: null,
+
+    appendPackage(packageName) {
+      set(state => {
+        if (!packageName) return state;
+
+        const exists = state.data.some(item => item.id === packageName.id);
+        if (exists) return state;
+
+        const newData = [...state.data, packageName];
+        newData.sort((a, b) => a.package_name.localeCompare(b.package_name));
+
+        return { data: newData };
+      });
+    },
+
+    updatePackage(updated) {
+      set(state => {
+        const newData = state.data.map(item =>
+          item.id === updated.id ? { ...item, ...updated } : item
+        );
+        newData.sort((a, b) => a.package_name.localeCompare(b.package_name));
+
+        return { data: newData };
+      });
+    },
+
+    removePackage(id) {
+      set(state => {
+        const newData = state.data.filter(item => item.id !== id);
+        newData.sort((a, b) => a.package_name.localeCompare(b.package_name));
+
+        return { data: newData };
+      });
+    },
 
     async fetchF3PackageNames(params = {}) {
       if (get().isLoaded) {

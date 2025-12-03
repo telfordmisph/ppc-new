@@ -20,10 +20,12 @@ class AnalogCalendarRepository
       ->get();
   }
 
+  /*
+   * @param $workweeks
+   * @return array
+  */
   public function getDatesByWorkWeekRange($workweeks)
   {
-    \Log::info('workweek: ', ['data' => $workweeks]);
-
     if (!is_array($workweeks)) {
       $trimmed = trim($workweeks);
 
@@ -39,7 +41,9 @@ class AnalogCalendarRepository
     foreach ($workweeks as $ww) {
       $query = DB::table(self::ANALOG_CALENDAR_TABLE)
         ->where('cal_workweek', $ww)
-        ->whereNotNull('cal_date');
+        ->whereNotNull('cal_date')
+        ->orderBy('cal_workweek', 'asc')
+        ->orderBy('cal_date', 'asc');
 
       $startDate = $query->min('cal_date');
       $endDate = $query->max('cal_date');
@@ -53,6 +57,29 @@ class AnalogCalendarRepository
       }
     }
 
-    return $ranges;
+    if (empty($ranges)) {
+      return [
+        'range' => [],
+        'earliest_date' => null,
+        'latest_date' => null,
+      ];
+    }
+
+    $earliest = null;
+    $latest = null;
+    foreach ($ranges as $r) {
+      if ($earliest === null || $r->startDate < $earliest) {
+        $earliest = $r->startDate;
+      }
+      if ($latest === null || $r->endDate > $latest) {
+        $latest = $r->endDate;
+      }
+    }
+
+    return [
+      'range' => $ranges,
+      'earliest_date' => $earliest,
+      'latest_date' => $latest,
+    ];
   }
 }

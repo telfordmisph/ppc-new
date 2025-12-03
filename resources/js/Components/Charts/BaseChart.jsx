@@ -3,12 +3,13 @@ import { useThemeStore } from "@/Store/themeStore";
 import BarChartSkeleton from "./BarChartSkeleton";
 import { DARK_THEME_NAME } from "@/Constants/colors";
 import { FaDotCircle } from "react-icons/fa";
+import useStateThrottle from "@/Hooks/useStateThrottle";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
 
     return (
-        <div className="flex flex-col gap-1 border border-base-content/20 rounded-lg shadow-xs shadow-accent border-opacity-30 bg-base-300">
+        <div className="flex flex-col gap-1 border border-base-content/20 rounded-lg pb-2 shadow-xs shadow-accent border-opacity-30 bg-base-300">
             <div className="px-2 pt-2 font-semibold rounded-t-lg">{label}</div>
             {payload.map((item, index) => {
                 const baseColor = item.color;
@@ -33,9 +34,6 @@ const CustomTooltip = ({ active, payload, label }) => {
                     </div>
                 );
             })}
-            <div className="px-2 pb-2 text-xs opacity-50">
-                click for see details
-            </div>
         </div>
     );
 };
@@ -48,8 +46,8 @@ export default function BaseChart({ data, isLoading, error, children }) {
     const tooltip = (
         <Tooltip
             content={<CustomTooltip />}
-            animationEasing="ease-in-out"
-            animationDuration={150}
+            animationEasing="cubic-bezier(0, 0, 0, 1)"
+            animationDuration={800}
             cursor={{ fill: "var(--color-base-content-dim)" }}
             includeHidden
         />
@@ -79,8 +77,11 @@ export default function BaseChart({ data, isLoading, error, children }) {
         );
 
     return (
-        <ResponsiveContainer>
-            {children({ isDark, tooltip })}
+        <ResponsiveContainer debounce={500}>
+            {children({
+                isDark,
+                tooltip,
+            })}
         </ResponsiveContainer>
     );
 }

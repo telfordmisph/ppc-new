@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, {
+    useState,
+    useEffect,
+    useMemo,
+    useCallback,
+    useRef,
+} from "react";
 import { Head } from "@inertiajs/react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -21,7 +27,6 @@ import {
     summaryWipPLBarsQuantity,
 } from "@/Utils/chartBars";
 
-// TODO: extract?
 function buildComputeFunction(selectedTotal, visibleBars) {
     const activeKeys = Object.entries(visibleBars)
         .filter(([_, isVisible]) => isVisible)
@@ -145,11 +150,11 @@ const WIPTrend = () => {
         selectedWorkWeek,
     });
 
-    const handleDateChange = (dates) => {
+    const handleDateChange = useCallback((dates) => {
         const [start, end] = dates;
         setTempStartDate(start);
         setTempEndDate(end);
-    };
+    }, []);
 
     const handleResetFilter = () => {
         setTempStartDate(null);

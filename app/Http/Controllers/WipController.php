@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\WipConstants;
+use App\Repositories\PackageGroupRepository;
 use App\Traits\ParseDateTrait;
+use App\Traits\ParseRequestTrait;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\WipService;
@@ -12,44 +15,22 @@ use Illuminate\Support\Facades\Log;
 class WipController extends Controller
 {
   use ParseDateTrait;
+  use ParseRequestTrait;
 
   protected $wipService;
-  protected $wipRepository;
+  protected $f1f2WipRepo;
+  protected $packageGroupRepo;
 
   private const CATEGORY_FILTER = ['all', 'F1', 'F2', 'F3', 'PL1', 'PL6'];
 
-  public function __construct(WipService $wipService, F1F2WipRepository $wipRepository)
-  {
+  public function __construct(
+    WipService $wipService,
+    F1F2WipRepository $f2f2WipRepo,
+    PackageGroupRepository $packageGroupRepo
+  ) {
+    $this->packageGroupRepo = $packageGroupRepo;
     $this->wipService = $wipService;
-    $this->wipRepository = $wipRepository;
-  }
-
-  // ------------------------
-  // Helper Methods
-  // ------------------------
-  private function parsePackageName(Request $request, string $inputName = 'packageName'): array
-  {
-    $input = $request->input($inputName, '') ?? '';
-    $packages = explode(',', $input);
-    return array_filter($packages, fn($p) => !empty($p));
-  }
-
-  private function parsePeriodParams(Request $request, int $defaultLookBack = 20): array
-  {
-    return [
-      'period' => $request->input('period', 'daily') ?? 'daily',
-      'lookBack' => $request->input('lookBack', $defaultLookBack) ?? $defaultLookBack,
-      'offsetDays' => $request->input('offsetDays', 0) ?? 0,
-    ];
-  }
-
-  private function parseWorkweek(Request $request): array
-  {
-    $workweek = $request->input('workweek', '') ?? '';
-    return [
-      'workweek' => $workweek,
-      'useWorkweek' => !empty($workweek),
-    ];
+    $this->f1f2WipRepo = $f2f2WipRepo;
   }
 
   private function parseDateRangeFromRequest(Request $request): array
@@ -69,10 +50,14 @@ class WipController extends Controller
   {
     Log::info("Fetching getWipOutTrend ...");
 
-    $results = $this->wipRepository->getDistinctPackages();
+    // TODO: use a separate table, perhaps use the excel file from PPC portal at 'downloads' folder
 
+    $packages = $this->wipService->getAllPackages();
+    Log::info("Packages: " . json_encode($packages));
     return response()->json([
-      'data' => $results,
+      'data' => $packages,
+      // 'data' => WipConstants::DISTINCT_PACKAGES,
+      // 'data' => ["TSSOP (240 mils)", "150 mils"],
       'status' => 'success',
       'message' => 'Data retrieved successfully',
     ]);
@@ -83,12 +68,14 @@ class WipController extends Controller
     $filteringCondition = trim($request->input('filteringCondition', '') ?? '');
     $packageName = $this->parsePackageName($request);
     $periodParams = $this->parsePeriodParams($request);
+    $workweekParams = $this->parseWorkweek($request);
 
     return $this->wipService->getWIPStationSummaryTrend(
       $packageName,
       $periodParams['period'],
-      $periodParams['lookBack'],
-      $periodParams['offsetDays'],
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+      $workweekParams['workweek'],
       $filteringCondition
     );
   }
@@ -117,16 +104,12 @@ class WipController extends Controller
     $packageName = $this->parsePackageName($request);
     $periodParams = $this->parsePeriodParams($request, 3);
     $dates = $this->parseDateRangeFromRequest($request);
-    Log::info("Overall WIP By Package Trefasdfasfsdsdfsdfnd: ");
-    return $this->wipService->getOverallWipByPackage(
-      $dates['start'],
-      $dates['end'],
-      $workweekParams['useWorkweek'],
+    return $this->wipService->getAllWipTrendByPackage(
       $workweekParams['workweek'],
       $packageName,
       $periodParams['period'],
-      $periodParams['lookBack'],
-      $periodParams['offsetDays']
+      $periodParams['startDate'],
+      $periodParams['endDate']
     );
   }
 
@@ -176,12 +159,14 @@ class WipController extends Controller
   {
     $packageName = $this->parsePackageName($request);
     $periodParams = $this->parsePeriodParams($request);
+    $workweekParams = $this->parseWorkweek($request);
 
     return $this->wipService->getPackagePickUpTrend(
       $packageName,
       $periodParams['period'],
-      $periodParams['lookBack'],
-      $periodParams['offsetDays']
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+      $workweekParams['workweek']
     );
   }
 
@@ -206,16 +191,16 @@ class WipController extends Controller
     $periodParams = $this->parsePeriodParams($request);
     $workweek = $request->input('workweek', '') ?? '';
 
-    return $this->wipService->getWIPQuantityAndLotsTotalNew(
-      $packageName,
-      $periodParams['period'],
-      $periodParams['lookBack'],
-      $periodParams['offsetDays'],
-      $workweek
-    );
+    // return $this->wipService->getWIPQuantityAndLotsTotalNew(
+    //   $packageName,
+    //   $periodParams['period'],
+    //   $periodParams['startDate'],
+    //   $periodParams['endDate'],
+    //   $workweek
+    // );
   }
 
-  public function getWipOutTrend(Request $request)
+  public function getWipOutCapacitySummaryTrend(Request $request)
   {
 
     $packageName = $this->parsePackageName($request);
@@ -227,8 +212,8 @@ class WipController extends Controller
     return $this->wipService->getWipOutCapacitySummaryTrend(
       $packageName,
       $periodParams['period'],
-      $periodParams['lookBack'],
-      $periodParams['offsetDays'],
+      $periodParams['startDate'],
+      $periodParams['endDate'],
       $workweeks['workweek']
     );
   }

@@ -1,5 +1,5 @@
 import { useFetch } from "@/Hooks/useFetch";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import TrendLineChart from "./Charts/TrendLineChart";
 import FloatingLabelInput from "./FloatingLabelInput";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -18,7 +18,15 @@ import Tabs from "./Tabs";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 import { visibleLines } from "@/Utils/chartLines";
 
-const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
+const test = ["F1", "F2", "F3", "Overall"];
+
+const WipOutTrendByPackage = ({
+    isVisible,
+    title = "",
+    dataAPI = null,
+    showLines = {},
+    noChartTable = false,
+}) => {
     const [isChartTableVisible, setIsChartTableVisible] = useState(
         !noChartTable ? true : false
     );
@@ -79,7 +87,7 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
         isLoading: isOveraByPackagellWipLoading,
         errorMessage: overallByPackageWipErrorMessage,
         fetch: overallByPackageWipFetch,
-    } = useFetch(route("api.wip.out.trend"), {
+    } = useFetch(dataAPI, {
         params: params,
         auto: false,
     });
@@ -128,7 +136,8 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
         isOveraByPackagellWipLoading,
         selectPeriod,
         selectedLookBack,
-        selectedOffsetPeriod
+        selectedOffsetPeriod,
+        selectedWorkWeeks
     );
 
     const disableSearch =
@@ -136,21 +145,28 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
         isOveraByPackagellWipLoading ||
         selectedLookBack === 0;
 
-    const handleSearchableDropdownSelect = (packageName) => {
-        setSelectedPackageName(packageName);
-        setSavedSelectedPackage(packageName);
-    };
+    const lines = useMemo(
+        () =>
+            visibleLines({
+                showFactories: {
+                    f1: selectedFactory === "F1",
+                    f2: selectedFactory === "F2",
+                    f3: selectedFactory === "F3",
+                    overall: selectedFactory === "Overall",
+                },
+                ...showLines,
+            }),
+        [selectedFactory]
+    );
 
     return (
         <>
-            <div className="mb-2 font-semibold">WIP-OUT-TREND by Packages</div>
-            <div className="flex items-center">
-                <Tabs
-                    options={["F1", "F2", "F3", "Overall"]}
-                    selectedFactory={selectedFactory}
-                    handleFactoryChange={handleFactoryChange}
-                />
-            </div>
+            <div className="mb-2">{title}</div>
+            <Tabs
+                options={test}
+                selectedFactory={selectedFactory}
+                handleFactoryChange={handleFactoryChange}
+            />
 
             <div
                 className={`border rounded-lg border-base-content/10 transition-all duration-300 ease-in-out transform origin-top ${
@@ -169,9 +185,6 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
                         }
                         onChange={handlePackageNamesChange}
                         defaultSelectedOptions={selectedPackageNames}
-                        handleSearchableDropdownSelect={
-                            handleSearchableDropdownSelect
-                        }
                         isLoading={isPackagesLoading}
                         itemName="Package List"
                         prompt="Select packages"
@@ -270,7 +283,10 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
                         onClick={handleSearch}
                         disabled={disableSearch}
                     >
-                        Get Data
+                        Get Data{" "}
+                        {isOveraByPackagellWipLoading && (
+                            <span className="loading loading-spinner loading-xs"></span>
+                        )}
                     </button>
 
                     {!noChartTable && (
@@ -301,18 +317,7 @@ const WipOutTrendByPackage = ({ isVisible, noChartTable = false }) => {
                         xKey={xAxis}
                         isLoading={isOveraByPackagellWipLoading}
                         errorMessage={overallByPackageWipErrorMessage}
-                        lines={visibleLines({
-                            showQuantities: true,
-                            showLots: false,
-                            showFactories: {
-                                f1: selectedFactory === "F1",
-                                f2: selectedFactory === "F2",
-                                f3: selectedFactory === "F3",
-                                overall: selectedFactory === "Overall",
-                            },
-                            showOuts: true,
-                            showCapacities: true,
-                        })}
+                        lines={lines}
                     />
                     {isChartTableVisible && !isOveraByPackagellWipLoading && (
                         <TableChart

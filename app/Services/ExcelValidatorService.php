@@ -151,9 +151,9 @@ class ExcelValidatorService
         'message' => 'Some required headers are missing or unrecognized.',
         'data' => [
           'headerRowIndex' => $headerRowIndex,
-          'missing' => array_values($missing),
-          'unknown' => array_values($unknown),
-          'found' => $found,
+          'missing_headers' => array_values($missing),
+          'unknown_headers' => array_values($unknown),
+          'found_headers' => $found,
         ],
       ];
     }
@@ -163,8 +163,8 @@ class ExcelValidatorService
       'status' => 'success',
       'headerRowIndex' => $headerRowIndex,
       'headers' => $headers,
-      'found' => $found,
-      'map' => $map,
+      'found_headers' => $found,
+      'map_headers' => $map,
     ];
   }
 }

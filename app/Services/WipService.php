@@ -8,37 +8,46 @@ use App\Repositories\F1F2OutRepository;
 use App\Repositories\F3WipRepository;
 use App\Repositories\F3OutRepository;
 use App\Repositories\PickUpRepository;
+use App\Services\PackageCapacityService;
 use App\Helpers\SqlDebugHelper;
 use App\Helpers\WipTrendParser;
 use App\Helpers\MergeAndAggregate;
 use App\Constants\WipConstants;
+use App\Traits\NormalizeStringTrait;
 use Carbon\Carbon;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Traits\TrendAggregation;
-
+use App\Traits\TrendAggregationTrait;
+use App\Repositories\PackageGroupRepository;
+use App\Repositories\F3PackageNamesRepository;
 use Exception;
 
 class WipService
 {
-  use TrendAggregation;
+  use TrendAggregationTrait;
+  use NormalizeStringTrait;
   protected $analogCalendarRepo;
+  protected $capacityRepo;
   protected $f1f2WipRepo;
   protected $f1f2OutRepo;
   protected $f3WipRepo;
   protected $f3OutRepo;
   protected $pickUpRepo;
-  private const F1F2_TABLE = "customer_data_wip";
-  private const F1F2_OUTS_TABLE = "customer_data_wip_out";
 
+  protected $packageGroupRepo;
+
+  protected $f3packageNamesRepo;
+  private const F1F2_TABLE = "customer_data_wip";
   public function __construct(
     AnalogCalendarRepository $analogCalendarRepo,
     F1F2WipRepository $f1f2WipRepo,
     F1F2OutRepository $f1f2WipOutRepo,
     F3WipRepository $f3WipRepo,
     F3OutRepository $f3OutRepo,
-    PickUpRepository $pickUpRepo
+    PickUpRepository $pickUpRepo,
+    PackageCapacityService $packageCapacityService,
+    PackageGroupRepository $packageGroupRepo,
+    F3PackageNamesRepository $f3PackageNamesRepo
   ) {
     $this->analogCalendarRepo = $analogCalendarRepo;
     $this->f1f2WipRepo = $f1f2WipRepo;
@@ -46,6 +55,9 @@ class WipService
     $this->f3WipRepo = $f3WipRepo;
     $this->f3OutRepo = $f3OutRepo;
     $this->pickUpRepo = $pickUpRepo;
+    $this->capacityRepo = $packageCapacityService;
+    $this->packageGroupRepo = $packageGroupRepo;
+    $this->f3packageNamesRepo = $f3PackageNamesRepo;
   }
 
   private function applyDateOrWorkweekFilter($query, $dateColumn, $useWorkweek, $workweek, $startDate = null, $endDate = null)
@@ -210,186 +222,85 @@ class WipService
     ]);
   }
 
-  private function getFactoryTrend(
-    $factory,
-    $packageName,
-    $period,
-    $lookBack,
-    $offsetDays,
-    $aggregateColumns = [
-      'SUM(wip.qty)' => 'total_quantity',
-      'COUNT(wip.lot_id)' => 'total_lots'
-    ],
-    $additionalFields = [],
-    $exposeColumn = [],
-    $workweeks = "",
-    $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'],
-    $dateColumn = 'wip.Date_Loaded'
-  ) {
-    $columns = [];
+  // TODO TO BE DELETED ????????????????????????????
+  // private function getOverallTrend($packageName, $period, $startDate, $endDate, $workweek, $trendType, $aggregateColumns)
+  // {
+  //   $context = $trendType === 'wip' ? 'wip' : 'out';
+  //   $type = $aggregateColumns === 'quantity' || $aggregateColumns === 'quantity-lot'
+  //     ? $aggregateColumns
+  //     : 'quantity-lot';
 
-    if (!empty($selectColumns)) {
-      foreach ($selectColumns as $col) {
-        $columns[] = $col;
-      }
-    }
+  //   $f1f2Query = $this->getFactoryTrend(
+  //     "F1F2",
+  //     $packageName,
+  //     $period,
+  //     $startDate,
+  //     $endDate,
+  //     workweeks: $workweek,
+  //     dateColumn: WipConstants::FACTORY_AGGREGATES['F1F2'][$context]['dateColumn'],
+  //     aggregateColumns: WipConstants::FACTORY_AGGREGATES['F1F2'][$context][$type]
+  //   );
 
-    if (!empty($exposeColumn)) {
-      foreach ($exposeColumn as $col) {
-        $columns[] = $col;
-      }
-    }
-    Log::info("Columns: " . print_r($columns, true));
-    $selectColumns = !empty($columns) ? implode(', ', $columns) : "1";
+  //   $f3Query =  $this->getFactoryTrend(
+  //     "F3",
+  //     $packageName,
+  //     $period,
+  //     $startDate,
+  //     $endDate,
+  //     workweeks: $workweek,
+  //     dateColumn: WipConstants::FACTORY_AGGREGATES['F3'][$context]['dateColumn'],
+  //     aggregateColumns: WipConstants::FACTORY_AGGREGATES['F3'][$context][$type]
+  //   );
 
-    switch ($factory) {
-      case 'F1F2':
-        $f1f2 = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw($selectColumns)
-          ->where(function ($sub) {
-            $sub->whereRaw('0 = 1');
+  //   $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
 
-            $sub->orWhere(fn($q) => $this->f1f2WipRepo->f1Filters(
-              $q,
-              WipConstants::REEL_TRANSFER_B3,
-              WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
-              'wip'
-            ));
+  //   $f1f2Sub = DB::query()->fromSub($f1f2Query, 'f1f2')
+  //     ->select([...$groupByOrderBy, ...array_values(WipConstants::FACTORY_AGGREGATES['F1F2'][$context][$type])]);
 
-            $sub->orWhere(fn($q) => $this->f1f2WipRepo->applyF2Filters(
-              $q,
-              WipConstants::EWAN_PROCESS,
-              'wip'
-            ));
-          });
-        $query = $this->f1f2WipRepo->filterByPackageName($f1f2, $packageName);
-        break;
+  //   $f3Sub = DB::query()->fromSub($f3Query, 'f3')
+  //     ->select([...$groupByOrderBy, ...array_values(WipConstants::FACTORY_AGGREGATES['F3'][$context][$type])]);
 
-      case 'F1':
-        $query = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw($selectColumns);
-        $query = $this->f1f2WipRepo->f1Filters(
-          $query,
-          WipConstants::REEL_TRANSFER_B3,
-          WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
-          'wip'
-        );
-        $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName);
-        break;
+  //   $combined = $f1f2Sub->unionAll($f3Sub);
 
-      case 'F2':
-        $query = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw($selectColumns);
-        $query = $this->f1f2WipRepo->applyF2Filters($query, WipConstants::EWAN_PROCESS, 'wip');
-        $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName);
-        break;
+  //   // Log::info(SqlDebugHelper::prettify($combined->toSql(), $combined->getBindings()));
 
-      case 'PL1':
-      case 'PL6':
-        $query = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw($selectColumns);
-        $query = $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, $factory);
-        $query->where(function ($sub) {
-          $this->f1f2WipRepo->f1Filters(
-            $sub,
-            WipConstants::REEL_TRANSFER_B3,
-            WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
-            'wip'
-          );
-          $sub->orWhere(fn($f2) => $this->f1f2WipRepo->applyF2Filters($f2, WipConstants::EWAN_PROCESS, 'wip'));
-        });
-        $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName);
-        break;
+  //   $finalResults = DB::query()->fromSub($combined, 'wip_union')
+  //     ->select([...$groupByOrderBy, ...array_values(WipConstants::FACTORY_AGGREGATES['All'][$context][$type])]);
+  //   foreach ($groupByOrderBy as $col) {
+  //     $finalResults->orderBy($col);
+  //   }
 
-      case 'F3':
-        $query = $this->f3WipRepo->baseF3Query()
-          ->selectRaw(expression: $selectColumns);
-        $query = $this->f3WipRepo->filterByPackageName($query, $packageName);
-        break;
+  //   return $finalResults->get();
+  // }
 
-      default:
-        throw new \InvalidArgumentException("Unknown factory: $factory");
-    }
-
-    return $this->applyTrendAggregation(
-      $query,
-      $period,
-      $lookBack,
-      $offsetDays,
-      column: $dateColumn,
-      aggregateColumns: $aggregateColumns,
-      additionalFields: $additionalFields,
-      workweeks: $workweeks,
-    );
-  }
-
-  public function getOverallWipByPackage($startDate, $endDate, $useWorkweek, $workweek, $packageName, $period, $lookBack, $offsetDays)
+  public function getAllWipTrendByPackage($workweeks, $packageName, $period, $startDate, $endDate)
   {
-    Log::info("Overall WIP By Package Trend: ");
     $trends = [];
 
-    $f3BaseQuery = $this->getFactoryTrend(
-      "F3",
-      $packageName,
-      $period,
-      $lookBack,
-      $offsetDays,
-      workweeks: $workweek,
-      selectColumns: [],
-      dateColumn: WipConstants::FACTORY_TREND_CONFIG["F3"]['dateColumn'],
-      aggregateColumns: WipConstants::FACTORY_TREND_CONFIG["F3"]['aggregateColumns']
-    );
+    // foreach (WipConstants::FACTORIES as $factory) {
+    //   $key = strtolower($factory) . '_trend';
+    //   $trends[$key] = $this->getFactoryTrend(
+    //     $factory,
+    //     $packageName,
+    //     $period,
+    //     $startDate,
+    //     $endDate,
+    //     workweeks: $workweek,
+    //     dateColumn: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
+    //     aggregateColumns: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot']
+    //   )->get();
+    // }
 
-    $trends['f3_trend'] = $f3BaseQuery->get();
+    $trends["f1_trend"] = $this->f1f2WipRepo->getTrend("F1", $packageName, $period, $startDate, $endDate, workweeks: $workweeks)->get();
+    $trends["f2_trend"] = $this->f1f2WipRepo->getTrend("F2", $packageName, $period, $startDate, $endDate, workweeks: $workweeks)->get();
+    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
 
-    foreach (WipConstants::FACTORIES as $factory) {
-      if ($factory == 'F3') {
-        continue;
-      }
-
-      $key = strtolower($factory) . '_trend';
-      $trends[$key] = $this->getFactoryTrend(
-        $factory,
-        $packageName,
-        $period,
-        $lookBack,
-        $offsetDays,
-        workweeks: $workweek,
-        selectColumns: [],
-        dateColumn: WipConstants::FACTORY_TREND_CONFIG["F1F2"]['dateColumn'],
-        aggregateColumns: WipConstants::FACTORY_TREND_CONFIG["F1F2"]['aggregateColumns']
-      )->get();
-    }
-
-    $f1f2Query = $this->getFactoryTrend(
-      "F1F2",
-      $packageName,
-      $period,
-      $lookBack,
-      $offsetDays,
-      workweeks: $workweek,
-      selectColumns: ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'],
-      dateColumn: WipConstants::FACTORY_TREND_CONFIG["All"]['dateColumn'],
-      aggregateColumns: WipConstants::FACTORY_TREND_CONFIG["All"]['aggregateColumns']
-    );
-
-    $f3Query =  $this->getFactoryTrend(
-      "F3",
-      $packageName,
-      $period,
-      $lookBack,
-      $offsetDays,
-      workweeks: $workweek,
-      selectColumns: ['f3_wip.date_received as date_loaded', 'f3_wip.qty as qty', 'f3_wip.lot_number as lot_id', 'f3_pkg.package_name as package_name'],
-      dateColumn: WipConstants::FACTORY_TREND_CONFIG["All"]['dateColumn'],
-      aggregateColumns: WipConstants::FACTORY_TREND_CONFIG["All"]['aggregateColumns']
-    );;
-
-    $combinedQuery = $f1f2Query->unionAll($f3Query);
-    $trends['overall_trend'] = $combinedQuery->get();
+    Log::info("getAllWipTrendByPackage trends: " . json_encode($trends));
+    $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
+    $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend'], $trends['f2_trend'], $trends['f3_trend']], $periodGroupBy);
 
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
-    Log::info("Overall WIP By Package Trend: " . json_encode($mergedTrends));
+    // Log::info("Overall WIP By Package Trend: " . json_encode($mergedTrends));
     return response()->json(array_merge($trends, [
       'data' => $mergedTrends,
       'status' => 'success',
@@ -520,7 +431,6 @@ class WipService
       'message' => 'Data retrieved successfully'
     ]);
   }
-
   public function getWIPQuantityAndLotsTotal($useWorkweek, $workweek, $startDate = null, $endDate = null, $includePL = true)
   {
     // NOTE: might be suitable to have another filtration here (for production line & factory)
@@ -717,25 +627,26 @@ class WipService
     return $baseQuery;
   }
 
-  public function getWIPQuantityAndLotsTotalNew($packageName, $period, $lookBack, $offsetDays, $workweek)
+  // TODO to be deleted ????????????????????????????
+  public function getWIPQuantityAndLotsTotalNew($packageName, $period, $startDate, $endDate, $workweek)
   {
     $baseQuery = $this->getBaseFactoryQuery();
     $baseF3Query = $this->f3WipRepo->baseF3Query(true);
 
     $f1QueryWip = (clone $baseQuery)
       ->where(fn($q) => $this->f1f2WipRepo->f1Filters($q, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip'));
-    $f1QueryWip = $this->f1f2WipRepo->filterByPackageName($f1QueryWip, $packageName);
+    $f1QueryWip = $this->f1f2WipRepo->filterByPackageName($f1QueryWip, $packageName, 'f1');
 
     $f1QueryOuts = $this->f1f2OutRepo->getF1QueryByPackage($packageName);
 
     $f2QueryWip = (clone $baseQuery)
       ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, WipConstants::EWAN_PROCESS, 'wip'));
-    $f2QueryWip = $this->f1f2WipRepo->filterByPackageName($f2QueryWip, $packageName);
+    $f2QueryWip = $this->f1f2WipRepo->filterByPackageName($f2QueryWip, $packageName, 'f2');
 
     $f2QueryOuts = $this->f1f2OutRepo->getF2QueryByPackage($packageName);
 
     $f3QueryWip = $baseF3Query;
-    $f3QueryWip = $this->f3WipRepo->filterByPackageName($f3QueryWip, $packageName);
+    $f3QueryWip = $this->f3WipRepo->filterByPackageName($f3QueryWip, $packageName, 'f3');
 
     $f3QueryOuts = $this->f1f2OutRepo->getF3QueryByPackage($packageName);
 
@@ -764,8 +675,8 @@ class WipService
         $results["{$key}_{$type}"] = $this->applyTrendAggregation(
           $queryPair[$type],
           $period,
-          $lookBack,
-          $offsetDays,
+          $startDate,
+          $endDate,
           "wip.Date_Loaded",
           ['SUM(wip.Qty)' => "{$type}_total_quantity"],
           ['plref.production_line'],
@@ -774,7 +685,7 @@ class WipService
       }
     }
 
-    \Log::info($results['f1_wip']->toSql());
+    Log::info($results['f1_wip']->toSql());
 
     $f1WipResults = $results['f1_wip']->get();
     $f2WipResults = $results['f2_wip']->get();
@@ -929,7 +840,7 @@ class WipService
     };
   }
 
-  public function getWIPStationSummaryTrend($packageName, $period, $lookBack, $offsetDays, $filteringCondition)
+  public function getWIPStationSummaryTrend($packageName, $period, $startDate, $endDate, $workweeks, $filteringCondition)
   {
     $filterRules = $this->getFilterRules($filteringCondition);
     Log::info("Applying WIP Filter Summary Trend with condition: $filteringCondition");
@@ -937,20 +848,18 @@ class WipService
     $trends = [];
     foreach (WipConstants::FACTORIES as $factory) {
       if ($factory === 'F3') {
-        continue;
+        continue; // * NOTE: This Station is for F1/F2 only
       }
 
       $key = strtolower($factory) . '_trend';
 
-      $query = $this->getFactoryTrend(
+      $query = $this->f1f2WipRepo->getTrend(
         $factory,
         $packageName,
         $period,
-        $lookBack,
-        $offsetDays,
-        selectColumns: [],
-        dateColumn: WipConstants::FACTORY_TREND_CONFIG[$factory]['dateColumn'],
-        aggregateColumns: WipConstants::FACTORY_TREND_CONFIG[$factory]['aggregateColumns']
+        $startDate,
+        $endDate,
+        $workweeks,
       );
 
       $query->where($this->applyFilterRules($filterRules));
@@ -958,17 +867,14 @@ class WipService
       Log::info(SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
       if ($filteringCondition === 'Bake') {
-        $bakeQuery = $this->getFactoryTrend(
+        $bakeQuery = $this->f1f2WipRepo->getTrend(
           $factory,
           $packageName,
           $period,
-          $lookBack,
-          $offsetDays,
-          selectColumns: [],
-          dateColumn: WipConstants::FACTORY_TREND_CONFIG[$factory]['dateColumn'],
-          aggregateColumns: WipConstants::FACTORY_TREND_CONFIG[$factory]['aggregateColumns']
+          $startDate,
+          $endDate,
+          $workweeks,
         );
-        Log::info("===== WIP FILTER SUMMARY TREND QUERY =====");
         // Log::info(SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
         // Log::info(SqlDebugHelper::prettify($bakeQuery->toSql(), $bakeQuery->getBindings()));
         $bakeQuery->where($this->bakeConditionQuery($filteringCondition));
@@ -980,10 +886,6 @@ class WipService
 
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
 
-    // return response()->json(array_merge($trends, [
-    //   'status' => 'success',
-    //   'message' => 'Data retrieved successfully',
-    // ]));
     return response()->json(array_merge($trends, [
       'data' => $mergedTrends,
       'status' => 'success',
@@ -1117,60 +1019,65 @@ class WipService
     ]);
   }
 
-  public function getPackagePickUpTrend($packageName, $period, $lookBack, $offsetDays)
+  public function getPackagePickUpTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
-    return $this->pickUpRepo->getPickUpTrend($packageName, $period, $lookBack, $offsetDays);
+    return $this->pickUpRepo->getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks);
   }
 
-  public function getWipOutCapacitySummaryTrend($packageName, $period, $lookBack, $offsetDays, $workweeks)
+  public function getWipOutCapacitySummaryTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
 
+    $prefixMap = [
+      'f1_trend' => 'f1',
+      'f2_trend' => 'f2',
+      'f3_trend' => 'f3',
+      'f1_capacity_trend' => 'f1',
+      'f2_capacity_trend' => 'f2',
+      'f3_capacity_trend' => 'f3',
+      'overall_trend' => 'overall',
+      'overall_capacity_trend' => 'overall'
+    ];
+
+    $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks);
+    // Log::info($trends['f1_trend']->toSql());
+    Log::info("f1_trend query: " . SqlDebugHelper::prettify($trends['f1_trend']->toSql(), $trends['f1_trend']->getBindings()));
+
+    $trends['f1_trend'] = $trends['f1_trend']->get();
+
+    $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks);
+    // Log::info($trends['f2_trend']->toSql());
+    Log::info("f2_trend query: " . SqlDebugHelper::prettify($trends['f2_trend']->toSql(), $trends['f2_trend']->getBindings()));
+
+    $trends['f2_trend'] = $trends['f2_trend']->get();
+
+    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
+
     foreach (WipConstants::FACTORIES as $factory) {
-      $key = strtolower($factory) . '_trend';
-      $trends[$key] = $this->getFactoryTrend($factory, $packageName, $period, $lookBack, $offsetDays, workweeks: $workweeks)->get();
+      // TODO capacity won't show if there's no wip data for the package in that factory
+
+      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDate, $endDate, $workweeks);
+      $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
     }
 
-    $trends['overall_trend'] = $this->getFactoryTrend(
-      'All',
-      $packageName,
-      $period,
-      $lookBack,
-      $offsetDays,
-      [
-        'SUM(wip.Qty)' => 'total_quantity',
-      ],
-      workweeks: $workweeks
-    )->get();
+    Log::info("trends: " . json_encode($trends));
 
-    $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
-    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $lookBack, $offsetDays, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $lookBack, $offsetDays, $workweeks);
+    $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
+    $trends['overall_capacity_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_capacity_trend'], $trends['f2_capacity_trend'], $trends['f3_capacity_trend']], $periodGroupBy);
+    $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend'], $trends['f2_trend'], $trends['f3_trend']], $periodGroupBy);
 
-    $merged = [];
+    // $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, periodFields: WipConstants::PERIOD_GROUP_BY[$period]);
+    $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, $prefixMap);
 
-    foreach (array_merge($f1f2out, $f3out, $mergedTrends) as $item) {
-      $key = $item['dateKey'];
+    Log::info("mergedTrends: " . json_encode($mergedTrends));
 
-      if (!isset($merged[$key])) {
-        $merged[$key] = $item;
-      } else {
-        foreach ($item as $field => $value) {
-          if ($field === 'dateKey') {
-            continue;
-          }
+    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
 
-          if (isset($merged[$key][$field]) && is_numeric($merged[$key][$field]) && is_numeric($value)) {
-            $merged[$key][$field] += $value;
-          } else {
-            $merged[$key][$field] = $value;
-          }
-        }
-      }
-    }
+    Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
+    Log::info("getWipOutCapacitySummaryTrend: f3out: " . json_encode($f3out));
 
-    // Optional: sort by dateKey
-    usort($merged, fn($a, $b) => strcmp($a['dateKey'], $b['dateKey']));
+    $merged = $this->mergeTrendsByKey('dateKey', $mergedTrends, $f1f2out, $f3out);
 
     return response()->json([
       'data' => $merged,
@@ -1188,5 +1095,16 @@ class WipService
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);
+  }
+
+  public function getAllPackages()
+  {
+    $f1f2Packages = $this->f1f2WipRepo->getDistinctPackages();
+    // $fromPackageGroup = $this->packageGroupRepo->getUniquePackageNamesByFactory(['F1', 'F2', 'F3']);
+    $f3Packages = $this->f3packageNamesRepo->getAllPackageNames();
+
+    $all = array_values(array_unique(array_merge($f1f2Packages, WipConstants::SPECIAL_FILTER_VALUE, $f3Packages)));
+
+    return array_map('strtoupper', $this->uniqueNormalized($all));
   }
 }

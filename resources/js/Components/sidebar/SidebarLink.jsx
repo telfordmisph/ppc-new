@@ -46,8 +46,8 @@ const SidebarLink = ({
                     : ""
             )}
         >
-            <div className="flex items-center">
-                <span className="w-6 h-6 pt-0.5">{icon}</span>
+            <div className="flex items-center gap-2">
+                <span className="w-4 h-4">{icon}</span>
                 <p className="pl-1 pt-px">{label}</p>
             </div>
 

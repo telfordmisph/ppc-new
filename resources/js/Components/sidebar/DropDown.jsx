@@ -29,8 +29,6 @@ export default function Dropdown({
         const firstSegmentTo = new URL(href, window.location.origin).pathname
             .replace(`/${appName}`, "")
             .split("/")[1];
-        // console.log("🚀 ~ isActiveLink ~ firstSegmentFrom:", firstSegmentFrom);
-        // console.log("🚀 ~ isActiveLink ~ firstSegmentTo:", firstSegmentTo);
 
         return firstSegmentFrom === firstSegmentTo;
     };
@@ -58,8 +56,8 @@ export default function Dropdown({
                 className={`flex items-center h-8 justify-between w-full px-2.5 py-2 rounded-lg ${hoverColor}`}
             >
                 <div className="relative flex items-center space-x-2">
-                    {icon && <span className="w-6 h-6 pt-0.5">{icon}</span>}
-                    <span className="pl-0 pr-1">{label}</span>
+                    {icon && <span className="w-4 h-4">{icon}</span>}
+                    <span className="pr-1">{label}</span>
 
                     {/* Dropdown notification */}
                     {notification ? (
@@ -104,7 +102,7 @@ export default function Dropdown({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
             >
-                <div className="mt-1 ml-5">
+                <div className="mt-1 ml-4">
                     {links.map((link, index) => {
                         const active = isActiveLink(link.href);
                         const linkNotification = link.notification;

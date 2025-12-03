@@ -58,12 +58,22 @@ class AutoImportController extends Controller
     {
         $userId = $request->user()->id ?? null;
 
-        $result = $this->wipImportService->importCapacity($userId);
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx|max:10240',
+        ]);
+
+        $file = $request->file('file');
+
+        $result = $this->wipImportService->importCapacity($userId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
             'data' => $result['data'] ?? [],
+            'updated' => $result['updated'] ?? [],
+            'created' => $result['created'] ?? [],
+            'total' => $result['total'] ?? [],
         ]);
     }
 

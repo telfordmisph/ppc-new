@@ -12,15 +12,20 @@ export const visibleLines = (options = {}) => {
 
     const result = [];
 
-    keyLines.forEach(({ key, colorVar }) => {
+    keyLines.forEach(({ key, colorVar, strokeWidth, className }) => {
         if (showFactories[key]) {
+            // TODO have better distinction of overall lines
+            
             if (showQuantities) {
                 result.push({
                     dataKey: `${key}_total_quantity`,
                     yAxisId: "left",
                     stroke: colorVar.quantity,
-                    strokeWidth: 2,
-                    connectNulls: true,
+                    fill: colorVar.quantity,
+                    strokeWidth: strokeWidth,
+                    className: className,
+                    r: 2,
+                    connectNulls: false,
                 });
             }
             if (showLots) {
@@ -28,8 +33,11 @@ export const visibleLines = (options = {}) => {
                     dataKey: `${key}_total_lots`,
                     yAxisId: "right",
                     stroke: colorVar.lots,
-                    strokeWidth: 2,
-                    connectNulls: true,
+                    fill: colorVar.lots,
+                    strokeWidth: strokeWidth,
+                    className: className,
+                    r: 2,
+                    connectNulls: false,
                     strokeDasharray: "5 6",
                 });
             }
@@ -38,19 +46,28 @@ export const visibleLines = (options = {}) => {
                     dataKey: `${key}_total_outs`,
                     yAxisId: "right",
                     stroke: colorVar.out,
-                    strokeWidth: 2,
-                    connectNulls: true,
+                    fill: colorVar.out,
+                    strokeWidth: strokeWidth,
+                    className: className,
+                    r: 2,
+                    connectNulls: false,
                     strokeDasharray: "10 5",
                     // strokeOpacity: 0.75,
                 });
             }
             if (showCapacities) {
                 result.push({
+                    strokeDasharray: "100 5",
                     dataKey: `${key}_capacity`,
-                    yAxisId: "right",
+                    yAxisId: "left",
                     stroke: colorVar.capacity,
-                    strokeWidth: 2,
-                    connectNulls: true,
+                    fill: colorVar.capacity,
+                    strokeWidth: strokeWidth - 5,
+                    className: className + "opacity-50 drop-shadow-sm drop-shadow-accent",
+                    r: 0,
+                    // 'basis' | 'basisClosed' | 'basisOpen' | 'bumpX' | 'bumpY' | 'bump' | 'linear' | 'linearClosed' | 'natural' | 'monotoneX' | 'monotoneY' | 'monotone' | 'step' | 'stepBefore' | 'stepAfter' | CurveFactory;
+                    type: "step",
+                    connectNulls: false,
                 });
             }
         }

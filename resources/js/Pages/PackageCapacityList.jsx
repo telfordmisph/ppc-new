@@ -4,10 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { useMutation } from "@/Hooks/useMutation";
 import { FaEdit, FaHistory, FaTrash } from "react-icons/fa";
 import Modal from "@/Components/Modal";
-import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import clsx from "clsx";
 import Tabs from "@/Components/Tabs";
+import { BsInfoCircle } from "react-icons/bs";
 
 const PackageCapacityList = () => {
     const toast = useToast();
@@ -145,19 +144,23 @@ const PackageCapacityList = () => {
 
     return (
         <>
-            <div className="flex items-center justify-between text-center">
-                <h1 className="text-base font-bold mr-2">
-                    Package Capacity by Factory{" "}
-                </h1>
+            <div className="flex mb-4 items-center justify-between text-center">
+                <Tabs
+                    options={["Package Capacity List", "Upload New Capacity"]}
+                    selectedFactory={"Package Capacity List"}
+                    handleFactoryChange={() => {
+                        router.visit(route("package.capacity.upload.index"));
+                    }}
+                />
                 <button
                     className="btn btn-primary"
                     onClick={() => importCapacityModalRef.current?.open()}
                 >
                     Import Capacity
                 </button>
-                <Modal
+                {/* <Modal
                     ref={importCapacityModalRef}
-                    id="deletePartModal"
+                    id="PackageCapacityDeleteModal"
                     title="Import New Capacity"
                     onClose={() => importCapacityModalRef.current?.close()}
                     className="max-w-lg"
@@ -201,7 +204,18 @@ const PackageCapacityList = () => {
                             Cancel
                         </button>
                     </div>
-                </Modal>
+                </Modal> */}
+            </div>
+            <div className="bg-base-300 p-4 rounded-lg">
+                <BsInfoCircle className="inline mb-1 mr-2" />
+                All Package names in this list should also be included in the
+                <Link
+                    href={route("package.group.index")}
+                    className="underline text-secondary px-1"
+                >
+                    Package Group Page
+                </Link>
+                .
             </div>
 
             <Tabs

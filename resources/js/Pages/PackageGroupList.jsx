@@ -3,7 +3,9 @@ import { useToast } from "@/Hooks/useToast";
 import { useEffect, useState, useRef } from "react";
 import { useMutation } from "@/Hooks/useMutation";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { BsInfoCircle } from "react-icons/bs";
 import Modal from "@/Components/Modal";
+import { FaPlus } from "react-icons/fa6";
 
 const F1F2PackageGroupList = () => {
     const toast = useToast();
@@ -82,8 +84,8 @@ const F1F2PackageGroupList = () => {
     const handleDelete = async () => {
         try {
             await mutate(
-                route("api.package.group.delete", {
-                    id: selectedPackageGroup.ppc_partnamedb_id,
+                route("api.package.delete", {
+                    id: selectedPackageGroup.id,
                 }),
                 {
                     method: "DELETE",
@@ -93,7 +95,7 @@ const F1F2PackageGroupList = () => {
             refresh();
 
             deleteModalRef.current.close();
-            toast.success("Part deleted successfully!");
+            toast.success("Package Group deleted successfully!");
         } catch (error) {
             toast.error(mutateErrorMessage);
             console.error(error);
@@ -102,30 +104,87 @@ const F1F2PackageGroupList = () => {
 
     return (
         <>
-            <div className="flex items-center justify-between text-center">
-                <h1 className="text-base font-bold">Package Groups</h1>
+            <div className="flex items-center justify-between text-center mb-4">
+                <h1 className="text-base font-bold mb-2">Package Groups</h1>
+                <Link
+                    href={route("package.group.create")}
+                    className="btn btn-primary"
+                >
+                    <FaPlus /> Add Package Group
+                </Link>
             </div>
-            <table className="table w-full table-auto table-xs">
+            <div className="flex gap-2 flex-col text-xs">
+                <div className="bg-base-300 p-4 rounded-lg">
+                    <BsInfoCircle className="inline mb-1 mr-2" />
+                    Package names that do not exist here will not display any
+                    capacity. Please add them to the package group to view their
+                    capacity.
+                </div>
+                <div className="bg-base-300 p-4 rounded-lg">
+                    <BsInfoCircle className="inline mb-1 mr-2" />
+                    All package names on the
+                    <Link
+                        href={route("package.capacity.index")}
+                        className="underline text-secondary px-1"
+                    >
+                        Capacity Page
+                    </Link>
+                    should also appear here, along with their corresponding
+                    canonical names in the package_name or dimension columns
+                    from the database.
+                    <p className="mt-2">
+                        For example, the 'TSSOP (240mils)' entry on the Capacity
+                        Page should appear here, grouped with '240 mils,' which
+                        will be used to filter the dimension column in the
+                        database.
+                    </p>
+                </div>
+                <div className="bg-base-300 p-4 rounded-lg">
+                    <BsInfoCircle className="inline mb-1 mr-2" />
+                    Package names are case insensitive. That said, be sure to
+                    include all possible variants of the name in the group name.
+                    <p className="mt-2">
+                        For example,
+                        <span className="font-semibold"> 150 mils</span>,
+                        <span className="font-semibold"> 150Mils </span>, and
+                        <span className="font-semibold"> 150_MILS </span> are
+                        considered different names. To group them together, both
+                        should be included in the same package group.
+                    </p>
+                </div>
+            </div>
+            <table className="table w-full table-zebra table-auto table-xs mt-4">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Factory</th>
                         <th>Group Name</th>
-                        <th>Package Members</th>
+                        <th>Package Members / Dimension</th>
                     </tr>
                 </thead>
                 <tbody>
                     {serverPackageGroup.data.map((packageGroup) => (
                         <tr key={packageGroup.id}>
                             <td>{packageGroup.id}</td>
-                            <td>{packageGroup.factory}</td>
+                            <td className="uppercase">
+                                {packageGroup.factory}
+                            </td>
                             <td>{packageGroup?.group_name || "-"}</td>
                             <td>
-                                {packageGroup?.packages.map((packageName) => (
-                                    <p key={packageName.id}>
-                                        {packageName?.package_name}
-                                    </p>
-                                ))}
+                                <div className="flex flex-col gap-2">
+                                    {packageGroup?.packages.map(
+                                        (packageName) => (
+                                            <div
+                                                key={packageName.id}
+                                                className="m-1"
+                                            >
+                                                <span className="border rounded-lg border-base-content/10 p-1">
+                                                    {packageName?.package_name}
+                                                </span>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
                             </td>
                             <td className="flex flex-col lg:flex-row">
                                 <Link
@@ -139,19 +198,20 @@ const F1F2PackageGroupList = () => {
                                 >
                                     <FaEdit />
                                 </Link>
-                                <Link
+                                <a
+                                    href="#"
                                     className="btn btn-ghost btn-sm text-error"
                                     onClick={() => {
-                                        selectedPackageGroup(packageGroup);
+                                        setSelectedPackageGroup(packageGroup);
                                         deleteModalRef.current.open();
                                     }}
                                 >
                                     <FaTrash />
-                                </Link>
+                                </a>
 
                                 <Modal
                                     ref={deleteModalRef}
-                                    id="deletePartModal"
+                                    id="deletePackageGroupModal"
                                     title="Are you sure?"
                                     onClose={() =>
                                         deleteModalRef.current?.close()
@@ -159,10 +219,8 @@ const F1F2PackageGroupList = () => {
                                     className="max-w-lg"
                                 >
                                     <p className="px-2 pt-4">
-                                        This action cannot be undone. Delete{" "}
-                                        <span className="pl-1">
-                                            this group?
-                                        </span>
+                                        This action cannot be undone. Delete
+                                        this group?
                                     </p>
 
                                     <p

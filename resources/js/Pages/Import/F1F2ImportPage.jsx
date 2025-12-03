@@ -5,9 +5,9 @@ import { runAsyncToast } from "@/Utils/runAsyncToast";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 import { TbAlertCircle } from "react-icons/tb";
 import { useImportTraceStore } from "@/Store/importTraceStore";
-import ImportLabel from "./lastImportLabel";
+import ImportLabel from "../../Components/lastImportLabel";
 
-const F1F2ImportPage = ({ pageName }) => {
+const F1F2ImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
         useImportTraceStore();
 
@@ -85,8 +85,8 @@ const F1F2ImportPage = ({ pageName }) => {
                     <div className="card-body">
                         <h2 className="card-title">Refresh Daily WIP Import</h2>
                         <p>
-                            Get the latest data for {pageName} from the daily
-                            WIP import. This must be done atleast once a day.
+                            Get the latest data for F1/F2 from the daily WIP
+                            import. This must be done atleast once a day.
                         </p>
                         <ImportLabel
                             data={importTraceData?.f1f2_wip}
@@ -103,7 +103,7 @@ const F1F2ImportPage = ({ pageName }) => {
                             </button>
                             <Modal
                                 ref={manualWIPImportRef}
-                                id="deletePartModal"
+                                id="f1f2WipImportModal"
                                 title="Refresh auto daily WIP import"
                                 onClose={() =>
                                     manualWIPImportRef.current?.close()
@@ -168,8 +168,8 @@ const F1F2ImportPage = ({ pageName }) => {
                     <div className="card-body">
                         <h2 className="card-title">Refresh Daily Outs</h2>
                         <p>
-                            Get the latest data for {pageName} from the daily
-                            OUTS. This must be done atleast once a day.
+                            Get the latest data for F1/F2 from the daily OUTS.
+                            This must be done atleast once a day.
                         </p>
                         <ImportLabel
                             data={importTraceData?.f1f2_out}
@@ -186,7 +186,7 @@ const F1F2ImportPage = ({ pageName }) => {
                             </button>
                             <Modal
                                 ref={manualOUTImportRef}
-                                id="deletePartModal"
+                                id="f1f2OutImportModal"
                                 title="Refresh auto daily OUTS import"
                                 onClose={() =>
                                     manualOUTImportRef.current?.close()

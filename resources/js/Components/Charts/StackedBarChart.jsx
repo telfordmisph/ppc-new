@@ -1,10 +1,11 @@
-import React from "react";
+import React, { memo } from "react";
 import {
     BarChart,
     Bar,
     XAxis,
     YAxis,
     CartesianGrid,
+    Rectangle,
     Legend,
     Brush,
 } from "recharts";
@@ -12,7 +13,62 @@ import BaseChart from "./baseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 import HoveredBar from "./HoverBar";
 
-const StackedBarChart = ({
+const HoverableBar = memo(({ bar, visible, onBarClick }) => {
+    if (!visible) return null;
+
+    return (
+        <Bar
+            key={bar.dataKey}
+            radius={4}
+            unit={10}
+            dataKey={bar.dataKey}
+            stackId={bar.stackId || null}
+            fill={
+                Array.isArray(bar.fill) ? `url(#grad-${bar.dataKey})` : bar.fill
+            }
+            // TODO this causes unnecessary re-renders, but have beautiful hover effects
+            shape={(props) => (
+                <HoveredBar
+                    barProps={props}
+                    onClick={({ data, dataKey }) =>
+                        onBarClick?.({ data, dataKey })
+                    }
+                />
+            )}
+            // shape={(props) => (
+            //     <g
+            //         onClick={() =>
+            //             onBarClick?.({
+            //                 data: props.payload,
+            //                 dateKey: bar.dataKey,
+            //             })
+            //         }
+            //         className="group cursor-pointer"
+            //     >
+            //         <Rectangle
+            //             width={props.width}
+            //             height={999}
+            //             x={props.x}
+            //             fill="transparent"
+            //             y={0}
+            //         />
+            //         <Rectangle
+            //             stroke={props.stroke}
+            //             width={props.width}
+            //             height={props.height}
+            //             x={props.x}
+            //             y={props.y}
+            //             radius={props.radius}
+            //             fill={props.fill}
+            //             strokeWidth={props.strokeWidth}
+            //         />
+            //     </g>
+            // )}
+        />
+    );
+});
+
+const StackedBarChart = memo(function StackedBarChart({
     data,
     isLoading,
     errorMessage,
@@ -22,7 +78,7 @@ const StackedBarChart = ({
     width = 500,
     height = 300,
     margin,
-}) => {
+}) {
     return (
         <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
             {({ tooltip }) => (
@@ -36,39 +92,6 @@ const StackedBarChart = ({
                     }
                 >
                     {tooltip}
-                    <defs>
-                        {bars.map((bar, index) => {
-                            if (
-                                Array.isArray(bar.fill) &&
-                                bar.fill.length > 1
-                            ) {
-                                return (
-                                    <linearGradient
-                                        key={index}
-                                        id={`grad-${bar.dataKey}`}
-                                        x1="0"
-                                        y1="0"
-                                        x2="0"
-                                        y2="1"
-                                    >
-                                        {bar.fill.map((color, i) => (
-                                            <stop
-                                                key={i}
-                                                offset={`${
-                                                    (i /
-                                                        (bar.fill.length - 1)) *
-                                                    100
-                                                }%`}
-                                                stopColor={color}
-                                                stopOpacity={0.9}
-                                            />
-                                        ))}
-                                    </linearGradient>
-                                );
-                            }
-                            return null;
-                        })}
-                    </defs>
 
                     <CartesianGrid
                         stroke={"var(--color-base-content-dim)"}
@@ -86,46 +109,24 @@ const StackedBarChart = ({
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
                     />
                     <Legend />
-                    {/* <Brush
-                        dataKey="Package_Name"
-                        height={20}
-                        stroke={colors.baseContent}
-                        fill={colors.base300}
-                    /> */}
                     <Bar
                         dataKey="total_quantity"
                         hide
                         className="hidden"
                         fill={"var(--color-neutral-content)"}
                     />
-                    {bars.map((bar, index) =>
-                        visibleBars?.[bar.visibilityKey] ? (
-                            <Bar
-                                key={index}
-                                radius={4}
-                                dataKey={bar.dataKey}
-                                stackId={bar.stackId || null}
-                                fill={
-                                    Array.isArray(bar.fill)
-                                        ? `url(#grad-${bar.dataKey})`
-                                        : bar.fill
-                                }
-                                activeBar={(props) => (
-                                    <HoveredBar
-                                        barProps={props}
-                                        onClick={({ data, dataKey }) => {
-                                            if (onBarClick) {
-                                                onBarClick({ data, dataKey });
-                                            }
-                                        }}
-                                    />
-                                )}
-                            />
-                        ) : null
-                    )}
+                    {bars.map((bar) => (
+                        <HoverableBar
+                            key={bar.dataKey}
+                            bar={bar}
+                            visible={visibleBars?.[bar.visibilityKey]}
+                            onBarClick={onBarClick}
+                        />
+                    ))}
                 </BarChart>
             )}
         </BaseChart>
     );
-};
+});
+StackedBarChart.name = "StackedBarChart";
 export default StackedBarChart;

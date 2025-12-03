@@ -62,8 +62,107 @@ class WipConstants
   // GT general trias
   // _T telford
   // _B3 special unknown location
+  public const TSSOP_240_MILS = "TSSOP (240 MILS)";
+  public const SPECIAL_FILTER_VALUE = [self::TSSOP_240_MILS];
+  public const F1F2_OUT_PACKAGE_VALUES = ["SOIC_N", "SOIC_N_EP", "QSOP", "150mils", "RN", "150 mils"];
+  // continue this service filter package OCP
+  public const DAYS_UNTIL_RECLASSIFIED_AS_NEW = 30;
   public const FACTORIES = ['F1', 'F2', 'F3'];
   public const PRODUCTION_LINES = ['PL1', 'PL6'];
+  public const DISTINCT_PACKAGES = [
+    "BGA",
+    "BGA_CAV",
+    "BGA_ED",
+    "BL_TIP",
+    "BUMPED_CHIP",
+    "CBGA",
+    "CERDIP",
+    "CERPACK",
+    "CERPAK",
+    "CHIP",
+    "CHIPS",
+    "CLCC",
+    "CQFP",
+    "CSP_BGA",
+    "DDPAK",
+    "DFN",
+    "EMGA",
+    "FC2QFN",
+    "FCCSP",
+    "FLATPACK",
+    "FLATPAK",
+    "GQFN",
+    "JLCC",
+    "LCC",
+    "LCC_HS",
+    "LCC_V",
+    "LDCC",
+    "LFCSP",
+    "LFCSP_CAV",
+    "LFCSP_RT",
+    "LFCSP_SS",
+    "LGA",
+    "LGA_CAV",
+    "LQFN",
+    "LQFN_EP",
+    "LQFP",
+    "LQFP_ED",
+    "LQFP_EP",
+    "MCML",
+    "MINI_SO",
+    "MINI_SO_EP",
+    "MQFP",
+    "MSML",
+    "PCA",
+    "PDIP",
+    "PLCC",
+    "PSOP_3",
+    "QFN",
+    "QFP",
+    "QSOP",
+    "QSOP_EP",
+    "SBDIP",
+    "SBRAZE",
+    "SC70",
+    "SOF",
+    "SOF_MP",
+    "SOIC_CAV",
+    "SOIC_IC",
+    "SOIC_N",
+    "SOIC_N_EP",
+    "SOIC_W",
+    "SOIC_W_FP",
+    "SOT_23",
+    "SOT_23_3",
+    "SOT_89",
+    "SOT-223",
+    "SOT-23",
+    "SOT223",
+    "SSOP",
+    "SSOP-W",
+    "TLA-QFN",
+    "TO",
+    "TO-220",
+    "TO-39",
+    "TO-46",
+    "TO-5",
+    "TO-92",
+    "TO220",
+    "TO39",
+    "TO5",
+    "TO92",
+    "TQFP",
+    "TQFP_EP",
+    "TSOT",
+    "TSSOP",
+    "TSSOP_4.4",
+    "TSSOP_4.4_EP",
+    "TSSOP_6.1",
+    "TSSOP-W",
+    "UTQFN",
+    "WLBGA",
+    "WLCSP"
+  ];
   public const TODAY_WIP_INCLUDED_STATIONS = [
     'GTTRES_T',
     'GTREEL',
@@ -86,50 +185,110 @@ class WipConstants
     ...self::TRANSFER_QA,
     ...self::FINAL_QA_STATION
   ];
-  public const FACTORY_TREND_CONFIG = [
-    "F1" => [
-      "dateColumn" => "wip.Date_Loaded",
-      "selectColumns" => "",
-      "aggregateColumns" => [
-        'SUM(wip.Qty)' => 'total_quantity',
-        'COUNT(wip.Lot_Id)' => 'total_lots'
+  public const PERIOD_GROUP_BY = [
+    'daily' => ['day'],
+    'weekly' => ['year', 'week', 'workweek'],
+    'monthly' => ['year', 'month'],
+    'quarterly' => ['year', 'quarter'],
+    'yearly' => ['year'],
+  ];
+
+  public const SPECIAL_PACKAGE = [];
+  public const FACTORY_AGGREGATES = [
+    'F1F2' => [
+      'wip' => [
+        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(wip.Qty)' => 'total_quantity',
+          'COUNT(wip.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'wip.Date_Loaded',
+      ],
+      'out' => [
+        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(out.Qty)' => 'total_quantity',
+          'COUNT(out.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'out.Date_Loaded',
       ],
     ],
-    "F2" => [
-      "dateColumn" => "wip.Date_Loaded",
-      "selectColumns" => "",
-      "aggregateColumns" => [
-        'SUM(wip.Qty)' => 'total_quantity',
-        'COUNT(wip.Lot_Id)' => 'total_lots'
+    'F1' => [
+      'wip' => [
+        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(wip.Qty)' => 'total_quantity',
+          'COUNT(wip.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'wip.Date_Loaded',
+      ],
+      'out' => [
+        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(out.Qty)' => 'total_quantity',
+          'COUNT(out.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'out.Date_Loaded',
       ],
     ],
-    "F1F2" => [
-      "dateColumn" => "wip.Date_Loaded",
-      "selectColumns" => "",
-      "aggregateColumns" => [
-        'SUM(wip.Qty)' => 'total_quantity',
-        'COUNT(wip.Lot_Id)' => 'total_lots'
+    'F2' => [
+      'wip' => [
+        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(wip.Qty)' => 'total_quantity',
+          'COUNT(wip.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'wip.Date_Loaded',
+      ],
+      'out' => [
+        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(out.Qty)' => 'total_quantity',
+          'COUNT(out.Lot_Id)' => 'total_lots'
+        ],
+        'dateColumn' => 'out.Date_Loaded',
       ],
     ],
-    "All" => [
-      "dateColumn" => "wip.date_loaded",
-      "selectColumns" => "",
-      "aggregateColumns" => [
-        'SUM(wip.qty)' => 'total_quantity',
-        'COUNT(wip.lot_id)' => 'total_lots'
+    'F3' => [
+      'wip' => [
+        'quantity' => ['SUM(f3_wip.qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(f3_wip.qty)' => 'total_quantity',
+          'COUNT(f3_wip.lot_number)' => 'total_lots'
+        ],
+        'dateColumn' => 'f3_wip.date_received',
+      ],
+      'out' => [
+        'quantity' => ['SUM(f3_out.qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(f3_out.qty)' => 'total_quantity',
+          'COUNT(f3_out.lot_number)' => 'total_lots'
+        ],
+        'dateColumn' => 'f3_out.date_received',
       ],
     ],
-    "F3" => [
-      "dateColumn" => "f3_wip.date_received",
-      "selectColumns" => "",
-      "aggregateColumns" => [
-        'SUM(f3_wip.qty)' => 'total_quantity',
-        'COUNT(f3_wip.lot_number)' => 'total_lots'
+    'All' => [
+      'wip' => [
+        'quantity' => ['SUM(wip.qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(wip.qty)' => 'total_quantity',
+          'COUNT(wip.lot_id)' => 'total_lots'
+        ],
+        'dateColumn' => 'wip.date_loaded',
+      ],
+      'out' => [
+        'quantity' => ['SUM(out.qty)' => 'total_quantity'],
+        'quantity-lot' => [
+          'SUM(out.qty)' => 'total_quantity',
+          'COUNT(out.lot_id)' => 'total_lots'
+        ],
+        'dateColumn' => 'out.date_loaded',
       ],
     ],
   ];
-  public const F2_WIP_OUT_FOCUS_GROUP_INCLUSION = ['CV', 'LT', 'LTCL', 'LTI'];
-  public const F1_WIP_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];
+
+  public const F2_OUT_FOCUS_GROUP_INCLUSION = ['CV', 'LT', 'LTCL', 'LTI'];
+  public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];

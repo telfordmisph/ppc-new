@@ -1,5 +1,5 @@
 import { useFetch } from "@/Hooks/useFetch";
-import React, { useEffect, useState } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import TrendLineChart from "./Charts/TrendLineChart";
 import FloatingLabelInput from "./FloatingLabelInput";
 import TogglerButton from "./TogglerButton";
@@ -21,11 +21,11 @@ import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 
-const WipTrendByPackage = ({
+const WipTrendByPackage = memo(function WipTrendByPackage({
     isVisible,
     packageName = null,
     noChartTable = false,
-}) => {
+}) {
     const {
         workWeeks: savedWorkWeeks,
         lookBack: savedLookBack,
@@ -37,7 +37,6 @@ const WipTrendByPackage = ({
         setSelectedOffset: setSavedSelectedOffset,
     } = useSelectedFilteredStore();
 
-    // TODO: workweek not using the saved :(
     const [isChartTableVisible, setIsChartTableVisible] = useState(
         !noChartTable ? true : false
     );
@@ -48,12 +47,12 @@ const WipTrendByPackage = ({
     const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(
         savedOffset || 0
     );
-    const [selectedWorkWeek, setSelectedWorkWeek] = useState(
+    const [selectedWorkWeeks, setSelectedWorkWeek] = useState(
         savedWorkWeeks || []
     );
     const [visibleLines, setVisibleLines] = useState({
-        totalQuantity: true,
         totalLots: true,
+        totalQuantity: true,
     });
 
     const {
@@ -71,7 +70,7 @@ const WipTrendByPackage = ({
         period: selectPeriod,
         lookBack: selectedLookBack,
         offsetDays: selectedOffsetPeriod,
-        workweek: selectedWorkWeek.join(","),
+        workweek: selectedWorkWeeks.join(","),
     };
 
     const {
@@ -99,7 +98,7 @@ const WipTrendByPackage = ({
         selectedLookBack,
         selectedOffsetPeriod,
         packageName,
-        selectedWorkWeek,
+        selectedWorkWeeks,
     ]);
 
     const datePeriod = formatPeriodLabel(selectPeriod);
@@ -108,28 +107,19 @@ const WipTrendByPackage = ({
         isOveraByPackagellWipLoading,
         selectPeriod,
         selectedLookBack,
-        selectedOffsetPeriod
+        selectedOffsetPeriod,
+        selectedWorkWeeks
     );
 
-    const lines = [
-        {
-            dataKey: `overall_total_quantity`,
-            yAxisId: "right",
-            stroke: "var(--color-neutral-content)",
-            hide: true,
-        },
-        {
-            dataKey: `overall_total_lots`,
-            yAxisId: "right",
-            stroke: "var(--color-neutral-content)",
-            hide: true,
-        },
-        ...chartLines({
-            showQuantities: visibleLines.totalQuantity,
-            showLots: visibleLines.totalLots,
-            showFactories: { f1: true, f2: true, f3: true },
-        }),
-    ];
+    const lines = useMemo(
+        () =>
+            chartLines({
+                showQuantities: visibleLines.totalQuantity,
+                showLots: visibleLines.totalLots,
+                showFactories: { f1: true, f2: true, f3: true, overall: true },
+            }),
+        [visibleLines]
+    );
 
     return (
         <div
@@ -224,11 +214,8 @@ const WipTrendByPackage = ({
                                 )} - ${formatFriendlyDate(item.endDate)}`,
                             })) || []
                         }
+                        defaultSelectedOptions={selectedWorkWeeks}
                         onChange={(value) => {
-                            console.log(
-                                "🚀 ~ WipOutTrendByPackage ~ value:",
-                                value
-                            );
                             setSelectedWorkWeek(value);
                             setSavedWorkWeeks(value);
                         }}
@@ -282,6 +269,6 @@ const WipTrendByPackage = ({
             </div>
         </div>
     );
-};
+});
 
 export default WipTrendByPackage;

@@ -12,6 +12,7 @@ use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
+use App\Http\Controllers\F3PackageNamesController;
 
 $app_name = env('APP_NAME', '');
 Route::redirect('/', "/$app_name");
@@ -41,7 +42,6 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
     Route::get("/profile", [ProfileController::class, 'index'])->name('profile.index');
     Route::post("/change-password", [ProfileController::class, 'changePassword'])->name('changePassword');
 
-    // Part Name Routes
     Route::prefix('partname')->name('partname.')->group(function () {
         Route::get('/', [PartNameController::class, 'index'])->name('index');
         Route::get('/create', [PartNameController::class, 'upsert'])->name('create');
@@ -51,18 +51,31 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
     Route::prefix('package')->name('package.group.')->group(function () {
         Route::get('/', [PackageGroupController::class, 'index'])->name('index');
         Route::get('/{id}/edit', [PackageGroupController::class, 'upsert'])->name('edit');
+        Route::get('/create', [PackageGroupController::class, 'upsert'])->name('create');
     });
 
-    Route::prefix('f3-raw-package')->name('f3.raw.package.')->group(function () {
-        Route::get('/', [F3RawPackageController::class, 'index'])->name('index');
-        Route::get('/create', [F3RawPackageController::class, 'upsert'])->name('create');
-        Route::get('/{id}/edit', [F3RawPackageController::class, 'upsert'])->name('edit');
+    Route::prefix('f3')->name('f3.')->group(function () {
+        Route::prefix('package')->name('package.')->group(function () {
+            Route::get('/', [F3PackageNamesController::class, 'index'])->name('index');
+            Route::get('/create', [F3PackageNamesController::class, 'upsert'])->name('create');
+            Route::get('/{id}/edit', [F3PackageNamesController::class, 'upsert'])->name('edit');
+        });
+
+        Route::prefix('raw-package')->name('raw.package.')->group(function () {
+            Route::get('/', [F3RawPackageController::class, 'index'])->name('index');
+            Route::get('/create', [F3RawPackageController::class, 'upsert'])->name('create');
+            Route::get('/{id}/edit', [F3RawPackageController::class, 'upsert'])->name('edit');
+        });
     });
 
     Route::prefix('package-capacity')->name('package.capacity.')->group(function () {
         Route::get('/', [PackageCapacityController::class, 'getSummaryLatestAndPrevious'])->name('index');
         Route::get('/create', [PackageCapacityController::class, 'storeCapacity'])->name('create');
         Route::get('/{id}/edit', [PackageCapacityController::class, 'updateCapacity'])->name('edit');
+
+        Route::prefix('upload')->name('upload.')->group(function () {
+            Route::get('/', [PackageCapacityController::class, 'upload'])->name('index');
+        });
     });
 });
 

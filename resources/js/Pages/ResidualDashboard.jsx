@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -254,7 +254,7 @@ const ResidualDashboard = () => {
     );
 };
 
-const ResidualTable = ({ data, onSummaryView }) => {
+const ResidualTable = memo(function ResidualTable({ data, onSummaryView }) {
     const formatNumber = (value) => (value || 0).toLocaleString();
 
     const rows = [
@@ -381,7 +381,7 @@ const ResidualTable = ({ data, onSummaryView }) => {
             </tbody>
         </table>
     );
-};
+});
 
 const ResidualTableSkeleton = ({ message }) => {
     const rows = ["F1", "F2", "F3", "Overall"];

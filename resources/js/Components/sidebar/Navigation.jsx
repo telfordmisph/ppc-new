@@ -1,12 +1,8 @@
-import { FaUsers } from "react-icons/fa";
+import { FaRecycle, FaUsers } from "react-icons/fa";
 
 import {
     LuLayoutDashboard,
     LuListChecks,
-    LuTableOfContents,
-    LuLayoutGrid,
-    LuLayoutList,
-    LuTrash,
     LuList,
     LuPackage,
 } from "react-icons/lu";
@@ -16,7 +12,12 @@ import { BiImport } from "react-icons/bi";
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { usePage } from "@inertiajs/react";
-import { FaLayerGroup } from "react-icons/fa6";
+import {
+    FaArrowTrendUp,
+    FaCodeBranch,
+    FaLayerGroup,
+    FaTruckPickup,
+} from "react-icons/fa6";
 import { FaBatteryHalf } from "react-icons/fa";
 import { TbSettings } from "react-icons/tb";
 
@@ -31,36 +32,36 @@ export default function NavLinks() {
             <SidebarLink
                 href={route("dashboard")}
                 label="Dashboard"
-                icon={<LuLayoutDashboard className="w-5 h-5" />}
+                icon={<LuLayoutDashboard className="w-4 h-4" />}
                 notifications={0}
             />
 
             <Dropdown
                 label="WIP Monitoring"
-                icon={<LuListChecks className="w-5 h-5" />}
+                icon={<LuListChecks className="w-4 h-4" />}
                 links={[
                     {
                         href: route("wip.trend"),
                         label: "WIP Trend",
-                        icon: <LuLayoutGrid className="w-5 h-5" />,
+                        icon: <FaArrowTrendUp className="w-4 h-4" />,
                         notification: false,
                     },
                     {
                         href: route("wipTable"),
                         label: "WIP Station",
-                        icon: <LuTableOfContents className="w-5 h-5" />,
+                        icon: <FaCodeBranch className="w-4 h-4" />,
                         notification: false,
                     },
                     {
                         href: route("pickup.dashboard"),
-                        label: "Pickup Dashboard",
-                        icon: <LuLayoutList className="w-5 h-5" />,
+                        label: "Pickup Trend",
+                        icon: <FaTruckPickup className="w-4 h-4" />,
                         notification: false,
                     },
                     {
                         href: route("residual.dashboard"),
                         label: "Residual Dashboard",
-                        icon: <LuTrash className="w-5 h-5" />,
+                        icon: <FaRecycle className="w-4 h-4" />,
                         notification: false,
                     },
                 ]}
@@ -69,24 +70,24 @@ export default function NavLinks() {
 
             <Dropdown
                 label="Maintenance"
-                icon={<TbSettings className="w-5 h-5" />}
+                icon={<TbSettings className="w-4 h-4" />}
                 links={[
                     {
                         href: route("package.group.index"),
-                        label: "F1/F2 Package Group",
-                        icon: <FaLayerGroup className="w-5 h-5" />,
+                        label: "Package Group",
+                        icon: <FaLayerGroup className="w-4 h-4" />,
                         notification: false,
                     },
                     {
                         href: route("f3.raw.package.index"),
                         label: "F3 Packages",
-                        icon: <LuPackage className="w-5 h-5" />,
+                        icon: <LuPackage className="w-4 h-4" />,
                         notification: false,
                     },
                     {
                         href: route("package.capacity.index"),
                         label: "Capacity",
-                        icon: <FaBatteryHalf className="w-5 h-5" />,
+                        icon: <FaBatteryHalf className="w-4 h-4" />,
                         notification: false,
                     },
                 ]}
@@ -96,14 +97,14 @@ export default function NavLinks() {
             <SidebarLink
                 href={route("import.index")}
                 label="Import Data"
-                icon={<BiImport className="w-5 h-5" />}
+                icon={<BiImport className="w-4 h-4" />}
                 notifications={0}
             />
 
             <SidebarLink
                 href={route("partname.index")}
                 label="Partname List"
-                icon={<LuList className="w-5 h-5" />}
+                icon={<LuList className="w-4 h-4" />}
                 notifications={false}
             />
 
@@ -111,7 +112,7 @@ export default function NavLinks() {
                 <SidebarLink
                     href={route("admin")}
                     label="Administrators"
-                    icon={<FaUsers className="w-5 h-5" />}
+                    icon={<FaUsers className="w-4 h-4" />}
                 />
             )}
         </nav>

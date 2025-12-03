@@ -4,12 +4,16 @@ import { useEffect, useState, useRef } from "react";
 import { useMutation } from "@/Hooks/useMutation";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "@/Components/Modal";
+import Tabs from "@/Components/Tabs";
+import { FaPlus } from "react-icons/fa6";
+import { TbAlertCircle } from "react-icons/tb";
+import { useF3PackagesStore } from "@/Store/f3PackageListStore";
 
-const PartNameList = () => {
+const F3PackageNameList = () => {
     const toast = useToast();
 
     const {
-        packageGroups: serverPackageGroup,
+        f3PackageNames: serverPackageGroup,
         search: serverSearch,
         perPage: serverPerPage,
         totalEntries,
@@ -21,12 +25,12 @@ const PartNameList = () => {
     const overallTotal = totalEntries ?? filteredTotal;
     const deleteModalRef = useRef(null);
     const [searchInput, setSearchInput] = useState(serverSearch || "");
-    const [maxItem, setMaxItem] = useState(serverPerPage || 10);
-    const [selectedPackageGroup, setSelectedPackageGroup] = useState(null);
+    const [maxItem, setMaxItem] = useState(serverPerPage || 50);
+    const [selectedF3Package, setSelectedF3Package] = useState(null);
     const [currentPage, setCurrentPage] = useState(
         serverPackageGroup.current_page || 1
     );
-    const packageGroupIndexPageRoute = route("package.group.index");
+    const { removePackage } = useF3PackagesStore((state) => state);
 
     const {
         mutate,
@@ -36,12 +40,11 @@ const PartNameList = () => {
     } = useMutation();
 
     useEffect(() => {
+        if (serverSearch === searchInput) return;
+
         const timer = setTimeout(() => {
             router.reload({
                 data: { search: searchInput, perPage: maxItem, page: 1 },
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
             });
             setCurrentPage(1);
         }, 700);
@@ -49,16 +52,9 @@ const PartNameList = () => {
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    useEffect(() => {
-        console.log(serverPackageGroup);
-    }, []);
-
     const goToPage = (page) => {
         router.reload({
             data: { search: searchInput, perPage: maxItem, page },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
         });
         setCurrentPage(page);
     };
@@ -66,9 +62,6 @@ const PartNameList = () => {
     const changeMaxItemPerPage = (maxItem) => {
         router.reload({
             data: { search: searchInput, perPage: maxItem, page: 1 },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
         });
         setMaxItem(maxItem);
     };
@@ -76,17 +69,14 @@ const PartNameList = () => {
     const refresh = () => {
         router.reload({
             data: { search: searchInput, perPage: maxItem, currentPage },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
         });
     };
 
     const handleDelete = async () => {
         try {
             await mutate(
-                route("api.package.group.delete", {
-                    id: selectedPackageGroup.ppc_partnamedb_id,
+                route("api.f3.package.names.delete", {
+                    id: selectedF3Package.id,
                 }),
                 {
                     method: "DELETE",
@@ -94,11 +84,11 @@ const PartNameList = () => {
             );
 
             refresh();
-
+            removePackage(selectedF3Package.id);
             deleteModalRef.current.close();
-            toast.success("Part deleted successfully!");
+            toast.success("F3 Package deleted successfully!");
         } catch (error) {
-            toast.error(mutateErrorMessage);
+            toast.error(error?.message);
             console.error(error);
         }
     };
@@ -106,55 +96,116 @@ const PartNameList = () => {
     return (
         <>
             <div className="flex items-center justify-between text-center">
-                <h1 className="text-base font-bold">Package Groups</h1>
+                <Tabs
+                    options={["F3 Raw Packages", "F3 Packages"]}
+                    selectedFactory={"F3 Packages"}
+                    handleFactoryChange={() =>
+                        router.visit(route("f3.raw.package.index"))
+                    }
+                />
+
+                <Link
+                    href={route("f3.package.create")}
+                    className="btn btn-primary"
+                >
+                    <FaPlus /> Add F3 Package
+                </Link>
             </div>
+
+            <div className="flex justify-between py-4">
+                <div className="dropdown dropdown-bottom">
+                    <div tabIndex={0} className="m-1 btn">
+                        {`Show ${maxItem} items`}
+                    </div>
+                    <ul
+                        tabIndex={0}
+                        className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
+                    >
+                        {[10, 25, 50, 100].map((item) => (
+                            <li key={item}>
+                                <a
+                                    onClick={() => {
+                                        changeMaxItemPerPage(item);
+                                    }}
+                                    className="flex items-center justify-between"
+                                >
+                                    {item}
+                                    {maxItem === item && (
+                                        <span className="font-bold text-green-500">
+                                            ✔
+                                        </span>
+                                    )}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                <label className="input">
+                    <svg
+                        className="h-[1em] opacity-50"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                    >
+                        <g
+                            strokeLinejoin="round"
+                            strokeLinecap="round"
+                            strokeWidth="2.5"
+                            fill="none"
+                            stroke="currentColor"
+                        >
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                        </g>
+                    </svg>
+                    <input
+                        type="search"
+                        placeholder="Search"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                    />
+                </label>
+            </div>
+
             <table className="table w-full table-auto table-xs">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Factory</th>
-                        <th>Group Name</th>
-                        <th>Package Members</th>
+                        <th>Package Name</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {serverPackageGroup.data.map((packageGroup) => (
                         <tr key={packageGroup.id}>
                             <td>{packageGroup.id}</td>
-                            <td>{packageGroup.factory}</td>
-                            <td>{packageGroup?.group_name || "-"}</td>
-                            <td>
-                                {packageGroup?.packages.map((packageName) => (
-                                    <p key={packageName.id}>
-                                        {packageName?.package_name}
-                                    </p>
-                                ))}
-                            </td>
+                            <td>{packageGroup.package_name}</td>
                             <td className="flex flex-col lg:flex-row">
-                                <Link
-                                    href={route("package.group.edit", {
+                                <a
+                                    href={route("f3.package.edit", {
                                         id: packageGroup.id,
-                                        search: searchInput,
-                                        perPage: maxItem,
-                                        page: currentPage,
+                                        // search: searchInput,
+                                        // perPage: maxItem,
+                                        // page: currentPage,
+                                        selectedPackage: packageGroup,
                                     })}
                                     className="btn btn-ghost btn-sm btn-primary"
                                 >
                                     <FaEdit />
-                                </Link>
-                                <Link
+                                </a>
+                                <a
+                                    href="# "
                                     className="btn btn-ghost btn-sm text-error"
                                     onClick={() => {
-                                        selectedPackageGroup(packageGroup);
+                                        setSelectedF3Package(packageGroup);
                                         deleteModalRef.current.open();
                                     }}
                                 >
                                     <FaTrash />
-                                </Link>
-
+                                </a>
                                 <Modal
                                     ref={deleteModalRef}
-                                    id="deletePartModal"
+                                    id="f3PackageNameDeleteModal"
                                     title="Are you sure?"
                                     onClose={() =>
                                         deleteModalRef.current?.close()
@@ -162,10 +213,21 @@ const PartNameList = () => {
                                     className="max-w-lg"
                                 >
                                     <p className="px-2 pt-4">
-                                        This action cannot be undone. Delete{" "}
+                                        This action cannot be undone. Delete
                                         <span className="pl-1">
-                                            this group?
+                                            "
+                                            <span className="text-error">
+                                                {
+                                                    selectedF3Package?.package_name
+                                                }
+                                            </span>
+                                            "?
                                         </span>
+                                        <div className="flex items-center text-error gap-2">
+                                            <TbAlertCircle />
+                                            Anything that uses this package in
+                                            F3 raw packages will be deleted.
+                                        </div>
                                     </p>
 
                                     <p
@@ -212,8 +274,48 @@ const PartNameList = () => {
                     ))}
                 </tbody>
             </table>
+
+            <div className="flex justify-between w-full mt-4">
+                <div className="content-center my-2 text-sm text-gray-600">
+                    {`Showing ${start ?? 0} to ${
+                        end ?? 0
+                    } of ${filteredTotal.toLocaleString()} entries`}
+                    {overallTotal && overallTotal !== filteredTotal
+                        ? ` (filtered from ${overallTotal.toLocaleString()} total entries)`
+                        : ""}
+                </div>
+                <div className="join">
+                    {serverPackageGroup.links.map((link, index) => {
+                        const page = link.url
+                            ? parseInt(
+                                  new URL(link.url).searchParams.get("page")
+                              )
+                            : currentPage;
+
+                        return (
+                            <button
+                                key={index}
+                                className={`join-item btn ${
+                                    link.active || page === currentPage
+                                        ? "text-white bg-primary"
+                                        : "bg-base-200/50"
+                                }`}
+                                dangerouslySetInnerHTML={{
+                                    __html: link.label,
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (!link.url) return;
+                                    goToPage(page);
+                                }}
+                                disabled={!link.url}
+                            />
+                        );
+                    })}
+                </div>
+            </div>
         </>
     );
 };
 
-export default PartNameList;
+export default F3PackageNameList;

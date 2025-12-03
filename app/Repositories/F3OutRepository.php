@@ -2,88 +2,84 @@
 
 namespace App\Repositories;
 
-use App\Constants\WipConstants;
-use App\Traits\TrendAggregation;
-
+use App\Traits\PackageAliasTrait;
+use App\Traits\TrendAggregationTrait;
+use App\Repositories\AnalogCalendarRepository;
+use App\Repositories\PackageGroupRepository;
+use App\Services\PackageFilters\PackageFilterService;
+use App\Traits\F3Trait;
 use App\Models\F3Out;
-use Illuminate\Support\Facades\DB;
 use App\Helpers\WipTrendParser;
+use App\Helpers\SqlDebugHelper;
+use Illuminate\Support\Facades\DB;
+use App\Constants\WipConstants;
+use Illuminate\Support\Facades\Log;
 
 class F3OutRepository
 {
-  use TrendAggregation;
-
-  public const OUTS_TABLE = "f3_out";
+  use TrendAggregationTrait;
+  use PackageAliasTrait;
+  use F3Trait;
+  protected $table = "f3_out";
+  protected $tableAlias = "f3_out";
+  protected $packageGroupRepo;
   protected $analogCalendarRepo;
-  public const PACKAGES_TABLE = "f3_package_names";
-  public const RAW_PACKAGES = "f3_raw_packages";
-  private const PPC_TABLE = "ppc_productionline_packagereference";
-
+  protected $packageFilterService;
   public function __construct(
+    PackageFilterService $packageFilterService,
     AnalogCalendarRepository $analogCalendarRepo,
+    PackageGroupRepository $packageGroupRepo,
   ) {
     $this->analogCalendarRepo = $analogCalendarRepo;
+    $this->packageGroupRepo = $packageGroupRepo;
+    $this->packageFilterService = $packageFilterService;
   }
 
-  public function getExistingRecords()
+  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks)
   {
-    return DB::table(self::OUTS_TABLE)
-      ->select('lot_number', 'date_received')
-      ->where('date_received', '>=', now()->subDays(28))
-      ->get();
-  }
+    $queryByPackage = $this->baseF3Query();
 
-  public function filterByPackageName($query, ?array $packageNames)
-  {
-    if (is_string($packageNames)) {
-      $packageNames = explode(',', $packageNames);
-    }
-    $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
-
-    \Log::info("packagenames: " . json_encode($packageNames));
-
-    if (!empty($packageNames)) {
-      $query->whereIn('f3_pkg.package_name', $packageNames);
-    }
-
-    return $query;
-  }
-
-  public function baseF3Query($joinPpc = false)
-  {
-    $query = DB::table(self::OUTS_TABLE . ' as f3_out');
-    $query->leftJoin(self::RAW_PACKAGES . ' as raw', 'f3_out.package', '=', 'raw.id');
-    $query->leftJoin(self::PACKAGES_TABLE . ' as f3_pkg', 'raw.package_id', '=', 'f3_pkg.id');
-
-    if ($joinPpc) {
-      $query->join(self::PPC_TABLE . ' as plref', 'f3_pkg.package_name', '=', 'plref.Package');
-    }
-
-    return $query;
-  }
-
-  public function getOverallTrend($packageNames, $period, $lookBack, $offsetDays, $workweeks)
-  {
-    $query = $this->baseF3Query();
-    $query = $this->filterByPackageName($query, $packageNames);
-    $query = $query->orderByDesc('total_outs');
-
-    $query = $this->applyTrendAggregation(
-      $query,
+    $queryByPackage = $this->applyTrendAggregation(
+      $queryByPackage,
       $period,
-      $lookBack,
-      $offsetDays,
+      $startDate,
+      $endDate,
       'f3_out.date_received',
       ['SUM(f3_out.qty)' => 'total_outs'],
       workweeks: $workweeks
     );
+    $queryByDimension = (clone $queryByPackage);
 
-    $sql = $query->toSql();
-    \Log::info($sql);
+    $queryByPackage = $this->filterByPackageName($queryByPackage, $packageNames, 'f3_pkg.package_name');
+    $queryByDimension = $this->filterByPackageName($queryByDimension, $packageNames, 'raw.dimension');
+    $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
+    $unionQuery = $queryByPackage->unionAll($queryByDimension);
 
-    $query = $query->get();
+    // TODO tom. continue, the overall is not overalling >:(
 
-    $trends['overall_trend'] = $query;
+    foreach ($groupByOrderBy as $col) {
+      $unionQuery->orderBy($col);
+    }
+
+    // $sql = $query->toSql();
+    // \Log::info("noooooooo");
+    // \Log::info(SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+
+    Log::info("F3 Out Overall Trend Query: " . SqlDebugHelper::prettify($unionQuery->toSql(), $unionQuery->getBindings()));
+
+    $results = DB::query()
+      ->fromSub($unionQuery, 'combined');
+    foreach ($groupByOrderBy as $col) {
+      $results->orderBy($col);
+    }
+    $results = $results->orderByDesc('total_outs')
+      ->get();
+
+    Log::info("Results: " . json_encode($results));
+
+    $trends['overall_trend'] = $results;
+    $trends['f3_trend'] = $results;
+
 
     return WipTrendParser::parseTrendsByPeriod($trends);
   }

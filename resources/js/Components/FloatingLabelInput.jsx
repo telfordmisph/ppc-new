@@ -65,7 +65,7 @@ export default function FloatingLabelInput({
     );
 
     const labelBaseClass =
-        " top-0 pointer-events-none leading-none text-base-content/75 absolute text-sm duration-300 origin-[0] transform transition-all";
+        " top-0 pointer-events-none truncate leading-none text-base-content/75 absolute text-sm duration-300 origin-[0] transform transition-all";
 
     const variantClasses = {
         outlined: [

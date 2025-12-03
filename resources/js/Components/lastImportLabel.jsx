@@ -8,21 +8,22 @@ const ImportLabel = ({ data, loading }) => {
     if (!data) return null;
 
     return (
-        <div className="flex gap-1 items-center opacity-80">
-            <div>
+        <div className="items-center opacity-80">
+            <span className="inline-flex items-center">
                 <MdUpdate />
-            </div>
-
-            <div>updated {formatPastDateTimeLabel(data.latest_import)}</div>
-            <div className="text-secondary">
+                <span className="ml-2">
+                    updated {formatPastDateTimeLabel(data.latest_import)}
+                </span>
+            </span>
+            <span className="text-secondary px-1">
                 ({formatFriendlyDate(data.latest_import, true)})
-            </div>
-            <div>with </div>
-            <div>{formatAbbreviateNumber(data.entries)} entries</div>
+            </span>
+            <span>with </span>
+            <span>{formatAbbreviateNumber(data.entries)} entries</span>
             {data.imported_by && (
-                <div>
+                <span>
                     by <span className="text-primary">{data.imported_by}</span>
-                </div>
+                </span>
             )}
         </div>
     );

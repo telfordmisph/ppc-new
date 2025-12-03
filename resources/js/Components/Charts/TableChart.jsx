@@ -30,7 +30,12 @@ const TableChart = ({ data = [], exclude = [] }) => {
                     <tr>
                         <th>#</th>
                         {columns.map((col) => (
-                            <th key={col}>{col}</th>
+                            <th
+                                key={col}
+                                className="font-light whitespace-nowrap"
+                            >
+                                {col}
+                            </th>
                         ))}
                     </tr>
                 </thead>
@@ -40,20 +45,13 @@ const TableChart = ({ data = [], exclude = [] }) => {
                         <tr key={index}>
                             <th>{index + 1}</th>
                             {columns.map((col) => (
-                                <td key={col}>{formatValue(row[col])}</td>
+                                <td key={col} className="whitespace-nowrap">
+                                    {formatValue(row[col])}
+                                </td>
                             ))}
                         </tr>
                     ))}
                 </tbody>
-
-                <tfoot>
-                    <tr>
-                        <th>#</th>
-                        {columns.map((col) => (
-                            <th key={col}>{col}</th>
-                        ))}
-                    </tr>
-                </tfoot>
             </table>
         </div>
     );

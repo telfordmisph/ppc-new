@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState } from "react";
 import {
     LineChart as ReLineChart,
     Line,
@@ -10,7 +10,7 @@ import {
 import BaseChart from "./BaseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 
-export default function TrendLineChart({
+const TrendLineChart = memo(function TrendLineChart({
     data,
     xKey = "name",
     isLoading = false,
@@ -18,6 +18,35 @@ export default function TrendLineChart({
     lines = [],
     height = 300,
 }) {
+    console.log("🚀 ~ TrendLineChart ~ lines:", lines);
+    const [barProps, setBarProps] = useState(
+        lines.reduce(
+            (a, { dataKey }) => {
+                a[dataKey] = false;
+                return a;
+            },
+            { hover: null }
+        )
+    );
+
+    const handleLegendMouseEnter = (e) => {
+        if (!barProps[e.dataKey]) {
+            setBarProps({ ...barProps, hover: e.dataKey });
+        }
+    };
+
+    const handleLegendMouseLeave = (e) => {
+        setBarProps({ ...barProps, hover: null });
+    };
+
+    const selectBar = (e) => {
+        setBarProps({
+            ...barProps,
+            [e.dataKey]: !barProps[e.dataKey],
+            hover: null,
+        });
+    };
+
     return (
         <div style={{ width: "100%", height }}>
             <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
@@ -51,14 +80,32 @@ export default function TrendLineChart({
                             orientation="right"
                         />
 
-                        <Legend />
+                        <Legend
+                            wrapperStyle={{ cursor: "pointer" }}
+                            onClick={selectBar}
+                            onMouseOver={handleLegendMouseEnter}
+                            onMouseOut={handleLegendMouseLeave}
+                        />
+
                         {tooltip}
                         {lines.map((line, index) => (
-                            <Line key={index} {...line} />
+                            <Line
+                                key={index}
+                                hide={barProps[line.dataKey] === true}
+                                opacity={Number(
+                                    barProps.hover === line.dataKey ||
+                                        !barProps.hover
+                                        ? 1
+                                        : 0.1
+                                )}
+                                {...line}
+                            />
                         ))}
                     </ReLineChart>
                 )}
             </BaseChart>
         </div>
     );
-}
+});
+
+export default TrendLineChart;

@@ -4,20 +4,41 @@ namespace App\Repositories;
 
 use App\Models\CustomerDataWip;
 use App\Models\F3Wip;
+use App\Traits\PackageAliasTrait;
+use App\Traits\TrendAggregationTrait;
 use Illuminate\Database\Query\Builder;
+use App\Repositories\PackageGroupRepository;
+use App\Repositories\AnalogCalendarRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use App\Constants\WipConstants;
-use Log;
+use App\Services\PackageFilters\PackageFilterService;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\SqlDebugHelper;
 
 class F1F2WipRepository
 {
+  use PackageAliasTrait;
+  use TrendAggregationTrait;
+
   private const F1F2_TABLE = "customer_data_wip";
   private const DISTINCT_PACKAGE_CACHE_KEY = 'distinct_packages';
   private const CACHE_HOURS = 26;
   private const F3_TABLE = "f3_data_wip";
   private const PPC_TABLE = "ppc_productionline_packagereference";
+  protected $packageFilterService;
+  protected $packageGroupRepo;
+  protected $analogCalendarRepo;
+
+  public function __construct(
+    PackageFilterService $packageFilterService,
+    AnalogCalendarRepository $analogCalendarRepo,
+    PackageGroupRepository $packageGroupRepo
+  ) {
+    $this->packageFilterService = $packageFilterService;
+    $this->analogCalendarRepo = $analogCalendarRepo;
+    $this->packageGroupRepo = $packageGroupRepo;
+  }
 
   private const KEYS = [
     'Plant',
@@ -75,11 +96,11 @@ class F1F2WipRepository
   {
     return DB::table(self::F1F2_TABLE)
       ->select('Lot_Id', 'Date_Loaded', DB::raw('DATE(Date_Loaded) as dateonly'), 'Focus_Group')
-      ->where('Date_Loaded', '>=', now()->subDays(7))
+      ->where('Date_Loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
       ->unionAll(
         DB::table('f3_data_wip')
           ->select('Lot_Id', 'Date_Loaded', DB::raw('DATE(Date_Loaded) as dateonly'), 'Focus_Group')
-          ->where('Date_Loaded', '>=', now()->subDays(7))
+          ->where('Date_Loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
       )
       ->get();
   }
@@ -174,16 +195,114 @@ class F1F2WipRepository
     return $query;
   }
 
-  public function filterByPackageName($query, ?array $packageNames): Builder
+  public function filterByPackageName($query, ?array $packageNames, $factory): Builder
   {
-    if (is_string($packageNames)) {
-      $packageNames = explode(',', $packageNames);
+    $query = $this->packageFilterService->apply($query, $packageNames, null, 'wip.Package_Name');
+    Log::info("filter query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+    // if (is_string($packageNames)) {
+    //   $packageNames = explode(',', $packageNames);
+    // }
+    // $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
+    // $aliases = $this->packageGroupRepo->getMembersByPackageName($packageNames, $factory);
+    // Log::info("Aliases f1 f2 wip: " . json_encode($aliases));
+    // if (!empty($aliases)) {
+    //   $query->whereIn('wip.Package_Name', $aliases);
+    // }
+
+    return $query;
+  }
+
+  public function getTrend(
+    $factory,
+    $packageName,
+    $period,
+    $startDate,
+    $endDate,
+    $workweeks = "",
+  ) {
+    $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'];
+    $selectColumns = !empty($columns) ? implode(', ', $selectColumns) : "1";
+
+    switch ($factory) {
+      case 'F1F2':
+        $f1f2 = DB::table(self::F1F2_TABLE . ' as wip')
+          ->selectRaw($selectColumns)
+          ->where(function ($sub) {
+            // $sub->whereRaw('0 = 1');
+
+            $sub->orWhere(fn($q) => $this->f1Filters(
+              $q,
+              WipConstants::REEL_TRANSFER_B3,
+              WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
+              'wip'
+            ));
+
+            $sub->orWhere(fn($q) => $this->applyF2Filters(
+              $q,
+              WipConstants::EWAN_PROCESS,
+              'wip'
+            ));
+          });
+        $query = $this->filterByPackageName($f1f2, $packageName, $factory);
+        break;
+
+      case 'F1':
+        $query = DB::table(self::F1F2_TABLE . ' as wip')
+          ->selectRaw($selectColumns);
+        $query = $this->f1Filters(
+          $query,
+          WipConstants::REEL_TRANSFER_B3,
+          WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
+          'wip'
+        );
+        $query = $this->filterByPackageName($query, $packageName, $factory);
+        break;
+
+      case 'F2':
+        $query = DB::table(self::F1F2_TABLE . ' as wip')
+          ->selectRaw($selectColumns);
+        $query = $this->applyF2Filters($query, WipConstants::EWAN_PROCESS, 'wip');
+        $query = $this->filterByPackageName($query, $packageName, $factory);
+        break;
+
+      // case 'PL1':
+      // case 'PL6':
+      //   $query = DB::table(self::F1F2_TABLE . ' as wip')
+      //     ->selectRaw($selectColumns);
+      //   $query = $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, $factory);
+      //   $query->where(function ($sub) {
+      //     $this->f1f2WipRepo->f1Filters(
+      //       $sub,
+      //       WipConstants::REEL_TRANSFER_B3,
+      //       WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
+      //       'wip'
+      //     );
+      //     $sub->orWhere(fn($f2) => $this->f1f2WipRepo->applyF2Filters($f2, WipConstants::EWAN_PROCESS, 'wip'));
+      //   });
+      //   $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName, $factory);
+      //   break;
+
+      // case 'F3':
+      //   $query = $this->f3WipRepo->baseF3Query()
+      //     ->selectRaw($selectColumns);
+      //   $query = $this->f3WipRepo->filterByPackageName($query, $packageName, $factory);
+      //   break;
+
+      default:
+        throw new \InvalidArgumentException("Unknown factory: $factory");
     }
-    $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
 
-    if (empty($packageNames)) return $query;
+    // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
-    return $query->whereIn('wip.Package_Name', $packageNames);
+    return $this->applyTrendAggregation(
+      $query,
+      $period,
+      $startDate,
+      $endDate,
+      column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
+      aggregateColumns: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot'],
+      workweeks: $workweeks,
+    );
   }
 
   public function refreshDistinctPackagesCache(): void
@@ -200,17 +319,14 @@ class F1F2WipRepository
 
   public function getDistinctPackages()
   {
-    // sleep(5);
-
     return Cache::remember(self::DISTINCT_PACKAGE_CACHE_KEY, now()->addHours(self::CACHE_HOURS), function () {
-      // sleep(5);
-
       return DB::table(self::F1F2_TABLE)
         ->whereNotNull('Package_Name')
         ->where('Package_Name', '!=', '')
         ->distinct()
         ->orderBy('Package_Name')
-        ->pluck('Package_Name');
+        ->pluck('Package_Name')
+        ->toArray();
     });
   }
 }

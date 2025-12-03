@@ -213,6 +213,7 @@ const PartNameList = () => {
                                         <FaEdit />
                                     </Link>
                                     <a
+                                        href="#"
                                         className="btn btn-ghost btn-sm text-error"
                                         onClick={() => {
                                             setSelectedPart(part);

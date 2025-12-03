@@ -6,10 +6,11 @@ import { FaPlus } from "react-icons/fa6";
 import Modal from "@/Components/Modal";
 import { useToast } from "@/Hooks/useToast";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import Tabs from "@/Components/Tabs";
+import { TbAlertCircle } from "react-icons/tb";
 
 const F3RawPackageList = () => {
     const toast = useToast();
-    const isFirstRender = useRef(true);
     const {
         f3RawPackages: serverF3RawPackages,
         search: serverSearch,
@@ -23,13 +24,11 @@ const F3RawPackageList = () => {
     const overallTotal = totalEntries ?? filteredTotal;
     const deleteModalRef = useRef(null);
     const [searchInput, setSearchInput] = useState(serverSearch || "");
-    const [maxItem, setMaxItem] = useState(serverPerPage || 10);
+    const [maxItem, setMaxItem] = useState(serverPerPage || 50);
     const [selectedRawPackage, setSelectedRawPackage] = useState(null);
     const [currentPage, setCurrentPage] = useState(
         serverF3RawPackages.current_page || 1
     );
-
-    const f3RawPackageIndexRoute = route("f3.raw.package.index");
 
     const {
         mutate,
@@ -94,9 +93,16 @@ const F3RawPackageList = () => {
 
     return (
         <>
-            <div className="w-full px-4">
+            <div className="w-full">
                 <div className="flex items-center justify-between text-center">
-                    <h1 className="text-base font-bold">F3 Raw Packages</h1>
+                    <Tabs
+                        options={["F3 Raw Packages", "F3 Packages"]}
+                        selectedFactory={"F3 Raw Packages"}
+                        handleFactoryChange={() =>
+                            router.visit(route("f3.package.index"))
+                        }
+                    />
+
                     <Link
                         href={route("f3.raw.package.create")}
                         className="btn btn-primary"
@@ -196,7 +202,7 @@ const F3RawPackageList = () => {
                                         rawPackage?.updated_at
                                     ) || "-"}
                                 </td>
-                                <td className="flex flex-col lg:flex-row">
+                                <td cl2assName="flex flex-col lg:flex-row">
                                     <a
                                         href={route("f3.raw.package.edit", {
                                             id: rawPackage.id,
@@ -209,6 +215,7 @@ const F3RawPackageList = () => {
                                         <FaEdit />
                                     </a>
                                     <a
+                                        href="#"
                                         className="btn btn-ghost btn-sm text-error"
                                         onClick={() => {
                                             setSelectedRawPackage(rawPackage);
@@ -228,11 +235,18 @@ const F3RawPackageList = () => {
                                         className="max-w-lg"
                                     >
                                         <p className="px-2 pt-4">
-                                            This action cannot be undone. Delete{" "}
-                                            <span className="pl-1">
+                                            This action cannot be undone. Delete
+                                            <span className="pl-1 text-error">
                                                 {selectedRawPackage?.raw_package ||
                                                     "this?"}
                                             </span>
+                                            <span>?</span>
+                                            <div className="flex items-center text-error gap-2">
+                                                <TbAlertCircle />
+                                                Anything that uses this package
+                                                in F3 WIP database will be
+                                                deleted.
+                                            </div>
                                         </p>
 
                                         <p

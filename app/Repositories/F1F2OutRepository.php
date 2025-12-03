@@ -3,21 +3,34 @@
 namespace App\Repositories;
 
 use App\Constants\WipConstants;
-use App\Traits\TrendAggregation;
+use App\Traits\NormalizeStringTrait;
+use App\Traits\TrendAggregationTrait;
 use App\Repositories\AnalogCalendarRepository;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\SqlDebugHelper;
 
 use App\Models\F1F2Out;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\WipTrendParser;
+use App\Services\PackageFilters\PackageFilterService;
+use App\Traits\PackageAliasTrait;
 
 class F1F2OutRepository
 {
-  use TrendAggregation;
+  use NormalizeStringTrait;
+  use TrendAggregationTrait;
+  use PackageAliasTrait;
   protected $analogCalendarRepo;
+  protected $packageFilterService;
+  protected $packageGroupRepo;
 
   public function __construct(
+    PackageFilterService $packageFilterService,
+    PackageGroupRepository $packageGroupRepo,
     AnalogCalendarRepository $analogCalendarRepo,
   ) {
+    $this->packageFilterService = $packageFilterService;
+    $this->packageGroupRepo = $packageGroupRepo;
     $this->analogCalendarRepo = $analogCalendarRepo;
   }
 
@@ -28,27 +41,45 @@ class F1F2OutRepository
   {
     return DB::table(self::F1F2_OUTS_TABLE)
       ->select('lot_id', 'date_loaded')
-      ->where('date_loaded', '>=', now()->subDays(28))
+      ->where('date_loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
       ->get();
   }
 
-  public function filterByPackageName($query, ?array $packageNames)
+  public function doesExist($column, $value)
   {
-    if (is_string($packageNames)) {
-      $packageNames = explode(',', $packageNames);
-    }
-    $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
+    return !DB::table(self::F1F2_OUTS_TABLE)
+      ->where($column, $value)
+      ->exists();
+  }
 
-    if (empty($packageNames)) return $query;
+  public function filterByPackageName($query, ?array $packageNames, $factory)
+  {
+    $query = $this->packageFilterService->apply($query, $packageNames, null, 'wip.package', "OUT");
+    // if (is_string($packageNames)) {
+    //   $packageNames = explode(',', $packageNames);
+    // }
+    // $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
+    // // separate alias for each packagename
+    // Log::info("package names: " . json_encode($packageNames));
 
-    return $query->whereIn('wip.package', $packageNames);
+    // $aliases = $this->packageGroupRepo->getMembersByPackageName($packageNames, $factory);
+    // Log::info("Aliases f1 f2 OUT : " . json_encode($aliases));
+    // Log::info("factory: " . json_encode($factory));
+    // if (!empty($aliases)) {
+    //   $query->whereIn('wip.Package', $aliases);
+    //   // $this->applyNormalizedDimensionFilter($query, $aliases->toArray(), 'wip.package');
+    // }
+
+    // package
+
+    return $query;
   }
 
   public function applyF2Filter($query, ?string $alias)
   {
     $prefix = $alias ? "{$alias}." : '';
 
-    $query->whereIn("{$prefix}focus_group", WipConstants::F2_WIP_OUT_FOCUS_GROUP_INCLUSION);
+    $query->whereIn("{$prefix}focus_group", WipConstants::F2_OUT_FOCUS_GROUP_INCLUSION);
 
     return $query;
   }
@@ -56,7 +87,7 @@ class F1F2OutRepository
   {
     $prefix = $alias ? "{$alias}." : '';
 
-    $query->whereNotIn("{$prefix}focus_group", WipConstants::F1_WIP_OUT_FOCUS_GROUP_EXCLUSION);
+    $query->whereNotIn("{$prefix}focus_group", WipConstants::F1_OUT_FOCUS_GROUP_EXCLUSION);
 
     return $query;
   }
@@ -86,7 +117,7 @@ class F1F2OutRepository
   {
     $f1QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
     $f1QueryOuts = $this->applyF1Filter($f1QueryOuts, 'wip');
-    $f1QueryOuts = $this->filterByPackageName($f1QueryOuts, $packageName);
+    $f1QueryOuts = $this->filterByPackageName($f1QueryOuts, $packageName, 'f1');
     $f1QueryOuts = $this->joinPL($f1QueryOuts);
 
     return $f1QueryOuts;
@@ -96,7 +127,7 @@ class F1F2OutRepository
   {
     $f2QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
     $f2QueryOuts = $this->applyF2Filter($f2QueryOuts, 'wip');
-    $f2QueryOuts = $this->filterByPackageName($f2QueryOuts, $packageName);
+    $f2QueryOuts = $this->filterByPackageName($f2QueryOuts, $packageName, 'f2');
     $f2QueryOuts = $this->joinPL($f2QueryOuts);
 
     return $f2QueryOuts;
@@ -113,25 +144,80 @@ class F1F2OutRepository
     return $f3QueryOuts;
   }
 
-  public function getOverallTrend($packageName, $period, $lookBack, $offsetDays, $workweeks)
+  public function filterFactory($factory = null)
+  {
+    if ($factory === "F1") {
+      return fn($q) => $q->whereNotIn('wip.focus_group', WipConstants::F1_OUT_FOCUS_GROUP_EXCLUSION);
+    }
+
+    if ($factory === "F2") {
+      return fn($q) => $q->whereIn('wip.focus_group', WipConstants::F2_OUT_FOCUS_GROUP_INCLUSION);
+    }
+
+    return null;
+  }
+
+  private function buildTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks)
   {
     $query = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
-    $query = $this->filterByPackageName($query, $packageName);
-    $query = $query->orderByDesc('total_outs');
+    $query = $this->filterByPackageName($query, $packageName, $factory);
+
+    if ($filter = $this->filterFactory($factory)) {
+      $query->where($filter);
+    }
+
     $query = $this->applyTrendAggregation(
       $query,
       $period,
-      $lookBack,
-      $offsetDays,
+      $startDate,
+      $endDate,
       'wip.date_loaded',
       ['SUM(wip.qty)' => 'total_outs'],
       workweeks: $workweeks
-    )->get();
+    );
 
-    $trends['overall_trend'] = $query;
+    Log::info("F1F2 Out Overall Trend Query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+    Log::info("F1F2 Out Overall Trend Query: " . $query->toSql());
 
-    return WipTrendParser::parseTrendsByPeriod($trends);
+    return $query->get();
   }
+
+  public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks)
+  {
+    $f1Trend = $this->buildTrend(
+      'F1',
+      $packageName,
+      $period,
+      $startDate,
+      $endDate,
+      $workweeks
+    );
+
+    $f2Trend = $this->buildTrend(
+      'F2',
+      $packageName,
+      $period,
+      $startDate,
+      $endDate,
+      $workweeks
+    );
+
+    $overallTrend = $this->buildTrend(
+      ['F1', 'F2'], // null means overall
+      $packageName,
+      $period,
+      $startDate,
+      $endDate,
+      $workweeks
+    );
+
+    return WipTrendParser::parseTrendsByPeriod([
+      'f1_trend' => $f1Trend,
+      'f2_trend' => $f2Trend,
+      'overall_trend' => $overallTrend,
+    ]);
+  }
+
 
   public function insertCustomer(array $data)
   {

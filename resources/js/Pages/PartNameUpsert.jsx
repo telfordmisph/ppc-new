@@ -211,7 +211,11 @@ const PartNameUpsert = () => {
                         >
                             Reset
                         </button>
-                        <button type="submit" className="btn btn-primary">
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={isMutateLoading}
+                        >
                             {isMutateLoading ? (
                                 <span className="loading loading-spinner"></span>
                             ) : (

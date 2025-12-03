@@ -8,13 +8,15 @@ import Collapse from "@/Components/Collapse";
 import { FaFileUpload } from "react-icons/fa";
 import ExcelUploader from "@/Components/FileUploader";
 import DataTable from "@/Components/Table";
-import ImportLabel from "./lastImportLabel";
+import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 
-const F3ImportPage = ({ pageName }) => {
+const F3ImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
         useImportTraceStore();
 
+    const uploaderWIPRef = useRef(null);
+    const uploaderOUTRef = useRef(null);
     const manualWIPImportRef = useRef(null);
     const manualOUTImportRef = useRef(null);
     const [selectedWIPFile, setSelectedWIPFile] = useState(null);
@@ -70,13 +72,14 @@ const F3ImportPage = ({ pageName }) => {
                         </span>
                     </div>
 
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-warning">
                         <span className="font-light">
-                            ignored {f3WipLabel} entries:
+                            ignored unknown package entries:
                         </span>
                         <span className="font-bold">
                             {Number(
-                                result?.data?.ignored.length ?? 0
+                                result?.data?.ignored_unknown_package.length ??
+                                    0
                             ).toLocaleString()}
                         </span>
                     </div>
@@ -84,6 +87,8 @@ const F3ImportPage = ({ pageName }) => {
             ),
             errorMessage: importWipQuantityErrorMessage,
         });
+
+        uploaderWIPRef.current?.reset();
     };
 
     const handleManualOUTImport = () => {
@@ -118,6 +123,8 @@ const F3ImportPage = ({ pageName }) => {
             ),
             errorMessage: importOutQuantityErrorMessage,
         });
+
+        uploaderOUTRef.current?.reset();
     };
 
     useEffect(() => {
@@ -141,8 +148,8 @@ const F3ImportPage = ({ pageName }) => {
                             Upload Daily {f3WipLabel}
                         </h2>
                         <p>
-                            Get the latest data for {pageName} from the daily
-                            WIP import. This must be done atleast once a day.
+                            Get the latest data for F3 from the daily WIP
+                            import. This must be done atleast once a day.
                         </p>
                         <ImportLabel
                             data={importTraceData?.f3_wip}
@@ -151,7 +158,7 @@ const F3ImportPage = ({ pageName }) => {
                         <div className="card-actions justify-end">
                             <Modal
                                 ref={manualWIPImportRef}
-                                id="deletePartModal"
+                                id="f3WipImportModal"
                                 title={`Confirm upload ${f3WipLabel} import`}
                                 onClose={() =>
                                     manualWIPImportRef.current?.close()
@@ -192,6 +199,7 @@ const F3ImportPage = ({ pageName }) => {
                             </Modal>
                         </div>
                         <ExcelUploader
+                            ref={uploaderWIPRef}
                             legend="Pick an Excel file"
                             onFileValid={(file) => {
                                 setSelectedWIPFile(file);
@@ -208,24 +216,37 @@ const F3ImportPage = ({ pageName }) => {
                         </button>
                     </div>
 
-                    {importWipQuantityData?.data?.ignored.length > 0 && (
+                    {importWipQuantityData?.data?.ignored_unknown_package
+                        .length > 0 && (
                         <Collapse
-                            title={`Ignored Rows (Not imported). Click to see details.`}
-                            className={"w-full"}
-                            contentClassName={"overflow-x-auto"}
+                            title={`Unknown Package: ignored Rows (Not imported). Click to see details.`}
+                            className={"w-full text-warning"}
+                            contentClassName={
+                                "overflow-x-auto text-base-content"
+                            }
                         >
-                            <div className="mb-2">
+                            <div className="mb-2 ">
                                 showing{" "}
-                                {importWipQuantityData?.data?.ignored.length}{" "}
+                                {
+                                    importWipQuantityData?.data
+                                        ?.ignored_unknown_package.length
+                                }{" "}
                                 out of{" "}
-                                {importWipQuantityData?.data?.ignoredCount}
+                                {
+                                    importWipQuantityData?.data
+                                        ?.ignored_unknown_package_count
+                                }
                             </div>
                             <div className="overflow-x-auto w-full max-h-96">
                                 <DataTable
                                     columns={Object.keys(
-                                        importWipQuantityData?.data?.ignored[0]
+                                        importWipQuantityData?.data
+                                            ?.ignored_unknown_package[0]
                                     )}
-                                    rows={importWipQuantityData?.data?.ignored}
+                                    rows={
+                                        importWipQuantityData?.data
+                                            ?.ignored_unknown_package
+                                    }
                                     className={"w-full"}
                                 />
                             </div>
@@ -240,14 +261,14 @@ const F3ImportPage = ({ pageName }) => {
                                     "border-red-500 hover:border-red-500 bg-error/10"
                                 }
                             >
-                                {importWipQuantityErrorData?.data?.missing
-                                    .length > 0 && (
+                                {importWipQuantityErrorData?.data
+                                    ?.missing_headers.length > 0 && (
                                     <div className="mt-2">
                                         Missing headers:{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importWipQuantityErrorData?.data?.missing.map(
+                                    {importWipQuantityErrorData?.data?.missing_headers.map(
                                         (missing) => (
                                             <li
                                                 className="list-row h-8 leading-none"
@@ -258,14 +279,14 @@ const F3ImportPage = ({ pageName }) => {
                                         )
                                     )}
                                 </ul>
-                                {importWipQuantityErrorData?.data?.unknown
-                                    .length > 0 && (
+                                {importWipQuantityErrorData?.data
+                                    ?.unknown_headers.length > 0 && (
                                     <div className="mt-2">
                                         Unknown (ignored):{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importWipQuantityErrorData?.data?.unknown.map(
+                                    {importWipQuantityErrorData?.data?.unknown_headers.map(
                                         (unknown) => (
                                             <li
                                                 className="list-row h-8 leading-none"
@@ -302,8 +323,8 @@ const F3ImportPage = ({ pageName }) => {
                             Upload Daily {f3OutsLabel}
                         </h2>
                         <p>
-                            Get the latest data for {pageName} from the daily
-                            OUTS. This must be done atleast once a day.
+                            Get the latest data for F3 from the daily OUTS. This
+                            must be done atleast once a day.
                         </p>
                         <ImportLabel
                             data={importTraceData?.f3_out}
@@ -312,7 +333,7 @@ const F3ImportPage = ({ pageName }) => {
                         <div className="card-actions justify-end">
                             <Modal
                                 ref={manualOUTImportRef}
-                                id="deletePartModal"
+                                id="f3OutImportModal"
                                 title={`Confirm upload ${f3OutsLabel} import`}
                                 onClose={() =>
                                     manualOUTImportRef.current?.close()
@@ -353,6 +374,7 @@ const F3ImportPage = ({ pageName }) => {
                             </Modal>
                         </div>
                         <ExcelUploader
+                            ref={uploaderOUTRef}
                             legend="Pick an Excel file"
                             onFileValid={(file) => {
                                 console.log("🚀 ~ onFileValid ~ file:", file);
@@ -378,14 +400,14 @@ const F3ImportPage = ({ pageName }) => {
                                     "border-red-500 hover:border-red-500 bg-error/10"
                                 }
                             >
-                                {importOutsErrorData?.data?.missing.length >
-                                    0 && (
+                                {importOutsErrorData?.data?.missing_headers
+                                    .length > 0 && (
                                     <div className="mt-2">
                                         Missing headers:{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importOutsErrorData?.data?.missing.map(
+                                    {importOutsErrorData?.data?.missing_headers.map(
                                         (missing) => (
                                             <li
                                                 className="list-row h-8 leading-none"
@@ -396,14 +418,14 @@ const F3ImportPage = ({ pageName }) => {
                                         )
                                     )}
                                 </ul>
-                                {importOutsErrorData?.data?.unknown.length >
-                                    0 && (
+                                {importOutsErrorData?.data?.unknown_headers
+                                    .length > 0 && (
                                     <div className="mt-2">
                                         Unknown (ignored):{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importOutsErrorData?.data?.unknown.map(
+                                    {importOutsErrorData?.data?.unknown_headers.map(
                                         (unknown) => (
                                             <li
                                                 className="list-row h-8 leading-none"

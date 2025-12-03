@@ -52,7 +52,7 @@
   --color-primary-content: #3A000B;
   --color-secondary: #6BD3FF;
   --color-secondary-content: #002B38;
-  --color-accent: #9B6BFF;
+  --color-accent: #FFB86B;
   --color-accent-content: #2C2A00;
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
@@ -79,7 +79,7 @@
   --color-primary-content: #3A000B;
   --color-secondary: #6BD3FF;
   --color-secondary-content: #002B38;
-  --color-accent: #9B6BFF;
+  --color-accent: #FFB86B;
   --color-accent-content: #2C2A00;
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
@@ -98,6 +98,10 @@
   z-index: 50 !important;
   max-width: 200px !important;
   padding: 4px 4px !important;
+}
+
+.opacity {
+  opacity: 50%;
 }
 
 html {
