@@ -15,7 +15,7 @@ class DefaultPackageFilter implements PackageFilterStrategy
 
   public function apply($query)
   {
-    if (!empty($packageNames)) {
+    if (!empty($this->package)) {
       $query->whereIn($this->column, $this->package);
     }
     return $query;

@@ -14,7 +14,7 @@ trait ParseRequestTrait
     $period = $request->input('period', 'daily') ?? 'daily';
     $offsetDays = $request->input('offsetDays', 0) ?? 0;
     $lookBack = $request->input('lookBack', $defaultLookBack) ?? $defaultLookBack;
-    $endDate = Carbon::now()->subDays($offsetDays)->endOfDay();
+    $endDate = Carbon::now()->subDays($offsetDays)->startOfDay(); // 'YYYY-MM-DD 00:00:00'
     $startDate = null;
 
     switch ($period) {
@@ -32,12 +32,14 @@ trait ParseRequestTrait
         break;
     }
 
+    $endDateExclusive = (clone $endDate)->addDay();
+
     return [
       'period' => $period,
       'lookBack' => $lookBack,
       'offsetDays' => $offsetDays,
       'startDate' => $startDate,
-      'endDate' => $endDate
+      'endDate' => $endDateExclusive
     ];
   }
 

@@ -69,13 +69,20 @@ class WipService
 
       return $query->where(function ($q) use ($dateColumn, $weekRanges) {
         foreach ($weekRanges as $range) {
-          $q->orWhereBetween($dateColumn, [$range->start_date, $range->end_date]);
+          $q->orWhere(function ($q2) use ($dateColumn, $range) {
+            $q2->where($dateColumn, '>=', $range->start_date)
+              ->where($dateColumn, '<', $range->end_date);
+          });
         }
       });
     }
 
-    return $query->whereBetween($dateColumn, [$startDate, $endDate]);
+    return $query->where(function ($q) use ($dateColumn, $startDate, $endDate) {
+      $q->where($dateColumn, '>=', $startDate)
+        ->where($dateColumn, '<', $endDate);
+    });
   }
+
 
   public function getTodayWip()
   {
@@ -84,8 +91,10 @@ class WipService
 
     $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
       ->selectRaw('DATE(date_received) AS report_date, SUM(f3_wip.qty) AS f3_wip')
-      ->whereBetween('date_received', [$startDate, $endDate])
-      ->groupBy(DB::raw('DATE(date_received)'))
+      // ->whereBetween('date_received', [$startDate, $endDate])
+      ->where('date_received', ">=", $startDate)
+      ->where('date_received', "<", $endDate)
+      ->groupBy(DB::raw('date_received)'))
       ->get();
 
     $f3Data = [];
@@ -96,7 +105,9 @@ class WipService
     $f1Data = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f1_wip')
       ->whereNotIn('wip.Focus_Group', ['DLT', 'WLT', 'SOF'])
-      ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+      ->where('wip.Date_Loaded', ">=", $startDate)
+      ->where('wip.Date_Loaded', "<", $endDate);
 
     $f1Data = $this->f1f2WipRepo->f1Filters(
       $f1Data,
@@ -108,7 +119,9 @@ class WipService
       ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f2_wip');
 
     $f2Data = $this->f1f2WipRepo->applyF2Filters($f2Data, [...WipConstants::EWAN_PROCESS, 'Q-PITRANS1', 'GTTRANS_BE'], 'wip')
-      ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
+      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
+      ->where('wip.Date_Loaded', ">=", $startDate)
+      ->where('wip.Date_Loaded', "<", $endDate)
       ->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
 
     $f1f2Data = DB::query()
@@ -315,7 +328,9 @@ class WipService
     $result = new \stdClass();
 
     $fBaseQuery = DB::table(self::F1F2_TABLE . ' as wip')
-      ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
+      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
+      ->where('wip.Date_Loaded', ">=", $startDate)
+      ->where('wip.Date_Loaded', "<", $endDate)
       ->where('wip.Station', 'GTTRES_T');
 
     $result->f1_total_quantity = (clone $fBaseQuery)
@@ -367,7 +382,9 @@ class WipService
         $query = DB::table(self::F1F2_TABLE . ' as wip')
           ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots')
           ->where('wip.Station', 'GTTRES_T')
-          ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+          // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+          ->where('wip.Date_Loaded', ">=", $startDate)
+          ->where('wip.Date_Loaded', "<", $endDate);
 
         if ($chartStatus === 'all') {
           $query->where(function ($q) {
@@ -388,7 +405,9 @@ class WipService
         $query = DB::table(self::F1F2_TABLE . ' as wip')
           ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots')
           ->where('wip.Station', 'GTTRES_T')
-          ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+          // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+          ->where('wip.Date_Loaded', ">=", $startDate)
+          ->where('wip.Date_Loaded', "<", $endDate);
         $query->where(fn($q) => $this->f1f2WipRepo->applyF1Filters($q, WipConstants::F1_EXCLUDED_PLANT, 'wip'));
 
         $query->groupBy('PACKAGE')
@@ -402,7 +421,9 @@ class WipService
         $query = DB::table('ppc_pickupdb')
           ->selectRaw('ppc_pickupdb.PACKAGE AS PACKAGE, SUM(QTY) AS total_quantity, COUNT(DISTINCT LOTID) AS total_lots')
           ->join('ppc_partnamedb as partname', 'ppc_pickupdb.PARTNAME', '=', 'partname.Partname')
-          ->whereBetween('ppc_pickupdb.DATE_CREATED', [$startDate, $endDate]);
+          // ->whereBetween('ppc_pickupdb.DATE_CREATED', [$startDate, $endDate]);
+          ->where('ppc_pickupdb.DATE_CREATED', ">=", $startDate)
+          ->where('ppc_pickupdb.DATE_CREATED', "<", $endDate);
 
         if ($chartStatus === 'F2' || $chartStatus === 'F3') {
           $query->where('partname.Factory', strtoupper($chartStatus));
@@ -1027,6 +1048,7 @@ class WipService
   public function getWipOutCapacitySummaryTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
+    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
 
     $prefixMap = [
       'f1_trend' => 'f1',
@@ -1039,26 +1061,36 @@ class WipService
       'overall_capacity_trend' => 'overall'
     ];
 
-    $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks);
+    $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Package_Name as package_name'];
+    $aggregateColumnsF1 = WipConstants::FACTORY_AGGREGATES['F1']['wip']['quantity'];
+    $aggregateColumnsF2 = WipConstants::FACTORY_AGGREGATES['F2']['wip']['quantity'];
+
+    $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1);
     // Log::info($trends['f1_trend']->toSql());
+    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
+
     Log::info("f1_trend query: " . SqlDebugHelper::prettify($trends['f1_trend']->toSql(), $trends['f1_trend']->getBindings()));
 
     $trends['f1_trend'] = $trends['f1_trend']->get();
 
-    $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks);
+    $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2);
     // Log::info($trends['f2_trend']->toSql());
+    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
+
     Log::info("f2_trend query: " . SqlDebugHelper::prettify($trends['f2_trend']->toSql(), $trends['f2_trend']->getBindings()));
 
     $trends['f2_trend'] = $trends['f2_trend']->get();
 
     $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
 
     foreach (WipConstants::FACTORIES as $factory) {
       // TODO capacity won't show if there's no wip data for the package in that factory
-
-      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDate, $endDate, $workweeks);
+      // TODO cloning startDate works but it's a bit hacky, find a better way later
+      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, clone $startDate, $endDate, $workweeks);
       $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
     }
+    Log::info('what : ' . $startDate . ', endDate: ' . $endDate);
 
     Log::info("trends: " . json_encode($trends));
 
@@ -1070,6 +1102,8 @@ class WipService
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, $prefixMap);
 
     Log::info("mergedTrends: " . json_encode($mergedTrends));
+
+    Log::info('startDate: ' . $startDate . ', endDate: ' . $endDate);
 
     $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
     $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);

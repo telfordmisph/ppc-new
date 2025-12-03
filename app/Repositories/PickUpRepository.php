@@ -10,6 +10,7 @@ use App\Helpers\WipTrendParser;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\SqlDebugHelper;
 use App\Helpers\MergeAndAggregate;
+use Carbon\Carbon;
 
 class PickUpRepository
 {
@@ -28,7 +29,10 @@ class PickUpRepository
   public function getTotalQuantity($startDate, $endDate)
   {
     return DB::table(self::TABLE_NAME)
-      ->whereBetween('DATE_CREATED', [$startDate, $endDate])
+      // ->whereBetween('DATE_CREATED', [$startDate, $endDate])
+      ->where('DATE_CREATED', ">=", $startDate)
+      ->where('DATE_CREATED', "<", $endDate)
+
       ->sum('QTY');
   }
 
@@ -44,7 +48,10 @@ class PickUpRepository
           $join->on('pickup.PARTNAME', '=', 'part.Partname');
         }
       )
-      ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
+      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
+      ->where('pickup.DATE_CREATED', ">=", $startDate)
+      ->where('pickup.DATE_CREATED', "<", $endDate)
+
       ->where('part.Factory', $factory)
       ->sum('pickup.QTY');
   }
@@ -59,7 +66,10 @@ class PickUpRepository
       ->joinSub($partSubquery, 'part', function ($join) {
         $join->on('pickup.PARTNAME', '=', 'part.Partname');
       })
-      ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
+      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
+      ->where('pickup.DATE_CREATED', ">=", $startDate)
+      ->where('pickup.DATE_CREATED', "<", $endDate)
+
       ->where('part.Factory', $factory)
       ->where('part.PL', $pl)
       ->sum('pickup.QTY');
@@ -88,9 +98,15 @@ class PickUpRepository
 
   public function getPackageSummary($chartStatus, $startDate, $endDate)
   {
+    $today = Carbon::today()->toDateString();
+    $tomorrow = Carbon::tomorrow()->toDateString();
+
     $query = DB::table(self::TABLE_NAME . ' as pickup')
       ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_quantity, COUNT(DISTINCT pickup.LOTID) as total_lots')
-      ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate]);
+      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate]);
+      ->where('pickup.DATE_CREATED', ">=", $startDate)
+      ->where('pickup.DATE_CREATED', "<", $endDate);
+
 
     switch ($chartStatus) {
       case 'F1':
@@ -110,7 +126,9 @@ class PickUpRepository
         break;
 
       default:
-        $query->whereRaw('DATE(pickup.DATE_CREATED) = CURDATE()');
+        // $query->whereRaw('DATE(pickup.DATE_CREATED) = CURDATE()');
+        $query->where('pickup.DATE_CREATED', '>=', $today)
+          ->where('pickup.DATE_CREATED', '<', $tomorrow);
         break;
     }
 

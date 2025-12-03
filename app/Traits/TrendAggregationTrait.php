@@ -6,6 +6,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 use App\Constants\WipConstants;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\SqlDebugHelper;
 
 trait TrendAggregationTrait
 {
@@ -42,7 +43,7 @@ trait TrendAggregationTrait
       case 'daily':
         $query->selectRaw("
                 $extraFields
-                DATE($column) as day,
+                Date($column) as day,
                 $aggSelects
             ");
 
@@ -57,7 +58,11 @@ trait TrendAggregationTrait
 
         $query->where(function ($q) use ($column, $weekRanges) {
           foreach ($weekRanges as $range) {
-            $q->orWhereBetween($column, [$range->startDate, $range->endDate]);
+            // $q->orWhereBetween($column, [$range->startDate, $range->endDate]);
+            $q->orWhere(function ($query) use ($column, $range) {
+              $query->where($column, '>=', $range->startDate)
+                ->where($column, '<', $range->startDate);
+            });
           }
         });
 
@@ -121,8 +126,11 @@ trait TrendAggregationTrait
     }
 
     if ($period !== 'weekly' || empty($workweeks)) {
-      $query->whereBetween($column, [$startDate, $endDate]);
+      // $query->whereBetween($column, [$startDate, $endDate]);
+      $query->where($column, '>=', $startDate)
+        ->where($column, '<', $endDate);
     }
+    Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
     return $query;
   }

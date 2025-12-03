@@ -219,9 +219,14 @@ class F1F2WipRepository
     $startDate,
     $endDate,
     $workweeks = "",
+    $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'],
+    $aggregateColumns = null
   ) {
-    $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'];
     $selectColumns = !empty($columns) ? implode(', ', $selectColumns) : "1";
+
+    if ($aggregateColumns === null) {
+      $aggregateColumns = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot'];
+    }
 
     switch ($factory) {
       case 'F1F2':
@@ -292,7 +297,6 @@ class F1F2WipRepository
         throw new \InvalidArgumentException("Unknown factory: $factory");
     }
 
-    // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
     return $this->applyTrendAggregation(
       $query,
@@ -300,7 +304,7 @@ class F1F2WipRepository
       $startDate,
       $endDate,
       column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
-      aggregateColumns: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot'],
+      aggregateColumns: $aggregateColumns,
       workweeks: $workweeks,
     );
   }

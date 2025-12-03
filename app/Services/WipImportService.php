@@ -131,7 +131,7 @@ class WipImportService
           continue;
         }
 
-        Log::info("row: " . print_r($row, true));
+        // Log::info("row: " . print_r($row, true));
 
         $row = $this->sanitizeRow($row, $importedBy);
         $focusGroup = $row['Focus_Group'];
@@ -236,7 +236,7 @@ class WipImportService
       $map["{$r->lot_number}-{$r->date_received}"] = true;
     }
 
-    Log::info("prepareExistingF3WipRecords: " . print_r($map, true));
+    // Log::info("prepareExistingF3WipRecords: " . print_r($map, true));
 
     return $map;
   }
@@ -307,7 +307,7 @@ class WipImportService
     $rowIterator = $sheet->getRowIterator();
 
     $mergedCells = $sheet->getMergeCells();
-    Log::info('Merged cells: ' . print_r($mergedCells, true));
+    // Log::info('Merged cells: ' . print_r($mergedCells, true));
     $lastPackage = null;
     foreach ($rowIterator as $row) {
       $pos = $row->getRowIndex();
@@ -324,7 +324,7 @@ class WipImportService
         continue;
       }
 
-      Log::info('Row ' . $pos . ': ' . $colA . ', ' . $colD);
+      // Log::info('Row ' . $pos . ': ' . $colA . ', ' . $colD);
 
       if ($colA == 'Total' || $colA == 'Overall Total') {
         continue;
@@ -352,9 +352,9 @@ class WipImportService
 
     $total = count($data);
 
-    Log::info((
-      "data: " . print_r($data, true)
-    ));
+    // Log::info((
+    //   "data: " . print_r($data, true)
+    // ));
 
     $return = $this->packageCapacityService->upsertMultiple($data);
     $this->importTraceRepository->upsertImport('capacity', null, $total);
@@ -501,7 +501,7 @@ class WipImportService
     $chunks = [];
     $ignoredRows = [];
     $successCount = 0;
-    Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
+    // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
     $existingRecords = $this->prepareExistingF3WipRecords();
 
     foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
@@ -526,11 +526,11 @@ class WipImportService
       }
 
       // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-      Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
+      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
 
       $key = "{$rowData['lot_number']}-{$rowData['date_received']}";
 
-      Log::info("Key: " . $key);
+      // Log::info("Key: " . $key);
 
       if (isset($existingRecords[$key])) {
         Log::info("Skipping existing record: " . print_r($rowData, true));
@@ -590,7 +590,7 @@ class WipImportService
 
     $ignoredRows = [];
     $successCount = 0;
-    Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
+    // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
     $existingRecords = $this->prepareExistingF3OutRecords();
 
     foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
@@ -600,7 +600,7 @@ class WipImportService
 
       $rowData = $this->extractRowData($map_headers, $row, $found_headers);
 
-      Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
+      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
 
       $rowData['imported_by'] = $importedBy;
       $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);

@@ -57,9 +57,9 @@ class F3OutRepository
 
     // TODO tom. continue, the overall is not overalling >:(
 
-    foreach ($groupByOrderBy as $col) {
-      $unionQuery->orderBy($col);
-    }
+    // foreach ($groupByOrderBy as $col) {
+    //   $unionQuery->orderBy($col);
+    // }
 
     // $sql = $query->toSql();
     // \Log::info("noooooooo");

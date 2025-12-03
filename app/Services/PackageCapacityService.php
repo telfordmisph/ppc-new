@@ -219,6 +219,7 @@ class PackageCapacityService
   public function getCapacityTrend($package, $factory, $period, $startDate, $endDate, $workweeks)
   {
     // Log::info("Getting Capacity Trend for Package: $package, Factory: $factory, Period: $period, Start Date: $startDate, End Date: $endDate, Workweeks: $workweeks");
+    $earliestStartDate = $startDate;
 
     $weekRanges = null;
     if ($period == 'weekly') {
@@ -226,13 +227,13 @@ class PackageCapacityService
 
       // Log::info("Week Rangessss: " . json_encode($weekRanges));
 
-      $startDate = $weekRanges['earliest_date'];
+      $earliestStartDate = $weekRanges['earliest_date'];
       $endDate = $weekRanges['latest_date'];
     }
 
     $rows = $this->packageCapacityRepository->getPackageCapacity($package, $factory);
     // Log::info("Rows: " . json_encode($rows));
-    $daily = $this->packageCapacityRepository->expandDaily($rows, $startDate, $endDate);
+    $daily = $this->packageCapacityRepository->expandDaily($rows, $earliestStartDate, $endDate);
 
     // TODO DFN SSOP
     // Showing 549, 601, 552, 551, 550, and 602 workweeks

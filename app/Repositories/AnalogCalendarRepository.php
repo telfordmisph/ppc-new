@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AnalogCalendarRepository
 {
@@ -49,10 +50,14 @@ class AnalogCalendarRepository
       $endDate = $query->max('cal_date');
 
       if ($startDate && $endDate) {
+        $startDate = Carbon::parse($startDate)->toDateString();
+        $endDate = Carbon::parse($endDate)->toDateString();
+        $endDateExclusive = Carbon::parse($endDate)->addDay()->toDateString();
+
         $ranges[] = (object)[
           'workweek' => $ww,
           'startDate' => $startDate,
-          'endDate' => $endDate,
+          'endDate' => $endDateExclusive,
         ];
       }
     }
