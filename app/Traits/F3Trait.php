@@ -29,7 +29,7 @@ trait F3Trait
   public function filterByPackageName($query, ?array $packageNames, $column = 'f3_pkg.package_name')
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, ["F3"], $column);
-    Log::info("F3333333 Filter Query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+
     // if (is_string($packageNames)) {
     //   $packageNames = explode(',', $packageNames);
     // }
