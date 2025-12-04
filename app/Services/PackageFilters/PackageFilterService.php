@@ -19,16 +19,17 @@ class PackageFilterService
     $this->f1f2OutPackages = array_map('strtoupper', WipConstants::F1F2_OUT_PACKAGE_VALUES);
   }
 
-  public function apply($query, ?array $packageNames, $factory, $column, $trendType = null)
+  public function applyPackageFilter($query, ?array $packageNames, $factories, $column, $trendType = null)
   {
     if (is_string($packageNames)) {
       $packageNames = explode(',', $packageNames);
     }
     $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
 
-    Log::info("Applying package filter with names: " . json_encode($packageNames) . ", factory: " . $factory . ", column: " . $column . ", trendType: " . $trendType);
 
-    $strategy = $this->resolveStrategy($packageNames, $column, $factory, $trendType);
+    Log::info("Applying package filter with names: " . json_encode($packageNames) . ", factory: " . json_encode($factories) . ", column: " . $column . ", trendType: " . $trendType);
+
+    $strategy = $this->resolveStrategy($packageNames, $column, $factories, $trendType);
     return $strategy->apply($query);
   }
 
@@ -37,17 +38,27 @@ class PackageFilterService
     return empty(array_diff($subset, $set));
   }
 
-  protected function resolveStrategy(array $packageNames, $column, $factory, $trendType): PackageFilterStrategy
+  protected function resolveStrategy(array $packageNames, $column, $factories, $trendType): PackageFilterStrategy
   {
     $packageNames = array_map('strtoupper', $packageNames);
 
-    if (array_map('strtolower', $packageNames) === $this->tssop240Mils && $factory === "F3") {
-      return new Tssop240MilsPackageFilter();
-    }
+    Log::info("Resolving strategy for package names: " . json_encode($packageNames) . ", factory: " . json_encode($factories) . ", trendType: " . $trendType);
 
-    if ($this->isSubset($packageNames, $this->f1f2OutPackages) && ($factory === "F1" || $factory === "F2") && $trendType === "OUT") {
+    if (
+      $this->isSubset($packageNames, $this->f1f2OutPackages) &&
+      (in_array("F1", $factories) || in_array("F2", $factories)) &&
+      $trendType === "OUT"
+    ) {
       return new DefaultPackageFilter(["150mils"], column: $column);
     }
+
+    if (in_array("F3", $factories)) {
+      return new F3PackageDimensionFilter($this->packageGroupRepo, $packageNames);
+    }
+
+    // if (array_map('strtolower', $packageNames) === $this->tssop240Mils && $factory === "F3") {
+    //   return new Tssop240MilsPackageFilter();
+    // }
 
     // f1 f2 f3
     // tssop 240, 150mils, lfcsp

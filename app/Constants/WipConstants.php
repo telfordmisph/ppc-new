@@ -292,6 +292,8 @@ class WipConstants
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];
+  public const EXCLUDED_F1F2_STATIONS = ['GTTRES_T', 'GTARCH_T'];
+
   public const LOT_ON_HOLD = ['HELD', 'RHLD', 'LWAITH'];
   public const PRE_BAKE = ['GTTRANS_T', 'GTIQA_T', 'GTLPI_T', 'GTBKLDBE_T'];
   public const BRAND_ERASE = ['GTBRAND_T', 'GTTERASE_T'];

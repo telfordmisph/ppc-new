@@ -23,6 +23,7 @@ class F1F2WipRepository
 
   private const F1F2_TABLE = "customer_data_wip";
   private const DISTINCT_PACKAGE_CACHE_KEY = 'distinct_packages';
+  private const DISTINCT_STATION_CACHE_KEY = 'f1f2_distinct_stations';
   private const CACHE_HOURS = 26;
   private const F3_TABLE = "f3_data_wip";
   private const PPC_TABLE = "ppc_productionline_packagereference";
@@ -122,13 +123,15 @@ class F1F2WipRepository
 
   public function applyStationFilter($query, array $includeStations = [], array $excludeStations = []): Builder
   {
-    $query->where(function ($q) use ($includeStations, $excludeStations) {
-      $q->whereIn('wip.Station', $includeStations)
-        ->orWhere(function ($q2) use ($excludeStations) {
-          $q2->where('wip.station_suffix', '=', '_T')
-            ->whereNotIn('wip.Station', $excludeStations);
-        });
-    });
+    // $query->where(function ($q) use ($includeStations, $excludeStations) {
+    //   $q->whereIn('wip.Station', $includeStations)
+    //     ->orWhere(function ($q2) use ($excludeStations) {
+    //       $q2->where('wip.station_suffix', '=', '_T')
+    //         ->whereNotIn('wip.Station', $excludeStations);
+    //     });
+    // });
+
+    $query->whereIn('wip.Station', $includeStations);
 
     return $query;
   }
@@ -179,10 +182,14 @@ class F1F2WipRepository
   {
     $prefix = $alias ? "{$alias}." : '';
 
+    $stations = $this->getDistinctStations();
+    $stations = array_diff($stations, $excludedStation);
+
     $query->where("{$prefix}f2_focus_group_flag", true);
 
     if (!empty($excludedStation)) {
-      $query->whereNotIn("{$prefix}Station", $excludedStation);
+      // $query->whereNotIn("{$prefix}Station", $excludedStation);
+      $query->whereIn("{$prefix}Station", $stations);
     }
 
     return $query;
@@ -191,13 +198,17 @@ class F1F2WipRepository
   public function f1Filters($query, $includedStations = [], $excludedStations = [], ?string $alias = null)
   {
     $query = $this->applyF1Filters($query, WipConstants::F1_EXCLUDED_PLANT, $alias);
-    $query = $this->applyStationFilter($query, $includedStations, $excludedStations);
+
+    $stations = array_merge($this->getSuffixStation_T(), $includedStations);
+    $stations = array_diff($stations, WipConstants::EXCLUDED_F1F2_STATIONS);
+
+    $query = $this->applyStationFilter($query, $stations, $excludedStations);
     return $query;
   }
 
-  public function filterByPackageName($query, ?array $packageNames, $factory): Builder
+  public function filterByPackageName($query, ?array $packageNames, $factories): Builder
   {
-    $query = $this->packageFilterService->apply($query, $packageNames, null, 'wip.Package_Name');
+    $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.Package_Name');
     Log::info("filter query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
     // if (is_string($packageNames)) {
     //   $packageNames = explode(',', $packageNames);
@@ -248,7 +259,7 @@ class F1F2WipRepository
               'wip'
             ));
           });
-        $query = $this->filterByPackageName($f1f2, $packageName, $factory);
+        $query = $this->filterByPackageName($f1f2, $packageName, [$factory]);
         break;
 
       case 'F1':
@@ -260,14 +271,14 @@ class F1F2WipRepository
           WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
           'wip'
         );
-        $query = $this->filterByPackageName($query, $packageName, $factory);
+        $query = $this->filterByPackageName($query, $packageName, [$factory]);
         break;
 
       case 'F2':
         $query = DB::table(self::F1F2_TABLE . ' as wip')
           ->selectRaw($selectColumns);
         $query = $this->applyF2Filters($query, WipConstants::EWAN_PROCESS, 'wip');
-        $query = $this->filterByPackageName($query, $packageName, $factory);
+        $query = $this->filterByPackageName($query, $packageName, [$factory]);
         break;
 
       // case 'PL1':
@@ -284,13 +295,13 @@ class F1F2WipRepository
       //     );
       //     $sub->orWhere(fn($f2) => $this->f1f2WipRepo->applyF2Filters($f2, WipConstants::EWAN_PROCESS, 'wip'));
       //   });
-      //   $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName, $factory);
+      //   $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName, [$factory]);
       //   break;
 
       // case 'F3':
       //   $query = $this->f3WipRepo->baseF3Query()
       //     ->selectRaw($selectColumns);
-      //   $query = $this->f3WipRepo->filterByPackageName($query, $packageName, $factory);
+      //   $query = $this->f3WipRepo->filterByPackageName($query, $packageName, [$factory]);
       //   break;
 
       default:
@@ -321,6 +332,8 @@ class F1F2WipRepository
     Cache::put(self::DISTINCT_PACKAGE_CACHE_KEY, $packages, now()->addHours(value: self::CACHE_HOURS));
   }
 
+  // TODO ? refreshDistinctStationsCache
+
   public function getDistinctPackages()
   {
     return Cache::remember(self::DISTINCT_PACKAGE_CACHE_KEY, now()->addHours(self::CACHE_HOURS), function () {
@@ -331,6 +344,32 @@ class F1F2WipRepository
         ->orderBy('Package_Name')
         ->pluck('Package_Name')
         ->toArray();
+    });
+  }
+
+  public function getDistinctStations()
+  {
+    return Cache::remember(
+      self::DISTINCT_STATION_CACHE_KEY,
+      now()->addHours(self::CACHE_HOURS),
+      function () {
+
+        return DB::table(self::F1F2_TABLE)
+          ->select('Station')
+          ->distinct()
+          ->orderBy('Station')
+          ->pluck('Station')
+          ->toArray();
+      }
+    );
+  }
+
+  public function getSuffixStation_T()
+  {
+    $stations = $this->getDistinctStations();
+
+    return array_filter($stations, function ($station) {
+      return str_ends_with($station, '_T');
     });
   }
 }

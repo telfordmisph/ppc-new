@@ -12,6 +12,8 @@ use App\Models\F3Wip;
 use App\Models\F1F2Out;
 use App\Helpers\WipTrendParser;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\SqlDebugHelper;
+use Illuminate\Support\Facades\Log;
 
 class F3WipRepository
 {
@@ -36,10 +38,10 @@ class F3WipRepository
 
   public function getTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
-    $queryByPackage = $this->baseF3Query();
+    $query = $this->baseF3Query();
 
-    $queryByPackage = $this->applyTrendAggregation(
-      $queryByPackage,
+    $query = $this->applyTrendAggregation(
+      $query,
       $period,
       $startDate,
       $endDate,
@@ -47,15 +49,11 @@ class F3WipRepository
       ['SUM(f3_wip.qty)' => 'total_quantity'],
       workweeks: $workweeks
     );
-    $queryByDimension = (clone $queryByPackage);
 
-    $queryByPackage = $this->filterByPackageName($queryByPackage, $packageName, 'f3_pkg.package_name');
-    $queryByDimension = $this->filterByPackageName($queryByDimension, $packageName, 'raw.dimension');
-
-    $unionQuery = $queryByPackage->unionAll($queryByDimension);
+    $query = $this->filterByPackageName($query, $packageName, 'f3_pkg.package_name');
 
     $results = DB::query()
-      ->fromSub($unionQuery, 'combined')
+      ->fromSub($query, 'combined')
       ->get();
 
     return $results;

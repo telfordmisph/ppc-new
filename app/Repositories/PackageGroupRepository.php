@@ -83,4 +83,37 @@ class PackageGroupRepository
       ->pluck('p.package_name')
       ->toArray();
   }
+
+  public function separateByGroups($packageNames, $factory)
+  {
+    $groups = [];
+
+    // $rows = DB::table('packages as p_input')
+    //   ->join('package_group_members as pgm_input', 'pgm_input.package_id', '=', 'p_input.id')
+    //   ->join('package_group_members as pgm_group', 'pgm_group.group_id', '=', 'pgm_input.group_id')
+    //   ->join('packages as p_member', 'p_member.id', '=', 'pgm_group.package_id')
+    //   ->join('package_groups as pg', 'pg.id', '=', 'pgm_input.group_id')
+    //   ->whereIn('p_input.package_name', $packageNames)
+    //   ->whereIn('pg.factory', $factory)
+    //   ->select('pg.factory', 'pgm_group.group_id', 'p_member.package_name')
+    //   ->get();
+
+    $rows = DB::table('packages as p_input')
+      ->leftJoin('package_group_members as pgm_input', 'pgm_input.package_id', '=', 'p_input.id')
+      ->leftJoin('package_group_members as pgm_group', 'pgm_group.group_id', '=', 'pgm_input.group_id')
+      ->leftjoin('packages as p_member', 'p_member.id', '=', 'pgm_group.package_id')
+      ->leftJoin('package_groups as pg', 'pg.id', '=', 'pgm_input.group_id')
+      ->whereIn('p_input.package_name', $packageNames)
+      ->where(function ($q) use ($factory) {
+        $q->whereNull('pg.factory')->orWhereIn('pg.factory', $factory);
+      })
+      ->select('pg.factory', 'pgm_group.group_id', 'p_member.package_name')
+      ->get();
+
+
+    return $rows
+      ->groupBy('group_id')
+      ->map(fn($items) => $items->pluck('package_name')->all())
+      ->toArray();
+  }
 }

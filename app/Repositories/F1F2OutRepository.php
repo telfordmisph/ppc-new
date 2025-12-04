@@ -52,9 +52,9 @@ class F1F2OutRepository
       ->exists();
   }
 
-  public function filterByPackageName($query, ?array $packageNames, $factory)
+  public function filterByPackageName($query, ?array $packageNames, $factories)
   {
-    $query = $this->packageFilterService->apply($query, $packageNames, null, 'wip.package', "OUT");
+    $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.package', "OUT");
     // if (is_string($packageNames)) {
     //   $packageNames = explode(',', $packageNames);
     // }
@@ -117,7 +117,7 @@ class F1F2OutRepository
   {
     $f1QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
     $f1QueryOuts = $this->applyF1Filter($f1QueryOuts, 'wip');
-    $f1QueryOuts = $this->filterByPackageName($f1QueryOuts, $packageName, 'f1');
+    $f1QueryOuts = $this->filterByPackageName($f1QueryOuts, $packageName, ['f1']);
     $f1QueryOuts = $this->joinPL($f1QueryOuts);
 
     return $f1QueryOuts;
@@ -127,7 +127,7 @@ class F1F2OutRepository
   {
     $f2QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
     $f2QueryOuts = $this->applyF2Filter($f2QueryOuts, 'wip');
-    $f2QueryOuts = $this->filterByPackageName($f2QueryOuts, $packageName, 'f2');
+    $f2QueryOuts = $this->filterByPackageName($f2QueryOuts, $packageName, ['f2']);
     $f2QueryOuts = $this->joinPL($f2QueryOuts);
 
     return $f2QueryOuts;
@@ -144,25 +144,26 @@ class F1F2OutRepository
     return $f3QueryOuts;
   }
 
-  public function filterFactory($factory = null)
+  public function filterFactory($factories = null)
   {
-    if ($factory === "F1") {
+    if (in_array("F1", $factories)) {
+
       return fn($q) => $q->whereNotIn('wip.focus_group', WipConstants::F1_OUT_FOCUS_GROUP_EXCLUSION);
     }
 
-    if ($factory === "F2") {
+    if (in_array("F2", $factories)) {
       return fn($q) => $q->whereIn('wip.focus_group', WipConstants::F2_OUT_FOCUS_GROUP_INCLUSION);
     }
 
     return null;
   }
 
-  private function buildTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks)
+  private function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks)
   {
     $query = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
-    $query = $this->filterByPackageName($query, $packageName, $factory);
+    $query = $this->filterByPackageName($query, $packageName, $factories);
 
-    if ($filter = $this->filterFactory($factory)) {
+    if ($filter = $this->filterFactory($factories)) {
       $query->where($filter);
     }
 
@@ -185,7 +186,7 @@ class F1F2OutRepository
   public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $f1Trend = $this->buildTrend(
-      'F1',
+      ['F1'],
       $packageName,
       $period,
       $startDate,
@@ -194,7 +195,7 @@ class F1F2OutRepository
     );
 
     $f2Trend = $this->buildTrend(
-      'F2',
+      ['F2'],
       $packageName,
       $period,
       $startDate,

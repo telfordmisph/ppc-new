@@ -37,10 +37,10 @@ class F3OutRepository
 
   public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks)
   {
-    $queryByPackage = $this->baseF3Query();
+    $query = $this->baseF3Query();
 
-    $queryByPackage = $this->applyTrendAggregation(
-      $queryByPackage,
+    $query = $this->applyTrendAggregation(
+      $query,
       $period,
       $startDate,
       $endDate,
@@ -48,32 +48,24 @@ class F3OutRepository
       ['SUM(f3_out.qty)' => 'total_outs'],
       workweeks: $workweeks
     );
-    $queryByDimension = (clone $queryByPackage);
+    $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
 
-    $queryByPackage = $this->filterByPackageName($queryByPackage, $packageNames, 'f3_pkg.package_name');
-    $queryByDimension = $this->filterByPackageName($queryByDimension, $packageNames, 'raw.dimension');
     $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
-    $unionQuery = $queryByPackage->unionAll($queryByDimension);
 
-    // TODO tom. continue, the overall is not overalling >:(
-
-    // foreach ($groupByOrderBy as $col) {
-    //   $unionQuery->orderBy($col);
-    // }
-
-    // $sql = $query->toSql();
-    // \Log::info("noooooooo");
-    // \Log::info(SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
-
-    Log::info("F3 Out Overall Trend Query: " . SqlDebugHelper::prettify($unionQuery->toSql(), $unionQuery->getBindings()));
+    // Log::info("F3 Out Overall Trend Query: " . SqlDebugHelper::prettify($unionQuery->toSql(), $unionQuery->getBindings()));
 
     $results = DB::query()
-      ->fromSub($unionQuery, 'combined');
+      ->fromSub($query, 'combined');
     foreach ($groupByOrderBy as $col) {
       $results->orderBy($col);
     }
+
+    Log::info("F3 Outttt Overall Trend Query: " . SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
+
     $results = $results->orderByDesc('total_outs')
       ->get();
+
+
 
     Log::info("Results: " . json_encode($results));
 

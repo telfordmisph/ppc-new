@@ -1,1 +1,2 @@
-export const EXCLUSIVE_OPTION_VALUES = ["TSSOP (240 MILS)"];
+// export const EXCLUSIVE_OPTION_VALUES = ["TSSOP (240 MILS)"];
+export const EXCLUSIVE_OPTION_VALUES = [];
