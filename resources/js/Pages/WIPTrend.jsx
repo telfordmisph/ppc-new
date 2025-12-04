@@ -26,6 +26,8 @@ import {
     summaryWipPLBarsLots,
     summaryWipPLBarsQuantity,
 } from "@/Utils/chartBars";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 
 function buildComputeFunction(selectedTotal, visibleBars) {
     const activeKeys = Object.entries(visibleBars)
@@ -78,6 +80,12 @@ const WIPTrend = () => {
         f3: true,
         always: true,
     });
+
+    const {
+        data: workWeekData,
+        isLoading: isWorkWeekLoading,
+        errorMessage: WorkWeekErrorMessage,
+    } = useWorkweekStore();
 
     const [plVisibleBars, setPLVisibleBars] = useState({
         pl1: true,
@@ -330,21 +338,24 @@ const WIPTrend = () => {
 
                         {isWorkweek ? (
                             <MultiSelectSearchableDropdown
-                                options={Array.from(
-                                    { length: 552 - 401 + 1 },
-                                    (_, i) => (401 + i).toString()
-                                )}
-                                value={tempSelectedWorkWeek}
+                                options={
+                                    workWeekData?.data.map((item) => ({
+                                        value: String(item.cal_workweek),
+                                        label: `${formatFriendlyDate(
+                                            item.startDate
+                                        )} - ${formatFriendlyDate(
+                                            item.endDate
+                                        )}`,
+                                    })) || []
+                                }
+                                defaultSelectedOptions={tempSelectedWorkWeek}
                                 onChange={setTempSelectedWorkWeek}
-                                className="max-w-sm"
-                                buttonClassName="btn border border-base-content/20 w-full justify-between"
-                                dropdownClassName="dropdown-content mt-1 border border-base-content/20 max-h-60 overflow-y-auto rounded-lg menu p-2 shadow bg-base-100 w-full"
-                                chipClassName="badge badge-outline badge-accent gap-1"
-                                clearButtonClassName="badge badge-soft badge-secondary gap-1"
-                                selectLabel={[
-                                    "Select WIP Lines",
-                                    "Modify WIP Lines",
-                                ]}
+                                setTempSelectedWorkWeek
+                                isLoading={isWorkWeekLoading}
+                                itemName="Workweek List"
+                                prompt="Select Workweek"
+                                debounceDelay={500}
+                                contentClassName="w-200 h-80"
                             />
                         ) : (
                             <DatePicker
