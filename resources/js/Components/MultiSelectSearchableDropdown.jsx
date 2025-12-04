@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from "react";
 import { FaTimes } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { memo } from "react";
-import { EXCLUSIVE_OPTION_VALUES } from "@/Constants/exclusivePackageFilter";
 
 const MultiSelectSearchableDropdown = memo(
     function MultiSelectSearchableDropdown({
@@ -21,6 +20,10 @@ const MultiSelectSearchableDropdown = memo(
         const [selectedOptions, setSelectedOptions] = useState(
             defaultSelectedOptions
         );
+        console.log(
+            "🚀 ~ MultiSelectSearchableDropdown ~ selectedOptions:",
+            selectedOptions
+        );
         const [searchInput, setSearchInput] = useState("");
         const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -36,44 +39,26 @@ const MultiSelectSearchableDropdown = memo(
             const value = e.target.value;
 
             let updated;
-
             if (singleSelect) {
                 updated = [value];
             } else {
                 const isChecked = e.target.checked;
-
-                if (EXCLUSIVE_OPTION_VALUES.includes(value)) {
-                    updated = [value];
-                } else {
-                    updated = selectedOptions.filter(
-                        (item) => !EXCLUSIVE_OPTION_VALUES.includes(item)
-                    );
-                    updated = isChecked
-                        ? [...updated, value]
-                        : updated.filter((item) => item !== value);
-                }
+                updated = isChecked
+                    ? [...selectedOptions, value]
+                    : selectedOptions.filter((item) => item !== value);
             }
 
             setSelectedOptions(updated);
             onChange(updated);
         };
 
-        // const handleChange = (e) => {
-        //     const value = e.target.value;
+        const handleRemoveOption = (value) => {
+            console.log("🚀 ~ handleRemoveOption ~ value:", value);
 
-        //     let updated;
-        //     if (singleSelect) {
-        //         updated = [value];
-        //     } else {
-        //         const isChecked = e.target.checked;
-        //         updated = isChecked
-        //             ? [...selectedOptions, value]
-        //             : selectedOptions.filter((item) => item !== value);
-        //     }
-
-        //     setSelectedOptions(updated);
-        //     onChange(updated);
-        // };
+            const updated = selectedOptions.filter((item) => item !== value);
+            setSelectedOptions(updated);
+            onChange(updated);
+        };
 
         const handleClearSelectionClick = (e) => {
             e.preventDefault();
@@ -145,7 +130,12 @@ const MultiSelectSearchableDropdown = memo(
         const tooltipID = `${itemName}-tooltip`;
 
         return (
-            <div className="dropdown h-full">
+            <div
+                // className=""
+                className={clsx("dropdown z-1000000")}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+            >
                 <Tooltip
                     id={tooltipID}
                     className="custom-tooltip"
@@ -175,8 +165,7 @@ const MultiSelectSearchableDropdown = memo(
                 <ul
                     tabIndex={-1}
                     className={clsx(
-                        "dropdown-content flex flex-col bg-base-100 rounded-box p-2 shadow-sm",
-                        contentClassName
+                        "dropdown-content w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
                     )}
                 >
                     {isLoading ? (
@@ -210,53 +199,111 @@ const MultiSelectSearchableDropdown = memo(
                                     )}
                                 </div>
 
-                                <button
-                                    onClick={handleClearSelectionClick}
-                                    disabled={!isClearSelectionEnabled}
-                                    className="sticky z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
-                                >
-                                    Clear selection
-                                </button>
+                                <div className="flex items-center">
+                                    <button
+                                        onClick={handleClearSelectionClick}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        disabled={!isClearSelectionEnabled}
+                                        className="sticky text-warning z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
+                                    >
+                                        Clear selection
+                                    </button>
+                                    <div className="w-full px-2">
+                                        Current Selected
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="overflow-y-auto flex flex-col h-full">
-                                {filteredOptions.length === 0 ? (
-                                    <div className="text-sm text-gray-500 px-2 py-1">
-                                        No matches found
-                                    </div>
-                                ) : (
-                                    filteredOptions.map((option) => (
-                                        <label
-                                            key={option.value}
-                                            className="flex items-center whitespace-nowrap cursor-pointer px-2 py-1 hover:bg-primary/10 rounded"
-                                        >
-                                            <input
-                                                type={
-                                                    singleSelect ||
-                                                    EXCLUSIVE_OPTION_VALUES.includes(
-                                                        option.value
-                                                    )
-                                                        ? "radio"
-                                                        : "checkbox"
-                                                }
-                                                name={formFieldName}
-                                                value={option.value}
-                                                checked={selectedOptions.includes(
-                                                    option.value
-                                                )}
-                                                onChange={handleChange}
-                                                className={clsx(
-                                                    singleSelect
-                                                        ? "radio radio-primary cursor-pointer"
-                                                        : "checkbox checkbox-sm checkbox-primary cursor-pointer"
-                                                )}
-                                            />
-                                            <span className="ml-2">
-                                                {highlightMatch(option)}
-                                            </span>
-                                        </label>
-                                    ))
+                            <div
+                                className={clsx(
+                                    "flex w-full",
+                                    contentClassName
                                 )}
+                            >
+                                <div
+                                    className={clsx(
+                                        "overflow-y-auto w-full flex flex-col"
+                                    )}
+                                >
+                                    {filteredOptions.length === 0 ? (
+                                        <div className="text-sm text-gray-500 px-2 py-1">
+                                            No matches found
+                                        </div>
+                                    ) : (
+                                        filteredOptions.map((option) => (
+                                            <label
+                                                key={option.value}
+                                                className="flex items-center whitespace-nowrap cursor-pointer px-2 py-1 hover:bg-primary/10 rounded"
+                                            >
+                                                <input
+                                                    type={
+                                                        singleSelect
+                                                            ? "radio"
+                                                            : "checkbox"
+                                                    }
+                                                    name={formFieldName}
+                                                    value={option.value}
+                                                    checked={selectedOptions.includes(
+                                                        option.value
+                                                    )}
+                                                    onChange={handleChange}
+                                                    className={clsx(
+                                                        singleSelect
+                                                            ? "radio radio-primary cursor-pointer"
+                                                            : "checkbox checkbox-sm checkbox-primary cursor-pointer"
+                                                    )}
+                                                />
+                                                <span className="ml-2">
+                                                    {highlightMatch(option)}
+                                                </span>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+
+                                <div
+                                    className={clsx(
+                                        "w-full flex flex-col"
+                                        // contentClassName
+                                    )}
+                                >
+                                    <div
+                                        className={clsx(
+                                            "overflow-y-auto text-left w-full flex flex-col p-2"
+                                        )}
+                                    >
+                                        {selectedOptions.length === 0 ? (
+                                            <div className="text-sm text-gray-500 px-2 py-1">
+                                                none
+                                            </div>
+                                        ) : (
+                                            selectedOptions.map((option) => (
+                                                <label
+                                                    key={option}
+                                                    className="whitespace-nowrap cursor-pointer w-full hover:bg-primary/10 rounded"
+                                                >
+                                                    <button
+                                                        onClick={() =>
+                                                            handleRemoveOption(
+                                                                option
+                                                            )
+                                                        }
+                                                        onMouseDown={(e) =>
+                                                            e.preventDefault()
+                                                        }
+                                                        className={clsx(
+                                                            "cursor-pointer text-left hover:text-error px-2 py-1 w-full"
+                                                        )}
+                                                    >
+                                                        <span className="ml-2">
+                                                            {option}
+                                                        </span>
+                                                    </button>
+                                                </label>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </>
                     )}
