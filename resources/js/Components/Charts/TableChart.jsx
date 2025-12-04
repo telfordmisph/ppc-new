@@ -24,15 +24,14 @@ const TableChart = ({ data = [], exclude = [] }) => {
     };
 
     return (
-        <div className="overflow-x-auto">
-            <table className="table table-xs">
+        <div className="overflow-x-auto h-96">
+            <table className="table table-xs table-pin-rows table-pin-cols">
                 <thead>
                     <tr>
-                        <th>#</th>
                         {columns.map((col) => (
                             <th
                                 key={col}
-                                className="font-light whitespace-nowrap"
+                                className="bg-base-200 text-right font-light whitespace-nowrap"
                             >
                                 {col}
                             </th>
@@ -43,9 +42,18 @@ const TableChart = ({ data = [], exclude = [] }) => {
                 <tbody>
                     {data.map((row, index) => (
                         <tr key={index}>
-                            <th>{index + 1}</th>
                             {columns.map((col) => (
-                                <td key={col} className="whitespace-nowrap">
+                                <td
+                                    key={col}
+                                    className={`text-right whitespace-nowrap ${
+                                        typeof row[col] === "number" ||
+                                        (typeof row[col] === "string" &&
+                                            !isNaN(row[col]) &&
+                                            row[col].trim() !== "")
+                                            ? "font-mono"
+                                            : ""
+                                    }`}
+                                >
                                     {formatValue(row[col])}
                                 </td>
                             ))}

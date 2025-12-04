@@ -20,6 +20,7 @@ import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { WIP_LOTS } from "@/Constants/colors";
 
 const WipTrendByPackage = memo(function WipTrendByPackage({
     isVisible,
@@ -104,6 +105,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
     const datePeriod = formatPeriodLabel(selectPeriod);
 
     const fullLabel = formatPeriodTrendMessage(
+        overallByPackageWipData,
         isOveraByPackagellWipLoading,
         selectPeriod,
         selectedLookBack,
@@ -117,6 +119,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
                 showQuantities: visibleLines.totalQuantity,
                 showLots: visibleLines.totalLots,
                 showFactories: { f1: true, f2: true, f3: true, overall: true },
+                keyLines: WIP_LOTS,
             }),
         [visibleLines]
     );

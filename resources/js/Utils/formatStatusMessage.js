@@ -47,6 +47,7 @@ export function formatPeriodLabel(periodValue) {
 const pluralize = (word, count) => (count === 1 ? word : `${word}s`);
 
 export function formatPeriodTrendMessage(
+    data,
     isOveraByPackagellWipLoading, 
     periodValue, 
     selectedLookBack, 
@@ -73,7 +74,7 @@ export function formatPeriodTrendMessage(
         return `${offset} days ago`;
     };
 
-    const label = isOveraByPackagellWipLoading ? "Loading" : "Showing";
+    const label = isOveraByPackagellWipLoading ? "Loading" : !data ? "Filter" : "Showing";
 
     if (hasWorkWeek) {
         const weeks = selectedWorkWeek;

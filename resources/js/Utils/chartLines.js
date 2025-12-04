@@ -1,4 +1,4 @@
-import { FACTORIES_COLOR } from "@/Constants/colors";
+import { WIP_OUT_CAPACITY } from "@/Constants/colors";
 
 export const visibleLines = (options = {}) => {
     const { 
@@ -7,12 +7,12 @@ export const visibleLines = (options = {}) => {
         showOuts = false,
         showCapacities = false,
         showFactories = { f1: true, f2: true, f3: true, overall: true },
-        keyLines = FACTORIES_COLOR
+        keyLines = WIP_OUT_CAPACITY
     } = options;
 
     const result = [];
 
-    keyLines.forEach(({ key, colorVar, strokeWidth, className }) => {
+    keyLines.forEach(({ key, colorVar, strokeWidth, r, className }) => {
         if (showFactories[key]) {
             // TODO have better distinction of overall lines
             
@@ -24,7 +24,7 @@ export const visibleLines = (options = {}) => {
                     fill: colorVar.quantity,
                     strokeWidth: strokeWidth,
                     className: className,
-                    r: 2,
+                    r: r,
                     connectNulls: false,
                 });
             }
@@ -36,7 +36,7 @@ export const visibleLines = (options = {}) => {
                     fill: colorVar.lots,
                     strokeWidth: strokeWidth,
                     className: className,
-                    r: 2,
+                    r: r,
                     connectNulls: false,
                     strokeDasharray: "5 6",
                 });
@@ -49,7 +49,7 @@ export const visibleLines = (options = {}) => {
                     fill: colorVar.out,
                     strokeWidth: strokeWidth,
                     className: className,
-                    r: 2,
+                    r: r,
                     connectNulls: false,
                     strokeDasharray: "10 5",
                     // strokeOpacity: 0.75,

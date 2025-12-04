@@ -21,6 +21,7 @@ import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDro
 import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { WIP_LOTS } from "@/Constants/colors";
 
 function useFetchByType(type, commonBaseParams) {
     return useFetch(route("api.wip.filterSummaryTrend"), {
@@ -129,6 +130,7 @@ const WIPStation = () => {
 
         setFullLabel(
             formatPeriodTrendMessage(
+                1,
                 anyLoading,
                 selectedPeriod,
                 selectedLookBack,
@@ -198,6 +200,7 @@ const WIPStation = () => {
                     f2: factoryVisibleBars.f2,
                     f3: factoryVisibleBars.f3,
                 },
+                keyLines: WIP_LOTS,
             }),
         [factoryVisibleBars.f1, factoryVisibleBars.f2, factoryVisibleBars.f3]
     );
