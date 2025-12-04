@@ -61,7 +61,7 @@ trait TrendAggregationTrait
             // $q->orWhereBetween($column, [$range->startDate, $range->endDate]);
             $q->orWhere(function ($query) use ($column, $range) {
               $query->where($column, '>=', $range->startDate)
-                ->where($column, '<', $range->startDate);
+                ->where($column, '<', $range->endDate);
             });
           }
         });

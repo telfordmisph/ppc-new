@@ -1078,10 +1078,11 @@ class WipService
 
     $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
 
+    $startDateCopy = is_object($startDate) ? clone $startDate : $startDate;
     foreach (WipConstants::FACTORIES as $factory) {
       // TODO capacity won't show if there's no wip data for the package in that factory
       // TODO cloning startDate works but it's a bit hacky, find a better way later
-      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, clone $startDate, $endDate, $workweeks);
+      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDateCopy, $endDate, $workweeks);
       $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
     }
 
