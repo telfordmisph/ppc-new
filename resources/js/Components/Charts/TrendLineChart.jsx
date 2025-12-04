@@ -19,7 +19,7 @@ const TrendLineChart = memo(function TrendLineChart({
     height = 300,
 }) {
     console.log("🚀 ~ TrendLineChart ~ lines:", lines);
-    const [barProps, setBarProps] = useState(
+    const [lineProps, setLineProps] = useState(
         lines.reduce(
             (a, { dataKey }) => {
                 a[dataKey] = false;
@@ -30,19 +30,19 @@ const TrendLineChart = memo(function TrendLineChart({
     );
 
     const handleLegendMouseEnter = (e) => {
-        if (!barProps[e.dataKey]) {
-            setBarProps({ ...barProps, hover: e.dataKey });
+        if (!lineProps[e.dataKey]) {
+            setLineProps({ ...lineProps, hover: e.dataKey });
         }
     };
 
     const handleLegendMouseLeave = (e) => {
-        setBarProps({ ...barProps, hover: null });
+        setLineProps({ ...lineProps, hover: null });
     };
 
-    const selectBar = (e) => {
-        setBarProps({
-            ...barProps,
-            [e.dataKey]: !barProps[e.dataKey],
+    const selectLine = (e) => {
+        setLineProps({
+            ...lineProps,
+            [e.dataKey]: !lineProps[e.dataKey],
             hover: null,
         });
     };
@@ -82,7 +82,7 @@ const TrendLineChart = memo(function TrendLineChart({
 
                         <Legend
                             wrapperStyle={{ cursor: "pointer" }}
-                            onClick={selectBar}
+                            onClick={selectLine}
                             onMouseOver={handleLegendMouseEnter}
                             onMouseOut={handleLegendMouseLeave}
                         />
@@ -91,10 +91,10 @@ const TrendLineChart = memo(function TrendLineChart({
                         {lines.map((line, index) => (
                             <Line
                                 key={index}
-                                hide={barProps[line.dataKey] === true}
+                                hide={lineProps[line.dataKey] === true}
                                 opacity={Number(
-                                    barProps.hover === line.dataKey ||
-                                        !barProps.hover
+                                    lineProps.hover === line.dataKey ||
+                                        !lineProps.hover
                                         ? 1
                                         : 0.1
                                 )}
