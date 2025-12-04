@@ -87,10 +87,15 @@ const WipOutTrendByPackage = ({
         isLoading: isOveraByPackagellWipLoading,
         errorMessage: overallByPackageWipErrorMessage,
         fetch: overallByPackageWipFetch,
+        abort: overallByPackageWipAbort,
     } = useFetch(dataAPI, {
         params: params,
         auto: false,
     });
+    console.log(
+        "🚀 ~ WipOutTrendByPackage ~ overallByPackageWipData:",
+        overallByPackageWipData
+    );
 
     const handlePackageNamesChange = (selectedPackages) => {
         setSelectedPackageNames(selectedPackages);
@@ -133,6 +138,7 @@ const WipOutTrendByPackage = ({
     const datePeriod = formatPeriodLabel(selectPeriod);
 
     const fullLabel = formatPeriodTrendMessage(
+        overallByPackageWipData,
         isOveraByPackagellWipLoading,
         selectPeriod,
         selectedLookBack,
@@ -142,7 +148,6 @@ const WipOutTrendByPackage = ({
 
     const disableSearch =
         (selectPeriod === "weekly" && selectedWorkWeeks.length === 0) ||
-        isOveraByPackagellWipLoading ||
         selectedLookBack === 0;
 
     const lines = useMemo(
@@ -188,7 +193,7 @@ const WipOutTrendByPackage = ({
                         isLoading={isPackagesLoading}
                         itemName="Package List"
                         prompt="Select packages"
-                        contentClassName="w-52 h-70"
+                        contentClassName="w-200 h-70"
                     />
 
                     <div className="join items-center">
@@ -274,18 +279,29 @@ const WipOutTrendByPackage = ({
                             itemName="Workweek List"
                             prompt="Select Workweek"
                             debounceDelay={500}
-                            contentClassName="w-72 h-120"
+                            contentClassName="w-200 h-80"
                         />
                     </div>
 
                     <button
-                        className="btn btn-primary"
-                        onClick={handleSearch}
+                        className={clsx(
+                            "btn btn-primary",
+                            isOveraByPackagellWipLoading ? "btn-secondary" : ""
+                        )}
+                        onClick={() => {
+                            if (isOveraByPackagellWipLoading) {
+                                overallByPackageWipAbort();
+                                return;
+                            }
+
+                            handleSearch();
+                        }}
                         disabled={disableSearch}
                     >
-                        Get Data{" "}
-                        {isOveraByPackagellWipLoading && (
-                            <span className="loading loading-spinner loading-xs"></span>
+                        {isOveraByPackagellWipLoading ? (
+                            <span>Cancel</span>
+                        ) : (
+                            <span>Get Trend</span>
                         )}
                     </button>
 
