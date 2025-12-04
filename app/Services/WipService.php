@@ -1048,7 +1048,6 @@ class WipService
   public function getWipOutCapacitySummaryTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
-    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
 
     $prefixMap = [
       'f1_trend' => 'f1',
@@ -1067,22 +1066,17 @@ class WipService
 
     $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1);
     // Log::info($trends['f1_trend']->toSql());
-    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
-
     Log::info("f1_trend query: " . SqlDebugHelper::prettify($trends['f1_trend']->toSql(), $trends['f1_trend']->getBindings()));
 
     $trends['f1_trend'] = $trends['f1_trend']->get();
 
     $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2);
     // Log::info($trends['f2_trend']->toSql());
-    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
-
     Log::info("f2_trend query: " . SqlDebugHelper::prettify($trends['f2_trend']->toSql(), $trends['f2_trend']->getBindings()));
 
     $trends['f2_trend'] = $trends['f2_trend']->get();
 
     $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
-    Log::info('zzstartDfasdfasfdfate: ' . $startDate . ', endDate: ' . $endDate);
 
     foreach (WipConstants::FACTORIES as $factory) {
       // TODO capacity won't show if there's no wip data for the package in that factory
@@ -1090,7 +1084,6 @@ class WipService
       $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, clone $startDate, $endDate, $workweeks);
       $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
     }
-    Log::info('what : ' . $startDate . ', endDate: ' . $endDate);
 
     Log::info("trends: " . json_encode($trends));
 
@@ -1102,8 +1095,6 @@ class WipService
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, $prefixMap);
 
     Log::info("mergedTrends: " . json_encode($mergedTrends));
-
-    Log::info('startDate: ' . $startDate . ', endDate: ' . $endDate);
 
     $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
     $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
