@@ -109,7 +109,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
     useEffect(() => {
         fetchPackages();
-        // fetchWip();
+        fetchWip();
         fetchWorkweek();
         fetchAllImports();
     }, []);

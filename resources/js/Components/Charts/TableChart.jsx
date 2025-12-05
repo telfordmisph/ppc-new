@@ -1,13 +1,47 @@
 import React, { useMemo } from "react";
 
+const preferredOrder = [
+    "label",
+    "f1_total_quantity",
+    "f2_total_quantity",
+    "f3_total_quantity",
+    "overall_total_quantity",
+    "f1_total_lots",
+    "f2_total_lots",
+    "f3_total_lots",
+    "overall_total_lots",
+    "f1_total_outs",
+    "f2_total_outs",
+    "f3_total_outs",
+    "overall_total_outs",
+    "f1_capacity",
+    "f2_capacity",
+    "f3_capacity",
+    "overall_capacity",
+];
+
 const TableChart = ({ data = [], exclude = [] }) => {
-    const columns = useMemo(() => {
-        const allKeys = new Set();
-        data.forEach((row) =>
-            Object.keys(row || {}).forEach((k) => allKeys.add(k))
-        );
-        return Array.from(allKeys).filter((key) => !exclude.includes(key));
-    }, [data, exclude]);
+    // const columns = useMemo(() => {
+    //     const allKeys = new Set();
+    //     data.forEach((row) =>
+    //         Object.keys(row || {}).forEach((k) => allKeys.add(k))
+    //     );
+    //     return Array.from(allKeys).filter((key) => !exclude.includes(key));
+    // }, [data, exclude]);
+    // const columns = useMemo(() => {
+    //     const allKeys = new Set();
+    //     data.forEach((row) =>
+    //         Object.keys(row || {}).forEach((k) => allKeys.add(k))
+    //     );
+
+    //     return Array.from(allKeys)
+    //         .filter((key) => !exclude.includes(key))
+    //         .sort((a, b) => a.localeCompare(b));
+    // }, [data, exclude]);
+
+    const columns = preferredOrder.filter((col) =>
+        data.some((row) => row.hasOwnProperty(col))
+    );
 
     if (!data.length) {
         return null;
