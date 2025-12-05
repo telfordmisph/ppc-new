@@ -94,7 +94,7 @@ class WipService
       // ->whereBetween('date_received', [$startDate, $endDate])
       ->where('date_received', ">=", $startDate)
       ->where('date_received', "<", $endDate)
-      ->groupBy(DB::raw('date_received)'))
+      ->groupBy(DB::raw('date_received'))
       ->get();
 
     $f3Data = [];

@@ -233,7 +233,7 @@ class F1F2WipRepository
     $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'],
     $aggregateColumns = null
   ) {
-    $selectColumns = !empty($columns) ? implode(', ', $selectColumns) : "1";
+    $selectColumns = !empty($selectColumns) ? implode(', ', $selectColumns) : "1";
 
     if ($aggregateColumns === null) {
       $aggregateColumns = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot'];
@@ -316,6 +316,7 @@ class F1F2WipRepository
       $endDate,
       column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
       aggregateColumns: $aggregateColumns,
+      // additionalFields: ['wip.Package_Name as package_name'],
       workweeks: $workweeks,
     );
   }
