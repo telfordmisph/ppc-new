@@ -337,8 +337,8 @@ class WipImportService
         $data[$key] = [
           'package_name' => $colA,
           'factory_name' => $currentFactory,
-          // 'effective_from' => date('Y-m-d', strtotime('+1 day')),
-          'effective_from' => date('Y-m-d', strtotime('-10 day')),
+          'effective_from' => date('Y-m-d', strtotime('today')),
+          // 'effective_from' => date('Y-m-d', strtotime('-10 day')),
           'capacity' => (int)$colD,
         ];
 
@@ -517,13 +517,14 @@ class WipImportService
       $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
 
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-      $rowData['package'] = $packageID;
 
       if (!$packageID) {
         Log::info("Package not found: " . $rowData['package']);
         $ignoredRows[] = $rowData;
         continue;
       }
+
+      $rowData['package'] = $packageID;
 
       // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
       // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
