@@ -143,12 +143,6 @@ const PackageCapacityList = () => {
                         router.visit(route("package.capacity.upload.index"));
                     }}
                 />
-                <button
-                    className="btn btn-primary"
-                    onClick={() => importCapacityModalRef.current?.open()}
-                >
-                    Import Capacity
-                </button>
                 {/* <Modal
                     ref={importCapacityModalRef}
                     id="PackageCapacityDeleteModal"

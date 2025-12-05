@@ -51,13 +51,12 @@ export const visibleLines = (options = {}) => {
                     className: className,
                     r: r,
                     connectNulls: false,
-                    strokeDasharray: "10 5",
                     // strokeOpacity: 0.75,
                 });
             }
             if (showCapacities) {
                 result.push({
-                    strokeDasharray: "100 5",
+                    strokeDasharray: "70 5",
                     dataKey: `${key}_capacity`,
                     yAxisId: "left",
                     stroke: colorVar.capacity,
