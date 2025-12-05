@@ -609,7 +609,6 @@ class WipImportService
       $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
 
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-      $rowData['package'] = $packageID;
 
       if (!$packageID) {
         Log::info("Package not found: " . $rowData['package']);
@@ -617,6 +616,7 @@ class WipImportService
         continue;
       }
 
+      $rowData['package'] = $packageID;
 
       if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_received']}"])) {
         continue;

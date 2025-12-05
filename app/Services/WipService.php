@@ -1115,7 +1115,7 @@ class WipService
     Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
     Log::info("getWipOutCapacitySummaryTrend: f3out: " . json_encode($f3out));
 
-    $merged = $this->mergeTrendsByKey('dateKey', $mergedTrends, $f1f2out, $f3out);
+    $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends, $f1f2out, $f3out);
 
     return response()->json([
       'data' => $merged,

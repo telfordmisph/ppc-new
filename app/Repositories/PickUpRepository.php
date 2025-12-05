@@ -218,7 +218,7 @@ class PickUpRepository
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
     Log::info(json_encode($mergedTrends));
 
-    $merged = $this->mergeTrendsByKey('dateKey', $mergedTrends);
+    $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends);
 
     return response()->json(array_merge([
       'data' => $merged,

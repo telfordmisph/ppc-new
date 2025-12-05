@@ -142,7 +142,7 @@ trait TrendAggregationTrait
    * @param array ...$arrays Arrays to merge
    * @return array Merged and sorted array
    */
-  public function mergeTrendsByKey(string $keyField = 'dateKey', array ...$arrays)
+  public function mergeTrendsByKey(string $keyField = 'dateKey', $ignore, array ...$arrays)
   {
     $merged = [];
 
@@ -153,7 +153,7 @@ trait TrendAggregationTrait
         $merged[$key] = $item;
       } else {
         foreach ($item as $field => $value) {
-          if ($field === $keyField) {
+          if ($field === $keyField || in_array($field, $ignore, true)) {
             continue;
           }
 
