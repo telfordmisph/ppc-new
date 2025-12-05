@@ -92,6 +92,7 @@ const TrendLineChart = memo(function TrendLineChart({
                                 key={index}
                                 hide={lineProps[line.dataKey] === true}
                                 animationDuration={1500}
+                                activeDot={{ r: 5 }}
                                 animationEasing="cubic-bezier(0, 0, 0, 1)"
                                 opacity={Number(
                                     lineProps.hover === line.dataKey ||

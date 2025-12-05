@@ -45,6 +45,7 @@ export default function BaseChart({ data, isLoading, error, children }) {
 
     const tooltip = (
         <Tooltip
+            offset={100}
             content={<CustomTooltip />}
             animationEasing="cubic-bezier(0, 0, 0, 1)"
             animationDuration={800}
