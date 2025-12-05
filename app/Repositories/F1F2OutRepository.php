@@ -8,7 +8,7 @@ use App\Traits\TrendAggregationTrait;
 use App\Repositories\AnalogCalendarRepository;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\SqlDebugHelper;
-
+use App\Helpers\MergeAndAggregate;
 use App\Models\F1F2Out;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\WipTrendParser;
@@ -203,14 +203,13 @@ class F1F2OutRepository
       $workweeks
     );
 
-    $overallTrend = $this->buildTrend(
-      ['F1', 'F2'], // null means overall
-      $packageName,
-      $period,
-      $startDate,
-      $endDate,
-      $workweeks
-    );
+
+    $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
+    $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
+
+    Log::info("f1trend: " . json_encode($f1Trend));
+    Log::info("f2trend: " . json_encode($f2Trend));
+    Log::info("overalltrend: " . json_encode($overallTrend));
 
     return WipTrendParser::parseTrendsByPeriod([
       'f1_trend' => $f1Trend,
