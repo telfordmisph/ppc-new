@@ -377,7 +377,6 @@ const F3ImportPage = () => {
                             ref={uploaderOUTRef}
                             legend="Pick an Excel file"
                             onFileValid={(file) => {
-                                console.log("🚀 ~ onFileValid ~ file:", file);
                                 setSelectedOUTFile(file);
                             }}
                         />

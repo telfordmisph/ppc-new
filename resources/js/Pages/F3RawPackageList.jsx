@@ -202,7 +202,7 @@ const F3RawPackageList = () => {
                                         rawPackage?.updated_at
                                     ) || "-"}
                                 </td>
-                                <td cl2assName="flex flex-col lg:flex-row">
+                                <td className="flex flex-col lg:flex-row">
                                     <a
                                         href={route("f3.raw.package.edit", {
                                             id: rawPackage.id,

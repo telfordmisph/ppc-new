@@ -33,7 +33,6 @@ export const useImportTraceStore = create((set, get) => {
         const url = buildUrlWithParams(route("api.import.trace.getAllLatestImports"), params);
         const response = await fetch(url, { method: "GET", signal: abortController.signal });
         const result = await response.json();
-        console.log("🚀 ~ result:", result)
 
         if (!response.ok || (result && result.status === "error")) {
           throw new Error(result?.message || `HTTP error: ${response.status}`);

@@ -8,7 +8,6 @@ import { useF3PackagesStore } from "@/Store/f3PackageListStore";
 const F3PackageUpsert = () => {
     const toast = useToast();
     const { packageName: selectedPackage } = usePage().props;
-    console.log("🚀 ~ F3PackageUpsert ~ selectedPackage:", selectedPackage);
     const isEdit = !!selectedPackage;
     const { appendPackage, updatePackage } = useF3PackagesStore(
         (state) => state

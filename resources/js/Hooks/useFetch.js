@@ -30,8 +30,6 @@ export function useFetch(url, options = {}) {
     
     try {
       const fetchUrl = buildUrlWithParams(url, currentParams);
-      console.log("🚀 ~ fetchData ~ fetchUrl:", fetchUrl)
-
       const response = await fetch(fetchUrl, {
         method: "GET",
         headers: {
@@ -56,7 +54,6 @@ export function useFetch(url, options = {}) {
         throw error;
       }
       
-      console.log("🚀 ~ fetchData ~ result:", result)
       setData(result);
     } catch (error) {
       console.log("🚀 ~ fetchData ~ err:", error)
@@ -79,7 +76,6 @@ export function useFetch(url, options = {}) {
       // 2. Abort the fetch when a new Inertia navigation starts
       // This will run *before* the component unmounts on navigation.
       if (abortControllerRef.current) {
-        console.log("Inertia Navigation started: Aborting fetch!");
         abortControllerRef.current.abort();
       }
     };

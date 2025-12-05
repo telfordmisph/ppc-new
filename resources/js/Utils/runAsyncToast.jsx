@@ -34,8 +34,6 @@ export function runAsyncToast({
 
     return action()
         .then((result) => {
-            console.log("🚀 ~ runAsyncToast ~ result:", result);
-
             toast.dismiss(toastId);
 
             toast.custom(

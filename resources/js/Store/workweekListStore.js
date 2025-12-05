@@ -49,7 +49,6 @@ export const useWorkweekStore = create((set, get) => {
           throw error;
         }
 
-        console.log("✅ Workweek fetched:", result);
         set({ data: result });
       } catch (error) {
         if (error.name !== "AbortError") {

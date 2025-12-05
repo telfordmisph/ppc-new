@@ -18,7 +18,6 @@ const TrendLineChart = memo(function TrendLineChart({
     lines = [],
     height = 300,
 }) {
-    console.log("🚀 ~ TrendLineChart ~ lines:", lines);
     const [lineProps, setLineProps] = useState(
         lines.reduce(
             (a, { dataKey }) => {

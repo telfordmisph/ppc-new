@@ -204,7 +204,6 @@ export default function AuthenticatedLayout({ header, children }) {
     //     const token = localStorage.getItem("authify-token");
 
     //     if (!token) {
-    //         console.log("fjalskd");
 
     //         window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
     //             route("dashboard")
@@ -228,7 +227,6 @@ export default function AuthenticatedLayout({ header, children }) {
 
     //         if (isTokenValid.data.status !== "success") {
     //             localStorage.removeItem("authify-token");
-    //             console.log("N O T S U C C E S S");
     //             window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
     //                 route("dashboard")
     //             )}`;

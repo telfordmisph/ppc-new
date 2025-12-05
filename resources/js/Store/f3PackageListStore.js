@@ -89,7 +89,6 @@ export const useF3PackagesStore = create((set, get) => {
           throw error;
         }
 
-        console.log("✅ F3 Package Names fetched:", result);
         if (controller === abortController) {
           set({ data: result });
           set({ isLoaded: true });
@@ -100,7 +99,6 @@ export const useF3PackagesStore = create((set, get) => {
           set({ errorMessage: error.message });
         }
       } finally {
-        console.log("Set loading FALSE");
         if (controller === abortController) {
           set({ isLoading: false });
         }

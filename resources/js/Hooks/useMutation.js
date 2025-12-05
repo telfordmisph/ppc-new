@@ -47,7 +47,6 @@ export function useMutation() {
       if (!response.ok || (result && result.status === "error")) {
         const error = new Error(result?.message || `HTTP error: ${response.status}`);
         error.status = response.status;
-        console.log("🚀 ~ mutate ~ result:", result)
         error.data = result;
         throw error;
       }

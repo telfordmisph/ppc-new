@@ -24,11 +24,6 @@ const SidebarLink = ({
     const firstSegmentTo = pathTo.split("/")[1];
     const isActive = firstSegmentFrom === firstSegmentTo;
 
-    // console.log("🚀 ~ SidebarLink ~ firstSegmentFrom:", firstSegmentFrom);
-    // console.log("🚀 ~ SidebarLink ~ firstSegmentTo:", firstSegmentTo);
-
-    // console.log("🚀 ~ SidebarLink ~ isActive:", isActive);
-
     const isDark = theme === DARK_THEME_NAME;
 
     const hoverColor = isDark ? "hover:bg-base-200" : "hover:bg-base-300";

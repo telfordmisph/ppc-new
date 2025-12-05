@@ -17,7 +17,6 @@ const F3RawPackageUpsert = () => {
     const [packageName, setPackageName] = useState(
         selectedRawPackage?.f3_package_name.package_name || ""
     );
-    console.log("🚀 ~ F3RawPackageUpsert ~ packageName:", packageName);
     const [leadCount, setLeadCount] = useState(
         selectedRawPackage?.lead_count || ""
     );

@@ -92,10 +92,6 @@ const WipOutTrendByPackage = ({
         params: params,
         auto: false,
     });
-    console.log(
-        "🚀 ~ WipOutTrendByPackage ~ overallByPackageWipData:",
-        overallByPackageWipData
-    );
 
     const handlePackageNamesChange = (selectedPackages) => {
         setSelectedPackageNames(selectedPackages);

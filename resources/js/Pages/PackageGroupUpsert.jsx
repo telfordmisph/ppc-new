@@ -9,8 +9,6 @@ const PackageGroupUpsert = () => {
     const toast = useToast();
     const { packageGroup } = usePage().props;
     const isEdit = !!packageGroup;
-    console.log("🚀 ~ PackageGroupUpsert ~ packageGroup:", packageGroup);
-
     const [factory, setFactory] = useState(
         packageGroup?.factory.toUpperCase() || "F1"
     );

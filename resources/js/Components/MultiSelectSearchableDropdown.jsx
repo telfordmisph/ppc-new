@@ -20,10 +20,6 @@ const MultiSelectSearchableDropdown = memo(
         const [selectedOptions, setSelectedOptions] = useState(
             defaultSelectedOptions
         );
-        console.log(
-            "🚀 ~ MultiSelectSearchableDropdown ~ selectedOptions:",
-            selectedOptions
-        );
         const [searchInput, setSearchInput] = useState("");
         const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -53,8 +49,6 @@ const MultiSelectSearchableDropdown = memo(
         };
 
         const handleRemoveOption = (value) => {
-            console.log("🚀 ~ handleRemoveOption ~ value:", value);
-
             const updated = selectedOptions.filter((item) => item !== value);
             setSelectedOptions(updated);
             onChange(updated);

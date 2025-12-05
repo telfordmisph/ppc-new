@@ -21,12 +21,10 @@ export const useF1F2PackagesStore = create((set, get) => {
       const controller = new AbortController();
       abortController = controller;
 
-      console.log("Set loading TRUE");
       set({ isLoading: true, errorMessage: null });
 
       try {
         const url = buildUrlWithParams(route("api.wip.distinctPackages"), params);
-        console.log("🚀 Fetching packages:", url);
 
         const response = await fetch(url, {
           method: "GET",
@@ -52,7 +50,6 @@ export const useF1F2PackagesStore = create((set, get) => {
           throw error;
         }
 
-        console.log("✅ Packages fetched:", result);
         if (controller === abortController) {
           set({ data: result });
         }

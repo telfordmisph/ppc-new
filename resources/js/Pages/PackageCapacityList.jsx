@@ -41,10 +41,6 @@ const PackageCapacityList = () => {
         return () => clearTimeout(timer);
     }, [selectedFactory]);
 
-    useEffect(() => {
-        console.log(serverPackageCapacity);
-    }, []);
-
     const refresh = () => {
         router.reload({
             data: { factory: selectedFactory },
@@ -75,11 +71,6 @@ const PackageCapacityList = () => {
     };
 
     const handleFactoryChange = (selectedFactory) => {
-        console.log(
-            "🚀 ~ handleFactoryChange ~ selectedFactory:",
-            selectedFactory
-        );
-
         setSelectedFactory(selectedFactory);
     };
 

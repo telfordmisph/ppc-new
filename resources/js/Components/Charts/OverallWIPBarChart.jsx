@@ -88,12 +88,12 @@ const BarChart = memo(function BarChart({
                 </div> */}
 
                 {/* <div className="mt-4 lg:mt-0"> */}
-                <TogglerButton
+                {/* <TogglerButton
                     toggleButtons={TOGGLE_FACTORY_BUTTONS}
                     visibleBars={visibleBars}
                     toggleBar={toggleBar}
                     toggleAll={toggleAll}
-                />
+                /> */}
                 {/* </div> */}
             </div>
 
