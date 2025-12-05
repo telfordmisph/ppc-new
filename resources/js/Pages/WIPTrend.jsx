@@ -137,13 +137,6 @@ const WIPTrend = () => {
     });
 
     const {
-        data: plSummaryWipData,
-        isLoading: isPlSummaryWipLoading,
-        errorMessage: plSummaryWipErrorMessage,
-        fetch: plSummaryWipFetch,
-    } = useFetch(route(endpoints.summary), { params: commonParams });
-
-    const {
         isLoading: isImportWipLoading,
         errorMessage: importWipErrorMessage,
         mutate: importWip,
