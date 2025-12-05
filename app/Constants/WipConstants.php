@@ -66,7 +66,7 @@ class WipConstants
   public const SPECIAL_FILTER_VALUE = [self::TSSOP_240_MILS];
   public const F1F2_OUT_PACKAGE_VALUES = ["SOIC_N", "SOIC_N_EP", "QSOP", "150mils", "RN", "150 mils"];
   // continue this service filter package OCP
-  public const DAYS_UNTIL_RECLASSIFIED_AS_NEW = 30;
+  public const DAYS_UNTIL_RECLASSIFIED_AS_NEW = 10;
   public const FACTORIES = ['F1', 'F2', 'F3'];
   public const PRODUCTION_LINES = ['PL1', 'PL6'];
   public const DISTINCT_PACKAGES = [
