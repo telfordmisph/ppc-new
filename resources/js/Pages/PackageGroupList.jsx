@@ -130,14 +130,8 @@ const F1F2PackageGroupList = () => {
                         Capacity Page
                     </Link>
                     should also appear here, along with their corresponding
-                    canonical names in the package_name or dimension columns
-                    from the database.
-                    <p className="mt-2">
-                        For example, the 'TSSOP (240mils)' entry on the Capacity
-                        Page should appear here, grouped with '240 mils,' which
-                        will be used to filter the dimension column in the
-                        database.
-                    </p>
+                    canonical names in the package_name columns from the
+                    database.
                 </div>
                 <div className="bg-base-300 p-4 rounded-lg">
                     <BsInfoCircle className="inline mb-1 mr-2" />

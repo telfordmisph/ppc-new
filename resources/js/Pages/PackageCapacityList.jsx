@@ -87,45 +87,33 @@ const PackageCapacityList = () => {
                 {serverPackageCapacity.map((packageGroup, idx) => (
                     <tr key={idx}>
                         <td>{packageGroup.package_name}</td>
+
                         <td>
-                            {packageGroup?.previous_capacity || "-"} (
-                            {formatFriendlyDate(
-                                packageGroup?.previous_from || ""
-                            )}
+                            <span className="font-mono text-right w-15 inline-block">
+                                {packageGroup?.previous_capacity?.toLocaleString() ||
+                                    "-"}
+                            </span>{" "}
+                            (
+                            <span className="opacity-50">
+                                {formatFriendlyDate(
+                                    packageGroup?.previous_from || ""
+                                )}
+                            </span>
                             )
                         </td>
+
                         <td>
-                            {packageGroup?.latest_capacity || "-"} (
-                            {formatFriendlyDate(
-                                packageGroup?.latest_from || ""
-                            )}
+                            <span className="font-mono text-right w-15 inline-block">
+                                {packageGroup?.latest_capacity?.toLocaleString() ||
+                                    "-"}
+                            </span>{" "}
+                            (
+                            <span className="opacity-50">
+                                {formatFriendlyDate(
+                                    packageGroup?.latest_from || ""
+                                )}
+                            </span>
                             )
-                        </td>
-                        <td className="flex flex-col lg:flex-row">
-                            <div className="tooltip" data-tip="View History">
-                                <Link
-                                    // href={route("package.capacity.edit", {
-                                    //     id: packageGroup.id,
-                                    //     search: searchInput,
-                                    //     perPage: maxItem,
-                                    //     page: currentPage,
-                                    // })}
-                                    className="btn btn-ghost btn-sm btn-primary"
-                                >
-                                    <FaHistory />
-                                </Link>
-                            </div>
-                            {/* <div className="tooltip" data-tip="Delete">
-                                <a
-                                    className="btn btn-ghost btn-sm text-error"
-                                    onClick={() => {
-                                        selectedPackageCapacity(packageGroup);
-                                        deleteModalRef.current.open();
-                                    }}
-                                >
-                                    <FaTrash />
-                                </a>
-                            </div> */}
                         </td>
                     </tr>
                 ))}

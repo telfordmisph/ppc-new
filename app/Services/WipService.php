@@ -16,6 +16,7 @@ use App\Constants\WipConstants;
 use App\Traits\NormalizeStringTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use App\Traits\TrendAggregationTrait;
 use App\Repositories\PackageGroupRepository;
@@ -37,6 +38,7 @@ class WipService
   protected $packageGroupRepo;
 
   protected $f3packageNamesRepo;
+  private const TODAY_WIP_CACHE_KEY = "today_wip";
   private const F1F2_TABLE = "customer_data_wip";
   public function __construct(
     AnalogCalendarRepository $analogCalendarRepo,
@@ -86,67 +88,70 @@ class WipService
 
   public function getTodayWip()
   {
-    $endDate = Carbon::now()->endOfDay();
-    $startDate = Carbon::now()->subDays(25)->startOfDay();
+    return Cache::remember(self::TODAY_WIP_CACHE_KEY, now()->addHours(23), function () {
+      $endDate = Carbon::now()->endOfDay();
+      $startDate = Carbon::now()->subDays(25)->startOfDay();
 
-    $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
-      ->selectRaw('DATE(date_received) AS report_date, SUM(f3_wip.qty) AS f3_wip')
-      // ->whereBetween('date_received', [$startDate, $endDate])
-      ->where('date_received', ">=", $startDate)
-      ->where('date_received', "<", $endDate)
-      ->groupBy(DB::raw('date_received'))
-      ->get();
+      $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
+        ->selectRaw('DATE(date_received) AS report_date, SUM(f3_wip.qty) AS f3_wip')
+        // ->whereBetween('date_received', [$startDate, $endDate])
+        ->where('date_received', ">=", $startDate)
+        ->where('date_received', "<", $endDate)
+        ->groupBy(DB::raw('date_received'))
+        ->get();
 
-    $f3Data = [];
-    foreach ($f3DataRaw as $row) {
-      $f3Data[$row->report_date] = (int) $row->f3_wip;
-    }
+      $f3Data = [];
+      foreach ($f3DataRaw as $row) {
+        $f3Data[$row->report_date] = (int) $row->f3_wip;
+      }
 
-    $f1Data = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f1_wip')
-      ->whereNotIn('wip.Focus_Group', ['DLT', 'WLT', 'SOF'])
-      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
-      ->where('wip.Date_Loaded', ">=", $startDate)
-      ->where('wip.Date_Loaded', "<", $endDate);
+      $f1Data = DB::table(self::F1F2_TABLE . ' as wip')
+        ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f1_wip')
+        ->whereNotIn('wip.Focus_Group', ['DLT', 'WLT', 'SOF'])
+        // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
+        ->where('wip.Date_Loaded', ">=", $startDate)
+        ->where('wip.Date_Loaded', "<", $endDate);
 
-    $f1Data = $this->f1f2WipRepo->f1Filters(
-      $f1Data,
-      WipConstants::TODAY_WIP_INCLUDED_STATIONS,
-      WipConstants::TODAY_WIP_EXCLUDED_STATIONS,
-    )->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
+      $f1Data = $this->f1f2WipRepo->f1Filters(
+        $f1Data,
+        WipConstants::TODAY_WIP_INCLUDED_STATIONS,
+        WipConstants::TODAY_WIP_EXCLUDED_STATIONS,
+      )->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
 
-    $f2Data = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f2_wip');
+      $f2Data = DB::table(self::F1F2_TABLE . ' as wip')
+        ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f2_wip');
 
-    $f2Data = $this->f1f2WipRepo->applyF2Filters($f2Data, [...WipConstants::EWAN_PROCESS, 'Q-PITRANS1', 'GTTRANS_BE'], 'wip')
-      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
-      ->where('wip.Date_Loaded', ">=", $startDate)
-      ->where('wip.Date_Loaded', "<", $endDate)
-      ->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
+      $f2Data = $this->f1f2WipRepo->applyF2Filters($f2Data, [...WipConstants::EWAN_PROCESS, 'Q-PITRANS1', 'GTTRANS_BE'], 'wip')
+        // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
+        ->where('wip.Date_Loaded', ">=", $startDate)
+        ->where('wip.Date_Loaded', "<", $endDate)
+        ->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
 
-    $f1f2Data = DB::query()
-      ->fromSub($f1Data, 'f1')
-      ->joinSub($f2Data, 'f2', function ($join) {
-        $join->on('f1.report_date', '=', 'f2.report_date');
-      })
-      ->selectRaw('f1.report_date, f1.f1_wip, f2.f2_wip')
-      ->get();
+      $f1f2Data = DB::query()
+        ->fromSub($f1Data, 'f1')
+        ->joinSub($f2Data, 'f2', function ($join) {
+          $join->on('f1.report_date', '=', 'f2.report_date');
+        })
+        ->selectRaw('f1.report_date, f1.f1_wip, f2.f2_wip')
+        ->get();
 
-    $data = [];
-    foreach ($f1f2Data as $row) {
-      $reportDate = $row->report_date;
-      $f3Value = $f3Data[$reportDate] ?? 0;
+      $data = [];
+      foreach ($f1f2Data as $row) {
+        $reportDate = $row->report_date;
+        $f3Value = $f3Data[$reportDate] ?? 0;
 
-      $data[] = [
-        'date'  => $reportDate,
-        'total' => (int) $row->f1_wip + (int) $row->f2_wip + $f3Value,
-        'f1'    => (int) $row->f1_wip,
-        'f2'    => (int) $row->f2_wip,
-        'f3'    => $f3Value,
-      ];
-    }
+        $data[] = [
+          'date'  => $reportDate,
+          'total' => (int) $row->f1_wip + (int) $row->f2_wip + $f3Value,
+          'f1'    => (int) $row->f1_wip,
+          'f2'    => (int) $row->f2_wip,
+          'f3'    => $f3Value,
+        ];
+      }
 
-    return response()->json($data);
+
+      return response()->json($data);
+    });
   }
 
   public function getOverallWip($startDate, $endDate, $useWorkweek, $workweek)
@@ -479,6 +484,8 @@ class WipService
     $f1Query = (clone $baseQuery)
       ->where(fn($q) => $this->f1f2WipRepo->f1Filters($q, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip'));
 
+    Log::info("F1 query: " . SqlDebugHelper::prettify($f1Query->toSql(), $f1Query->getBindings()));
+
     // -----------------------------
     //  F2 QUERIES
     // -----------------------------
@@ -526,6 +533,8 @@ class WipService
         DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
         DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
       );
+
+    Log::info("f1Left: " . SqlDebugHelper::prettify($f1Left->toSql(), $f1Left->getBindings()));
 
     // f2 LEFT JOIN others
     $f2Left = DB::table(DB::raw("({$f2Query->toSql()}) as f2"))
@@ -619,8 +628,11 @@ class WipService
         DB::raw('(MAX(f1_total_lots) + MAX(f2_total_lots) + MAX(f3_total_lots)) as total_lots')
       )
       ->groupBy($includePL ? ['Package_Name', 'PL'] : ['Package_Name'])
-      ->orderByDesc('total_quantity')
-      ->get();
+      ->orderByDesc('total_quantity');
+
+    Log::info("results: " . SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
+
+    $results = $results->get();
 
     $totalQuantity = $results->sum('total_quantity');
 

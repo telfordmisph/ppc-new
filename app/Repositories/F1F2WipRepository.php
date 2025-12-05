@@ -24,7 +24,7 @@ class F1F2WipRepository
   private const F1F2_TABLE = "customer_data_wip";
   private const DISTINCT_PACKAGE_CACHE_KEY = 'distinct_packages';
   private const DISTINCT_STATION_CACHE_KEY = 'f1f2_distinct_stations';
-  private const CACHE_HOURS = 26;
+  private const CACHE_HOURS = 23;
   private const F3_TABLE = "f3_data_wip";
   private const PPC_TABLE = "ppc_productionline_packagereference";
   protected $packageFilterService;
