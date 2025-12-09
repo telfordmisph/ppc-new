@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Helpers\MergeAndAggregate;
 use App\Traits\PackageAliasTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,14 +57,15 @@ class PackageCapacityRepository
       ->distinct()
       ->orderByDesc('pch.effective_from');
 
-    // Log::info(SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
-
     $filtered = collect($query->get())
       ->groupBy(fn($item) => $item->group_id . '_' . $item->effective_from)
       ->map(fn($groupItems) => $groupItems->first())
-      ->values(); // reindex numerically
+      ->values()
+      ->all(); // reindex numerically
 
-    return $filtered->all();
+    $aggregated = MergeAndAggregate::mergeAndAggregate([$filtered], ['effective_from', 'effective_to', 'factory'], ['package_name']);
+    $aggregated = array_map(fn($row) => (object)$row, $aggregated);
+    return $aggregated;
   }
 
   public function expandDaily($rows, $start, $end)
@@ -71,9 +73,9 @@ class PackageCapacityRepository
     $result = [];
 
     foreach ($rows as $r) {
-      $from = Carbon::parse($r->effective_from)->max($start);
+      $from = Carbon::parse($r->effective_from);
       $to = $r->effective_to
-        ? Carbon::parse($r->effective_to)->min($end)
+        ? Carbon::parse($r->effective_to)
         : $end;
 
       while ($from <= $to) {

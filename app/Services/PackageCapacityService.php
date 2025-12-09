@@ -232,8 +232,11 @@ class PackageCapacityService
     }
 
     $rows = $this->packageCapacityRepository->getPackageCapacity($package, $factory);
-    // Log::info("Rows: " . json_encode($rows));
     $daily = $this->packageCapacityRepository->expandDaily($rows, $earliestStartDate, $endDate);
+
+    $daily = array_filter($daily, function ($d) use ($earliestStartDate) {
+      return Carbon::parse($d['day'])->gt($earliestStartDate);
+    });
 
     // TODO DFN SSOP
     // Showing 549, 601, 552, 551, 550, and 602 workweeks
@@ -246,7 +249,6 @@ class PackageCapacityService
     // Log::info("Start Date: " . $startDate);
     // Log::info("End Date: " . $endDate);
     // Log::info("Factory: " . $factory);
-    // Log::info("Daily: " . json_encode($daily));
     // Log::info("Period: " . $period);
     // Log::info("Week Ranges: " . json_encode($weekRanges));
 
