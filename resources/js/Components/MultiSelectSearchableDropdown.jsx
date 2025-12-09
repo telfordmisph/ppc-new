@@ -1,8 +1,9 @@
 import clsx from "clsx";
 import { useState, useEffect, useMemo } from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaTrash } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { memo } from "react";
+import { BiSelectMultiple } from "react-icons/bi";
 
 const MultiSelectSearchableDropdown = memo(
     function MultiSelectSearchableDropdown({
@@ -44,6 +45,12 @@ const MultiSelectSearchableDropdown = memo(
                     : selectedOptions.filter((item) => item !== value);
             }
 
+            setSelectedOptions(updated);
+            onChange(updated);
+        };
+
+        const handleSelectAll = () => {
+            const updated = options.map((item) => item.value);
             setSelectedOptions(updated);
             onChange(updated);
         };
@@ -198,13 +205,19 @@ const MultiSelectSearchableDropdown = memo(
                                         onClick={handleClearSelectionClick}
                                         onMouseDown={(e) => e.preventDefault()}
                                         disabled={!isClearSelectionEnabled}
-                                        className="sticky text-warning z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
+                                        className="flex items-center gap-2 sticky text-warning z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
                                     >
+                                        <FaTrash />
                                         Clear selection
                                     </button>
-                                    <div className="w-full px-2">
-                                        Current Selected
-                                    </div>
+                                    <button
+                                        onClick={handleSelectAll}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        className="flex items-center gap-2 sticky text-primary z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
+                                    >
+                                        <BiSelectMultiple />
+                                        Select All
+                                    </button>
                                 </div>
                             </div>
 
@@ -268,7 +281,7 @@ const MultiSelectSearchableDropdown = memo(
                                     >
                                         {selectedOptions.length === 0 ? (
                                             <div className="text-sm text-gray-500 px-2 py-1">
-                                                none
+                                                currently none selected
                                             </div>
                                         ) : (
                                             selectedOptions.map((option) => (
