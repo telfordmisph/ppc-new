@@ -25,7 +25,7 @@ export const visibleLines = (options = {}) => {
                     strokeWidth: strokeWidth,
                     className: className,
                     r: r,
-                    connectNulls: false,
+                    connectNulls: true,
                 });
             }
             if (showLots) {
@@ -37,7 +37,7 @@ export const visibleLines = (options = {}) => {
                     strokeWidth: strokeWidth,
                     className: className,
                     r: r,
-                    connectNulls: false,
+                    connectNulls: true,
                     strokeDasharray: "5 6",
                 });
             }
@@ -50,7 +50,7 @@ export const visibleLines = (options = {}) => {
                     strokeWidth: strokeWidth,
                     className: className,
                     r: r,
-                    connectNulls: false,
+                    connectNulls: true,
                     // strokeOpacity: 0.75,
                 });
             }
@@ -66,7 +66,7 @@ export const visibleLines = (options = {}) => {
                     r: 0,
                     // 'basis' | 'basisClosed' | 'basisOpen' | 'bumpX' | 'bumpY' | 'bump' | 'linear' | 'linearClosed' | 'natural' | 'monotoneX' | 'monotoneY' | 'monotone' | 'step' | 'stepBefore' | 'stepAfter' | CurveFactory;
                     type: "step",
-                    connectNulls: false,
+                    connectNulls: true,
                 });
             }
         }
