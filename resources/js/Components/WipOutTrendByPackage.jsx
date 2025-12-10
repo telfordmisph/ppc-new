@@ -34,8 +34,8 @@ const WipOutTrendByPackage = ({
         packageNames: savedSelectedPackageNames,
         workWeeks: savedWorkWeeks,
         lookBack: savedLookBack,
-        period: savedPeriod,
         offset: savedOffset,
+        period: savedPeriod,
         factory: savedFactory,
         setSelectedPackageNames: setSavedSelectedPackage,
         setSelectedWorkWeeks: setSavedWorkWeeks,
@@ -45,28 +45,28 @@ const WipOutTrendByPackage = ({
         setSelectedFactory: setSavedSelectedFactory,
     } = useSelectedFilteredStore();
 
-    const [selectedPackageNames, setSelectedPackageNames] = useState([]);
-    const [selectedWorkWeeks, setSelectedWorkWeeks] = useState([]);
-    const [selectedLookBack, setSelectedLookBack] = useState(20);
-    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(0);
-    const [selectPeriod, setSelectedPeriod] = useState("weekly");
+    const [selectedPackageNames, setSelectedPackageNames] = useState(savedSelectedPackageNames);
+    const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(savedWorkWeeks);
+    const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
+    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(savedOffset);
+    const [selectPeriod, setSelectedPeriod] = useState(savedPeriod);
     const [selectedFactory, setSelectedFactory] = useState(savedFactory);
 
-    useEffect(() => {
-        if (savedSelectedPackageNames?.length) setSelectedPackageNames(savedSelectedPackageNames);
-        if (savedWorkWeeks?.length) setSelectedWorkWeeks(savedWorkWeeks);
-        if (savedLookBack) setSelectedLookBack(savedLookBack);
-        if (savedOffset) setSelectedOffsetPeriod(savedOffset);
-        if (savedPeriod) setSelectedPeriod(savedPeriod);
-        if (savedFactory) setSelectedFactory(savedFactory);
-    }, [
-        savedSelectedPackageNames,
-        savedWorkWeeks,
-        savedLookBack,
-        savedOffset,
-        savedPeriod,
-        savedFactory,
-    ]);
+    // useEffect(() => {
+    //     if (savedSelectedPackageNames?.length) setSelectedPackageNames(savedSelectedPackageNames);
+    //     if (savedWorkWeeks?.length) setSelectedWorkWeeks(savedWorkWeeks);
+    //     if (savedLookBack) setSelectedLookBack(savedLookBack);
+    //     if (savedOffset) setSelectedOffsetPeriod(savedOffset);
+    //     if (savedPeriod) setSelectedPeriod(savedPeriod);
+    //     if (savedFactory) setSelectedFactory(savedFactory);
+    // }, [
+    //     savedSelectedPackageNames,
+    //     savedWorkWeeks,
+    //     savedLookBack,
+    //     savedOffset,
+    //     savedPeriod,
+    //     savedFactory,
+    // ]);
 
     const params = {
         packageName: selectedPackageNames.join(","),

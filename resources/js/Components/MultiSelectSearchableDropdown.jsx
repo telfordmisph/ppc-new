@@ -210,14 +210,18 @@ const MultiSelectSearchableDropdown = memo(
                                         <FaTrash />
                                         Clear selection
                                     </button>
-                                    <button
-                                        onClick={handleSelectAll}
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        className="flex items-center gap-2 sticky text-primary z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
-                                    >
-                                        <BiSelectMultiple />
-                                        Select All
-                                    </button>
+                                    {!singleSelect && (
+                                        <button
+                                            onClick={handleSelectAll}
+                                            onMouseDown={(e) =>
+                                                e.preventDefault()
+                                            }
+                                            className="flex items-center gap-2 sticky text-primary z-10 top-0 w-full text-left px-2 py-1 rounded-lg hover:bg-primary/10 disabled:hover:bg-transparent disabled:cursor-default cursor-pointer disabled:opacity-50"
+                                        >
+                                            <BiSelectMultiple />
+                                            Select All
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
