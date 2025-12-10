@@ -48,12 +48,33 @@ class AuthenticationController extends Controller
         ]);
     }
 
+
     public function logout(Request $request)
     {
+        // Clear Laravel session
         session()->forget('emp_data');
         session()->flush();
+
+        // Clear SSO token cookie
+        Cookie::queue(
+            Cookie::forget('sso_token')
+        );
+
+        // Regenerate session ID
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        Cookie::forget('authify-session');
+
+        // Redirect to Authify logout endpoint
+        $redirectUrl = urlencode(route('dashboard'));
+        return redirect("http://192.168.2.221/authify/public/logout?redirect={$redirectUrl}");
     }
+
+    // public function logout(Request $request)
+    // {
+    //     session()->forget('emp_data');
+    //     session()->flush();
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
+    //     Cookie::forget('authify-session');
+    // }
 }

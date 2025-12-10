@@ -240,19 +240,19 @@ class WipService
     $f1Total = (int) ($f1QueryResult->f1_total_quantity ?? 0);
     $f2Total = (int) ($f2QueryResult->f2_total_quantity ?? 0);
 
-    // $grandTotal = $f1Total + $f2Total + $f3TotalQty;
+    $grandTotal = $f1Total + $f2Total + $f3TotalQty;
 
     return response()->json([
       'f1_total_quantity' => $f1Total,
       'f2_total_quantity' => $f2Total,
       'f3_total_quantity' => $f3TotalQty,
-      // 'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_quantity,
-      // 'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_quantity,
-      // 'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_quantity,
-      // 'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_quantity,
-      // 'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_quantity,
-      // 'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_quantity,
-      // 'total_quantity' => $grandTotal,
+      'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_quantity,
+      'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_quantity,
+      'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_quantity,
+      'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_quantity,
+      'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_quantity,
+      'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_quantity,
+      'total_quantity' => $grandTotal,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);

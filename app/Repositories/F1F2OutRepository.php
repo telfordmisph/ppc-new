@@ -224,17 +224,39 @@ class F1F2OutRepository
     F1F2Out::create($data);
   }
 
+  // public function insertManyCustomers(array $data)
+  // {
+  //   $uniqueKeys = ['lot_id', 'date_loaded'];
+
+  //   $allColumns = array_keys($data[0]);
+  //   $updateColumns = array_diff($allColumns, $uniqueKeys);
+
+  //   F1F2Out::upsert(
+  //     $data,
+  //     $uniqueKeys,
+  //     $updateColumns
+  //   );
+  // }
+
   public function insertManyCustomers(array $data)
   {
-    $uniqueKeys = ['lot_id', 'date_loaded_no_time'];
+    $data = array_map(function ($row) {
+      if (isset($row['date_loaded'])) {
+        $row['date_loaded'] = \Carbon\Carbon::parse($row['date_loaded'])->format('Y-m-d H:i:s');
+      }
+      return $row;
+    }, $data);
 
-    $allColumns = array_keys($data[0]);
-    $updateColumns = array_diff($allColumns, $uniqueKeys);
+    foreach ($data as $row) {
+      $existing = F1F2Out::where('lot_id', $row['lot_id'])
+        ->where('date_loaded', $row['date_loaded'])
+        ->first();
 
-    F1F2Out::upsert(
-      $data,
-      $uniqueKeys,
-      $updateColumns
-    );
+      if ($existing) {
+        $existing->update($row);
+      } else {
+        F1F2Out::create($row);
+      }
+    }
   }
 }

@@ -116,18 +116,40 @@ class F1F2WipRepository
     F3Wip::create($data);
   }
 
+  // public function insertManyCustomers(array $data)
+  // {
+  //   $uniqueKeys = ['Lot_Id', 'Date_Loaded'];;
+
+  //   $allColumns = array_keys($data[0]);
+  //   $updateColumns = array_diff($allColumns, $uniqueKeys);
+
+  //   CustomerDataWip::upsert(
+  //     $data,
+  //     $uniqueKeys,
+  //     $updateColumns
+  //   );
+  // }
+
   public function insertManyCustomers(array $data)
   {
-    $uniqueKeys = ['Lot_Id', 'Date_Loaded_No_Time'];
+    $data = array_map(function ($row) {
+      if (isset($row['Date_Loaded'])) {
+        $row['Date_Loaded'] = \Carbon\Carbon::parse($row['Date_Loaded'])->format('Y-m-d H:i:s');
+      }
+      return $row;
+    }, $data);
 
-    $allColumns = array_keys($data[0]);
-    $updateColumns = array_diff($allColumns, $uniqueKeys);
+    foreach ($data as $row) {
+      $existing = CustomerDataWip::where('Lot_Id', $row['Lot_Id'])
+        ->where('Date_Loaded', $row['Date_Loaded'])
+        ->first();
 
-    CustomerDataWip::upsert(
-      $data,
-      $uniqueKeys,
-      $updateColumns
-    );
+      if ($existing) {
+        $existing->update($row);
+      } else {
+        CustomerDataWip::create($row);
+      }
+    }
   }
 
   public function applyStationFilter($query, array $includeStations = [], array $excludeStations = []): Builder

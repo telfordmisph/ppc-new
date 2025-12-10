@@ -80,7 +80,6 @@ class WipImportService
     callable $operation,
     int &$successCounter
   ): ?array {
-    return null;
     if (empty($chunk)) return null;
 
     try {
@@ -113,7 +112,6 @@ class WipImportService
     }
 
     try {
-      $existingRecords = $this->prepareExistingF1F2WipRecords();
       [$countCustomer, $countF3, $ignored] = [0, 0, 0];
       $customerChunk = [];
       $f3Chunk = [];
@@ -136,16 +134,6 @@ class WipImportService
 
         $row = $this->sanitizeRow($row, $importedBy);
         $focusGroup = $row['Focus_Group'];
-        $lotId = $row['Lot_Id'];
-        $dateLoaded = $row['Date_Loaded'];
-        $dateOnly = substr($dateLoaded, 0, 10);
-        $key = $focusGroup === 'F3'
-          ? "{$lotId}-{$dateOnly}-F3"
-          : "{$lotId}-{$dateLoaded}";
-
-        // if (isset($existingRecords[$key])) {
-        //   continue;
-        // }
 
         if ($focusGroup === 'F3') {
           $f3Chunk[] = $row;
@@ -154,8 +142,6 @@ class WipImportService
           $customerChunk[] = $row;
           $countCustomer++;
         }
-
-
 
         if (count($f3Chunk) >= self::CHUNK_SIZE) {
           $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
@@ -172,8 +158,6 @@ class WipImportService
 
           $customerChunk = [];
         }
-
-        $existingRecords[$key] = true;
       }
 
       foreach (['F3' => $f3Chunk, 'F1F2' => $customerChunk] as $type => $chunk) {
@@ -201,33 +185,6 @@ class WipImportService
     } finally {
       $lock->release();
     }
-  }
-
-  private function prepareExistingF1F2WipRecords(): array
-  {
-    $records = $this->f1f2WipRepository->getExistingRecords();
-    $map = [];
-
-    foreach ($records as $r) {
-      $map[$r->Focus_Group === 'F3'
-        ? "{$r->Lot_Id}-{$r->dateonly}-F3"
-        : "{$r->Lot_Id}-{$r->Date_Loaded}"] = true;
-    }
-
-
-    return $map;
-  }
-
-  private function prepareExistingF1F2OutRecords(): array
-  {
-    $records = $this->f1f2WipOutRepository->getExistingRecords();
-    $map = [];
-
-    foreach ($records as $r) {
-      $map["{$r->lot_id}-{$r->date_loaded}"] = true;
-    }
-
-    return $map;
   }
 
   private function prepareExistingF3WipRecords(): array
@@ -389,8 +346,6 @@ class WipImportService
     $headerRowIndex = $headersData['headerRowIndex'];
     $lock = Cache::lock(self::WIP_OUTS_LOCK_KEY, 600);
 
-    $existingRecords = $this->prepareExistingF1F2OutRecords();
-
     $successCount = 0;
     $preparedRows = [];
 
@@ -405,18 +360,6 @@ class WipImportService
         }
 
         $rowData[$canonicalKey] = $value;
-      }
-
-      $lotId = $rowData['lot_id'];
-      $formatted = $this->parseDate($rowData['date_loaded'], null);
-      // Log::info("Processing row {$rowIndex} ({$lotId}-{$formatted}): " . print_r($rowData, true));
-
-      $key = "{$lotId}-{$formatted}";
-
-      // Log::info("Processing row {$rowIndex} ({$key}): " . print_r($rowData, true));
-
-      if (isset($existingRecords[$key]) || !array_filter($rowData)) {
-        continue;
       }
 
       if (isset($rowData['package'])) {
@@ -446,8 +389,6 @@ class WipImportService
 
         $preparedRows = [];
       }
-
-      $existingRecords[$key] = true;
     }
 
     if (count($preparedRows) > 0) {
