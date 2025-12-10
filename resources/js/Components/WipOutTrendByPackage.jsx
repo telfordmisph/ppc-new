@@ -45,22 +45,28 @@ const WipOutTrendByPackage = ({
         setSelectedFactory: setSavedSelectedFactory,
     } = useSelectedFilteredStore();
 
-    const [selectedPackageNames, setSelectedPackageNames] = useState(
-        savedSelectedPackageNames || []
-    );
-    const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(
-        savedWorkWeeks || []
-    );
-    const [selectedLookBack, setSelectedLookBack] = useState(
-        savedLookBack || 20
-    );
-    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(
-        savedOffset || 0
-    );
-    const [selectPeriod, setSelectedPeriod] = useState(savedPeriod || "weekly");
-    const [selectedFactory, setSelectedFactory] = useState(
-        savedFactory || "Overall"
-    );
+    const [selectedPackageNames, setSelectedPackageNames] = useState([]);
+    const [selectedWorkWeeks, setSelectedWorkWeeks] = useState([]);
+    const [selectedLookBack, setSelectedLookBack] = useState(20);
+    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(0);
+    const [selectPeriod, setSelectedPeriod] = useState("weekly");
+    const [selectedFactory, setSelectedFactory] = useState(savedFactory);
+
+    useEffect(() => {
+        if (savedSelectedPackageNames?.length) setSelectedPackageNames(savedSelectedPackageNames);
+        if (savedWorkWeeks?.length) setSelectedWorkWeeks(savedWorkWeeks);
+        if (savedLookBack) setSelectedLookBack(savedLookBack);
+        if (savedOffset) setSelectedOffsetPeriod(savedOffset);
+        if (savedPeriod) setSelectedPeriod(savedPeriod);
+        if (savedFactory) setSelectedFactory(savedFactory);
+    }, [
+        savedSelectedPackageNames,
+        savedWorkWeeks,
+        savedLookBack,
+        savedOffset,
+        savedPeriod,
+        savedFactory,
+    ]);
 
     const params = {
         packageName: selectedPackageNames.join(","),

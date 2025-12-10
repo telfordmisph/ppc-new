@@ -17,12 +17,7 @@ class ApiAuthMiddleware
    */
   public function handle(Request $request, Closure $next, $permission = null): Response
   {
-    // return $next($request);
-
-
-    Log::info('session from api auth middleware', $request->session()->all());
-    $empData = $request->session()->get('emp_data');
-
+    $empData = session('emp_data');
     if (!$empData || !isset($empData['token'])) {
       return response()->json(['error' => 'Unauthenticated', 'message' => 'You are not logged in'], 401);
     }
