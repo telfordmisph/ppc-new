@@ -29,8 +29,9 @@ class AutoImportController extends Controller
 
     public function autoImportWIP(Request $request)
     {
-        $userId = $request->user()->id ?? null;
-        $result = $this->wipImportService->autoImportF1F2WIP($userId);
+        $empId = $request->get('emp_id');
+
+        $result = $this->wipImportService->autoImportF1F2WIP($empId);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -41,9 +42,10 @@ class AutoImportController extends Controller
 
     public function autoImportWIPOUTS(Request $request)
     {
-        $userId = $request->user()->id ?? null;
+        $empId = $request->get('emp_id');
 
-        $result = $this->wipImportService->autoImportF1F2Outs($userId);
+
+        $result = $this->wipImportService->autoImportF1F2Outs($empId);
 
         Log::info("ttest", $result);
 
@@ -56,7 +58,8 @@ class AutoImportController extends Controller
 
     public function importCapacity(Request $request)
     {
-        $userId = $request->user()->id ?? null;
+        $empId = $request->get('emp_id');
+
 
 
         $request->validate([
@@ -65,7 +68,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importCapacity($userId, $file);
+        $result = $this->wipImportService->importCapacity($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -80,7 +83,8 @@ class AutoImportController extends Controller
     public function importF3WIP(Request $request)
     {
         $user = $request->user();
-        $userId = $user->id ?? null;
+        $empId = $request->get('emp_id');
+
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx|max:10240',
@@ -88,7 +92,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF3WIP($userId, $file);
+        $result = $this->wipImportService->importF3WIP($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -100,7 +104,8 @@ class AutoImportController extends Controller
     public function importF3OUTS(Request $request)
     {
         $user = $request->user();
-        $userId = $user->id ?? null;
+        $empId = $request->get('emp_id');
+
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx|max:10240',
@@ -108,7 +113,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF3OUT($userId, $file);
+        $result = $this->wipImportService->importF3OUT($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

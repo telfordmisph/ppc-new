@@ -23,6 +23,7 @@ export function useMutation() {
 
     try {
       const { method = "POST", body, isFormData = false, isContentTypeInclude = true } = options;
+      const token = localStorage.getItem("authify-token");
 
       const response = await fetch(url, {
         method,
@@ -30,6 +31,7 @@ export function useMutation() {
           ...(isContentTypeInclude && { "Content-Type": "application/json" }),
           "Accept": "application/json",
           "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: body ? isFormData ? body : JSON.stringify(body) : undefined,
         signal: controller.signal,

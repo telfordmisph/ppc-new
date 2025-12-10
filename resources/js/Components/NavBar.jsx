@@ -1,13 +1,14 @@
-import { Link, usePage, router } from "@inertiajs/react";
-import { useState } from "react";
+import useUserStore from "@/Store/useUserStore";
+import { router } from "@inertiajs/react";
 
 export default function NavBar() {
-    const { emp_data } = usePage().props;
+    const empData = useUserStore((state) => state.empData);
 
     const logout = () => {
         const token = localStorage.getItem("authify-token");
         localStorage.removeItem("authify-token");
         router.get(route("logout"));
+        useUserStore.getState().clearUserData();
         window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
             token
         )}&redirect=${encodeURIComponent(route("dashboard"))}`;
@@ -37,7 +38,7 @@ export default function NavBar() {
                                     />
                                 </svg>
                                 <span className="mt-[3px]">
-                                    Hello, {emp_data?.emp_firstname}
+                                    Hello, {empData?.emp_firstname}
                                 </span>
                             </div>
 

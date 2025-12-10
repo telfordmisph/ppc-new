@@ -21,8 +21,9 @@ const ImportLabel = ({ data, loading }) => {
             <span>with </span>
             <span>{formatAbbreviateNumber(data.entries)} entries</span>
             {data.imported_by && (
-                <span>
-                    by <span className="text-primary">{data.imported_by}</span>
+                <span className="px-1">
+                    by employee{" "}
+                    <span className="text-primary">{data.imported_by}</span>
                 </span>
             )}
         </div>

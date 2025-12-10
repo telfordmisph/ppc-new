@@ -30,10 +30,12 @@ export function useFetch(url, options = {}) {
     
     try {
       const fetchUrl = buildUrlWithParams(url, currentParams);
+      const token = localStorage.getItem("authify-token");
       const response = await fetch(fetchUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         signal: controller.signal,
       });

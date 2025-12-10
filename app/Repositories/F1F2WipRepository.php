@@ -118,7 +118,16 @@ class F1F2WipRepository
 
   public function insertManyCustomers(array $data)
   {
-    CustomerDataWip::insert($data);
+    $uniqueKeys = ['Lot_Id', 'Date_Loaded_No_Time'];
+
+    $allColumns = array_keys($data[0]);
+    $updateColumns = array_diff($allColumns, $uniqueKeys);
+
+    CustomerDataWip::upsert(
+      $data,
+      $uniqueKeys,
+      $updateColumns
+    );
   }
 
   public function applyStationFilter($query, array $includeStations = [], array $excludeStations = []): Builder

@@ -3,8 +3,10 @@ import { useState } from "react";
 import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
 import TextInput from "@/Components/TextInput";
+import useUserStore from "@/Store/useUserStore";
 
 export default function Profile({ profile, errors }) {
+    console.log("🚀 ~ Profile ~ profile:", profile);
     const { props } = usePage();
     const successMessage = props.flash?.success;
 
@@ -26,6 +28,7 @@ export default function Profile({ profile, errors }) {
                     const token = localStorage.getItem("authify-token");
                     localStorage.removeItem("authify-token");
                     router.get(route("logout"));
+                    useUserStore.getState().clearUserData();
                     window.location.href = `http://192.168.2.221/authify/public/logout?key=${encodeURIComponent(
                         token
                     )}&redirect=${encodeURIComponent(route("dashboard"))}`;
@@ -45,27 +48,28 @@ export default function Profile({ profile, errors }) {
 
                 {profile && (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <ProfileField label="Name" value={profile.EMPNAME} />
+                        <ProfileField label="Name" value={profile.emp_name} />
                         <ProfileField
                             label="Position"
-                            value={profile.JOB_TITLE}
+                            value={profile.emp_jobtittle}
                         />
                         <ProfileField
                             label="Department"
-                            value={profile.DEPARTMENT}
+                            value={profile.emp_dept}
                         />
                         <ProfileField
                             label="Production Line"
-                            value={profile.PRODLINE}
+                            value={profile.emp_prodline}
                         />
-                        <ProfileField label="Station" value={profile.STATION} />
+                        <ProfileField
+                            label="Station"
+                            value={profile.emp_station}
+                        />
                         <ProfileField label="Email" value={profile.EMAIL} />
                         <div className="flex items-end gap-2">
                             <ProfileField
                                 label="Password"
-                                value={[...Array(profile.PASSWRD?.length || 8)]
-                                    .map(() => "•")
-                                    .join("")}
+                                value={[...Array(16)].map(() => "•").join("")}
                             />
                             <button
                                 className="border-blue-500 btn btn-sm border-[1px]"

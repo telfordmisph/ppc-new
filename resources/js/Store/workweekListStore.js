@@ -24,11 +24,13 @@ export const useWorkweekStore = create((set, get) => {
 
       try {
         const url = buildUrlWithParams(route("api.analog.calendar.workweek"), params);
+        const token = localStorage.getItem("authify-token");
 
         const response = await fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           signal: abortController.signal,
         });

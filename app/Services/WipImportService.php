@@ -80,6 +80,7 @@ class WipImportService
     callable $operation,
     int &$successCounter
   ): ?array {
+    return null;
     if (empty($chunk)) return null;
 
     try {
@@ -142,9 +143,9 @@ class WipImportService
           ? "{$lotId}-{$dateOnly}-F3"
           : "{$lotId}-{$dateLoaded}";
 
-        if (isset($existingRecords[$key])) {
-          continue;
-        }
+        // if (isset($existingRecords[$key])) {
+        //   continue;
+        // }
 
         if ($focusGroup === 'F3') {
           $f3Chunk[] = $row;
@@ -153,6 +154,8 @@ class WipImportService
           $customerChunk[] = $row;
           $countCustomer++;
         }
+
+
 
         if (count($f3Chunk) >= self::CHUNK_SIZE) {
           $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
@@ -163,7 +166,7 @@ class WipImportService
         }
 
         if (count($customerChunk) >= self::CHUNK_SIZE) {
-          $result = $this->insertChunk($customerChunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successCustomer);
+          $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
 
           if ($result) return $result;
 
@@ -182,7 +185,7 @@ class WipImportService
 
       fclose($handle);
 
-      $this->importTraceRepository->upsertImport('f1f2_wip', null, $successCustomer + $successF3);
+      $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer + $successF3);
 
       return [
         'status' => 'success',
@@ -357,7 +360,7 @@ class WipImportService
     // ));
 
     $return = $this->packageCapacityService->upsertMultiple($data);
-    $this->importTraceRepository->upsertImport('capacity', null, $total);
+    $this->importTraceRepository->upsertImport('capacity', $importedBy, $total);
 
     return [
       'status' => 'success',
@@ -453,7 +456,7 @@ class WipImportService
       if ($result) return $result;
     }
 
-    $this->importTraceRepository->upsertImport('f1f2_out', null, $successCount);
+    $this->importTraceRepository->upsertImport('f1f2_out', $importedBy, $successCount);
 
     $lock->release();
 
@@ -557,7 +560,7 @@ class WipImportService
     // Log::info($this->F3_WIP_PATH);
     // Log::info('F3 Headers: ' . print_r($headers, true));
 
-    $this->importTraceRepository->upsertImport('f3_wip', null, $successCount);
+    $this->importTraceRepository->upsertImport('f3_wip', $importedBy, $successCount);
 
     return [
       'status' => 'success',
@@ -641,7 +644,7 @@ class WipImportService
     // Log::info($this->F3_WIP_PATH);
     // Log::info('F3 Headers: ' . print_r($headers, true));
 
-    $this->importTraceRepository->upsertImport('f3_out', null, $successCount);
+    $this->importTraceRepository->upsertImport('f3_out', $importedBy, $successCount);
 
     return [
       'status' => 'success',

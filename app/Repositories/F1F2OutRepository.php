@@ -226,6 +226,15 @@ class F1F2OutRepository
 
   public function insertManyCustomers(array $data)
   {
-    F1F2Out::insert($data);
+    $uniqueKeys = ['lot_id', 'date_loaded_no_time'];
+
+    $allColumns = array_keys($data[0]);
+    $updateColumns = array_diff($allColumns, $uniqueKeys);
+
+    F1F2Out::upsert(
+      $data,
+      $uniqueKeys,
+      $updateColumns
+    );
   }
 }

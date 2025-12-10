@@ -156,6 +156,21 @@ class WipService
 
   public function getOverallWip($startDate, $endDate, $useWorkweek, $workweek)
   {
+    // return response()->json([
+    //   'f1_total_quantity' => 0,
+    //   'f2_total_quantity' => 0,
+    //   'f3_total_quantity' => 0,
+    //   'total_f1_pl1' => 0,
+    //   'total_f1_pl6' => 0,
+    //   'total_f2_pl1' => 0,
+    //   'total_f2_pl6' => 0,
+    //   'total_f3_pl1' => 0,
+    //   'total_f3_pl6' => 0,
+    //   'total_quantity' => 0,
+    //   'status' => 'success',
+    //   'message' => 'Data retrieved successfully'
+    // ]);
+
     $f1Query = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw('SUM(wip.Qty) AS f1_total_quantity');
     $f1Query = $this->f1f2WipRepo->f1Filters($f1Query, ['GTREEL'], WipConstants::REEL_EXCLUDED_STATIONS_F1_OVERALL, 'wip');
@@ -176,6 +191,9 @@ class WipService
     $f1pl6Query = $this->f1f2WipRepo->joinPL($f1pl6Query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
 
     $f1pl6Query = $this->applyDateOrWorkweekFilter($f1pl6Query, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
+
+    // Log::info("f1pl6Query: ");
+    // Log::info(SqlDebugHelper::prettify($f1pl6Query->toSql(), $f1pl6Query->getBindings()));
     $f1pl6QueryResult = $f1pl6Query->first();
 
     $f1pl1Query = DB::table(self::F1F2_TABLE . ' as wip')
@@ -222,19 +240,19 @@ class WipService
     $f1Total = (int) ($f1QueryResult->f1_total_quantity ?? 0);
     $f2Total = (int) ($f2QueryResult->f2_total_quantity ?? 0);
 
-    $grandTotal = $f1Total + $f2Total + $f3TotalQty;
+    // $grandTotal = $f1Total + $f2Total + $f3TotalQty;
 
     return response()->json([
       'f1_total_quantity' => $f1Total,
       'f2_total_quantity' => $f2Total,
       'f3_total_quantity' => $f3TotalQty,
-      'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_quantity,
-      'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_quantity,
-      'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_quantity,
-      'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_quantity,
-      'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_quantity,
-      'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_quantity,
-      'total_quantity' => $grandTotal,
+      // 'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_quantity,
+      // 'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_quantity,
+      // 'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_quantity,
+      // 'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_quantity,
+      // 'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_quantity,
+      // 'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_quantity,
+      // 'total_quantity' => $grandTotal,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);

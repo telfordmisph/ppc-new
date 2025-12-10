@@ -11,18 +11,26 @@ class ProfileController extends Controller
 {
     public function index()
     {
-        $profile = !empty(session('emp_data'))
-            ? DB::connection('masterlist')
-            ->table('employee_masterlist')
-            ->select('EMPLOYID', 'EMPNAME', 'JOB_TITLE', 'DEPARTMENT', 'PRODLINE', 'STATION', 'DATEHIRED', 'EMAIL', 'PASSWRD')
-            ->where('EMPLOYID', session('emp_data')['emp_id'])
-            ->first()
-            : null;
+        $profile = session('emp_data') ?? null;
+
+        if ($profile) {
+            $otherDetails = DB::connection('masterlist')
+                ->table('employee_masterlist')
+                ->select('DATEHIRED', 'EMAIL')
+                ->where('EMPLOYID', $profile['emp_id'])
+                ->first();
+
+            if ($otherDetails) {
+                $otherDetailsArray = (array) $otherDetails;
+                $profile = array_merge($profile, $otherDetailsArray);
+            }
+        }
 
         return Inertia::render('Profile', [
             'profile' => $profile,
         ]);
     }
+
 
     public function changePassword(Request $request)
     {

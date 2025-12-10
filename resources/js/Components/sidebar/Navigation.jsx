@@ -20,9 +20,15 @@ import {
 } from "react-icons/fa6";
 import { FaBatteryHalf } from "react-icons/fa";
 import { TbSettings } from "react-icons/tb";
+import useUserStore from "@/Store/useUserStore";
 
 export default function NavLinks() {
     const { emp_data } = usePage().props;
+    const empData = useUserStore((state) => state.empData);
+
+    const role = empData?.emp_jobtitle || "";
+
+    console.log("🚀 ~ NavLinks ~ role:", role);
 
     return (
         <nav
@@ -108,13 +114,16 @@ export default function NavLinks() {
                 notifications={false}
             />
 
-            {["superadmin", "admin"].includes(emp_data?.emp_system_role) && (
+            {/* 
+            {["superadmin", "admin", "programmer 1"].includes(
+                role?.toLowerCase()
+            ) && (
                 <SidebarLink
                     href={route("admin")}
                     label="Administrators"
                     icon={<FaUsers className="w-4 h-4" />}
                 />
-            )}
+            )} */}
         </nav>
     );
 }

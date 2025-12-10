@@ -98,6 +98,7 @@ import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useWipStore } from "@/Store/overallDailyWipTrendStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import { useImportTraceStore } from "@/Store/importTraceStore";
+import useUserStore from "@/Store/useUserStore";
 
 export default function AuthenticatedLayout({ header, children }) {
     const { url } = usePage();
@@ -135,14 +136,45 @@ export default function AuthenticatedLayout({ header, children }) {
         const queryToken = queryParams.get("key");
 
         if (queryToken) {
+            try {
+                console.log(
+                    "🚀 ~ AuthenticatedLayout ~ queryToken:",
+                    queryToken
+                );
+
+                const response = await fetch(route("setSession"), {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]'
+                        ).content,
+                    },
+                    body: JSON.stringify({ queryToken }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const user = data.emp_data;
+
+                console.log("🚀 ~ authCheck ~ user:", user);
+
+                useUserStore.getState().setUser(user);
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setIsLoading(false);
+            }
+
             localStorage.setItem("authify-token", queryToken);
 
             // Remove query params from the URL without reloading the page
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
-            router.post(route("setSession"), { queryToken });
-
-            setIsLoading(false);
         }
         // Check if the URL contains a query parameter "key" (token value): END
 
@@ -155,9 +187,7 @@ export default function AuthenticatedLayout({ header, children }) {
             )}`;
             return;
         }
-        // Check if there is a token stored in localStorage, redirect to login if not: END
 
-        // Check if the token is valid, redirect to login if not: START
         try {
             const isTokenValid = await axios.get(
                 `http://192.168.2.221/authify/public/api/validate?token=${encodeURIComponent(
@@ -176,7 +206,6 @@ export default function AuthenticatedLayout({ header, children }) {
         } catch (error) {
             console.log("with error", error);
         }
-        // Check if the token is valid, redirect to login if not: END
 
         setIsLoading(false);
     };

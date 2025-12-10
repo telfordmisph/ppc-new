@@ -54,7 +54,7 @@ const TableChart = ({ data = [], exclude = [] }) => {
         if (typeof val === "string" && !isNaN(val) && val.trim() !== "") {
             return Number(val).toLocaleString();
         }
-        return val ?? "";
+        return val ?? "-";
     };
 
     return (
