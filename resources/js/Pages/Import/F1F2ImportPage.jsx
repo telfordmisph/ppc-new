@@ -6,6 +6,7 @@ import ImportPageLayout from "../../Layouts/ImportPageLayout";
 import { TbAlertCircle } from "react-icons/tb";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import ImportLabel from "../../Components/lastImportLabel";
+import { FaExclamationTriangle } from "react-icons/fa";
 
 const F1F2ImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
@@ -88,6 +89,10 @@ const F1F2ImportPage = () => {
                             Get the latest data for F1/F2 from the daily WIP
                             import. This must be done atleast once a day.
                         </p>
+                        <p>
+                            To ensure data consistency, all rows should have
+                            same Date_Loaded value.
+                        </p>
                         <ImportLabel
                             data={importTraceData?.f1f2_wip}
                             loading={isImportTraceLoading}
@@ -114,6 +119,12 @@ const F1F2ImportPage = () => {
                                     Are you sure? This will start the WIP
                                     import. Current import progress (if any)
                                     will block this action.
+                                </p>
+
+                                <p className="text-warning-content border-warning border rounded-lg bg-warning px-2 py-1 flex items-center gap-2 mb-2">
+                                    <FaExclamationTriangle /> Importing now will
+                                    overwrite all existing entries for this
+                                    date.
                                 </p>
 
                                 <div className="flex justify-end gap-2">
@@ -171,6 +182,10 @@ const F1F2ImportPage = () => {
                             Get the latest data for F1/F2 from the daily OUTS.
                             This must be done atleast once a day.
                         </p>
+                        <p>
+                            To ensure data consistency, all rows should have
+                            same Date_Loaded value.
+                        </p>
                         <ImportLabel
                             data={importTraceData?.f1f2_out}
                             loading={isImportTraceLoading}
@@ -197,6 +212,12 @@ const F1F2ImportPage = () => {
                                     Are you sure? This will start the OUTS
                                     import. Current import progress (if any)
                                     will block this action.
+                                </p>
+
+                                <p className="text-warning-content border-warning border rounded-lg bg-warning px-2 py-1 flex items-center gap-2 mb-2">
+                                    <FaExclamationTriangle /> Importing now will
+                                    overwrite all existing entries for this
+                                    date.
                                 </p>
 
                                 <div className="flex justify-end gap-2">
