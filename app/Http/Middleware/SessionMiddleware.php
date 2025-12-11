@@ -11,6 +11,14 @@ class SessionMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+        Log::info('SessionMiddleware triggered', [
+            'path'   => $request->path(),
+            'url'   => $request->url(),
+            'method' => $request->method(),
+            'route'  => optional($request->route())->getActionName(),
+        ]);
+
+
         $tokenFromQuery   = $request->query('key');
         $tokenFromSession = session('emp_data.token');
         $tokenFromCookie  = $request->cookie('sso_token');
@@ -54,7 +62,10 @@ class SessionMiddleware
             'generated_at'  => $currentUser->generated_at,
         ]]);
 
-        if ($tokenFromQuery) {
+        // if ($tokenFromQuery) {
+        //     return redirect($request->url());
+        // }
+        if ($tokenFromQuery && (!$existing || $existing['token'] !== $token)) {
             return redirect($request->url());
         }
 

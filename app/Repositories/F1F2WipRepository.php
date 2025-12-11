@@ -139,18 +139,9 @@ class F1F2WipRepository
       return $row;
     }, $data);
 
-    foreach ($data as $row) {
-      $existing = CustomerDataWip::where('Lot_Id', $row['Lot_Id'])
-        ->where('Date_Loaded', $row['Date_Loaded'])
-        ->first();
-
-      if ($existing) {
-        $existing->update($row);
-      } else {
-        CustomerDataWip::create($row);
-      }
-    }
+    CustomerDataWip::insert($data);
   }
+
 
   public function applyStationFilter($query, array $includeStations = [], array $excludeStations = []): Builder
   {

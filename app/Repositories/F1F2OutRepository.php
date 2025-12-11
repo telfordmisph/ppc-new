@@ -247,16 +247,6 @@ class F1F2OutRepository
       return $row;
     }, $data);
 
-    foreach ($data as $row) {
-      $existing = F1F2Out::where('lot_id', $row['lot_id'])
-        ->where('date_loaded', $row['date_loaded'])
-        ->first();
-
-      if ($existing) {
-        $existing->update($row);
-      } else {
-        F1F2Out::create($row);
-      }
-    }
+    F1F2Out::insert($data);
   }
 }
