@@ -637,8 +637,7 @@ class WipImportService
     $sheet = $spreadsheet->getActiveSheet();
     $sheetData = $sheet->toArray(null, true, false, false);
 
-    $expectedHeaders = WipConstants::IMPORT_F3_OUT_EXPECTED_HEADERS;
-
+    $expectedHeaders = WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS;
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, $expectedHeaders);
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -649,15 +648,10 @@ class WipImportService
     $map_headers = $headersData['map_headers'];
 
     $chunksWip = [];
-    $chunksOut = [];
     $ignoredRows = [];
     $successCount = 0;
 
     $existingWipRecords = $this->prepareExistingF3WipRecords();
-    $existingOutRecords = $this->prepareExistingF3OutRecords();
-
-    $f3wipStatuses = WipConstants::F3_WIP_STATUSES;
-    $f3outStatuses = WipConstants::F3_OUT_STATUSES;
 
     foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
       if ($this->isEmptyRow($row)) {
@@ -665,22 +659,16 @@ class WipImportService
       }
 
       $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-      $status = $rowData['status'] ?? null;
-
-      if (!$status) {
-        $ignoredRows[] = $rowData;
-        continue;
-      }
 
       $rowData['imported_by'] = $importedBy;
-      $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
-      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
-      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
-      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
+      $rowData['date_received'] = $this->parseDate($rowData['date_received'] ?? null);
+      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'] ?? null);
+      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
+      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
 
-      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
+      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
       if (!$packageID) {
-        Log::info("Package not found: " . $rowData['package']);
+        Log::info("Package not found: " . ($rowData['package'] ?? 'NULL'));
         $ignoredRows[] = $rowData;
         continue;
       }
@@ -688,36 +676,22 @@ class WipImportService
 
       $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
 
-      if (in_array(strtolower($status), array_map('strtolower', $f3wipStatuses))) {
-        if (isset($existingWipRecords[$key])) continue;
-        $chunksWip[] = $rowData;
+      if (isset($existingWipRecords[$key])) {
+        continue; // skip duplicates
+      }
 
-        if (count($chunksWip) >= self::CHUNK_SIZE) {
-          $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-          if ($resultError) return $resultError;
-          $chunksWip = [];
-        }
-      } elseif (in_array(strtolower($status), array_map('strtolower', $f3outStatuses))) {
-        if (isset($existingOutRecords[$key])) continue;
-        $chunksOut[] = $rowData;
+      $chunksWip[] = $rowData;
 
-        if (count($chunksOut) >= self::CHUNK_SIZE) {
-          $resultError = $this->insertChunk($chunksOut, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
-          if ($resultError) return $resultError;
-          $chunksOut = [];
-        }
-      } else {
-        $ignoredRows[] = $rowData;
+      if (count($chunksWip) >= self::CHUNK_SIZE) {
+        $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
+        if ($resultError) return $resultError;
+        $chunksWip = [];
       }
     }
 
-    // Insert remaining chunks
+    // Insert remaining rows
     if (!empty($chunksWip)) {
       $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-      if ($resultError) return $resultError;
-    }
-    if (!empty($chunksOut)) {
-      $resultError = $this->insertChunk($chunksOut, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
       if ($resultError) return $resultError;
     }
 

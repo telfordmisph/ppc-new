@@ -221,18 +221,18 @@ class WipService
     $f2pl1QueryResult = $f2pl1Query->first();
 
     $f3Total = $this->f3WipRepo->baseF3Query()
-      ->selectRaw("SUM(f3_wip.Qty) AS f3_total_quantity");
+      ->selectRaw("SUM(f3.Qty) AS f3_total_quantity");
 
-    $f3Total = $this->applyDateOrWorkweekFilter($f3Total, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
+    $f3Total = $this->applyDateOrWorkweekFilter($f3Total, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
     $f3PlTotals = $this->f3WipRepo->baseF3Query(true)
       ->selectRaw("
-          SUM(CASE WHEN plref.production_line = 'PL1' THEN f3_wip.Qty ELSE 0 END) AS f3pl1_total_quantity,
-          SUM(CASE WHEN plref.production_line = 'PL6' THEN f3_wip.Qty ELSE 0 END) AS f3pl6_total_quantity
+          SUM(CASE WHEN plref.production_line = 'PL1' THEN f3.Qty ELSE 0 END) AS f3pl1_total_quantity,
+          SUM(CASE WHEN plref.production_line = 'PL6' THEN f3.Qty ELSE 0 END) AS f3pl6_total_quantity
       ");
 
-    $f3PlTotals = $this->applyDateOrWorkweekFilter($f3PlTotals, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
+    $f3PlTotals = $this->applyDateOrWorkweekFilter($f3PlTotals, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
     $f3TotalQty = (int) $f3Total->f3_total_quantity;
@@ -514,11 +514,11 @@ class WipService
     //  F3 QUERIES
     // -----------------------------
     $f3Query = $this->f3WipRepo->baseF3Query($includePL);
-    $f3Query = $this->applyDateOrWorkweekFilter($f3Query, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
+    $f3Query = $this->applyDateOrWorkweekFilter($f3Query, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3Query = $f3Query->selectRaw(
       $includePL
-        ? 'f3_pkg.package_name as Package_Name, plref.production_line as PL, SUM(f3_wip.qty) AS total_quantity, COUNT(DISTINCT f3_wip.lot_number) AS total_lots'
-        : 'f3_pkg.package_name as Package_Name, SUM(f3_wip.qty) AS total_quantity, COUNT(DISTINCT f3_wip.lot_number) AS total_lots'
+        ? 'f3_pkg.package_name as Package_Name, plref.production_line as PL, SUM(f3.qty) AS total_quantity, COUNT(DISTINCT f3.lot_number) AS total_lots'
+        : 'f3_pkg.package_name as Package_Name, SUM(f3.qty) AS total_quantity, COUNT(DISTINCT f3.lot_number) AS total_lots'
     );
     if ($includePL) {
       $f3Query->groupBy('f3_pkg.package_name', 'plref.production_line');

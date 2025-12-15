@@ -37,15 +37,15 @@ class F3OutRepository
 
   public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks)
   {
-    $query = $this->baseF3Query();
+    $query = $this->baseF3Query(type: 'out');
 
     $query = $this->applyTrendAggregation(
       $query,
       $period,
       $startDate,
       $endDate,
-      'f3_out.date_loaded',
-      ['SUM(f3_out.qty)' => 'total_outs'],
+      'f3.date_loaded',
+      ['SUM(f3.qty)' => 'total_outs'],
       workweeks: $workweeks
     );
     $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Constants\WipConstants;
 use App\Traits\NormalizeStringTrait;
 use Illuminate\Support\Facades\Log;
+use App\Models\F3;
 use App\Helpers\SqlDebugHelper;
 
 trait F3Trait
@@ -49,16 +50,25 @@ trait F3Trait
     return $query;
   }
 
-  public function baseF3Query($joinPpc = false)
+  public function baseF3Query($joinPpc = false, $type = 'wip')
   {
     $query = DB::table($this->table . ' as ' . $this->tableAlias);
     $query->leftJoin(self::RAW_PACKAGES . ' as raw', $this->tableAlias . '.package', '=', 'raw.id');
     $query->leftJoin(self::PACKAGES_TABLE . ' as f3_pkg', 'raw.package_id', '=', 'f3_pkg.id');
+
+    if ($type == 'out') {
+      $query->where($this->tableAlias . '.status', 'shipped');
+    }
 
     if ($joinPpc) {
       $query->join(self::PPC_TABLE . ' as plref', 'f3_pkg.package_name', '=', 'plref.Package');
     }
 
     return $query;
+  }
+
+  public function insertManyF3(array $data)
+  {
+    F3::insert($data);
   }
 }

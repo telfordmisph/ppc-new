@@ -263,20 +263,20 @@ class WipConstants
     ],
     'F3' => [
       'wip' => [
-        'quantity' => ['SUM(f3_wip.qty)' => 'total_quantity'],
+        'quantity' => ['SUM(f3.qty)' => 'total_quantity'],
         'quantity-lot' => [
-          'SUM(f3_wip.qty)' => 'total_quantity',
-          'COUNT(f3_wip.lot_number)' => 'total_lots'
+          'SUM(f3.qty)' => 'total_quantity',
+          'COUNT(f3.lot_number)' => 'total_lots'
         ],
-        'dateColumn' => 'f3_wip.date_loaded',
+        'dateColumn' => 'f3.date_loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(f3_out.qty)' => 'total_quantity'],
+        'quantity' => ['SUM(f3.qty)' => 'total_quantity'],
         'quantity-lot' => [
-          'SUM(f3_out.qty)' => 'total_quantity',
-          'COUNT(f3_out.lot_number)' => 'total_lots'
+          'SUM(f3.qty)' => 'total_quantity',
+          'COUNT(f3.lot_number)' => 'total_lots'
         ],
-        'dateColumn' => 'f3_out.date_loaded',
+        'dateColumn' => 'f3.date_loaded',
       ],
     ],
     'All' => [

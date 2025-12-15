@@ -45,8 +45,8 @@ class F3WipRepository
       $period,
       $startDate,
       $endDate,
-      'f3_wip.date_loaded',
-      ['SUM(f3_wip.qty)' => 'total_quantity'],
+      'f3.date_loaded',
+      ['SUM(f3.qty)' => 'total_quantity'],
       workweeks: $workweeks
     );
 
@@ -62,10 +62,5 @@ class F3WipRepository
   public function insertCustomer(array $data)
   {
     F1F2Out::create($data);
-  }
-
-  public function insertManyF3(array $data)
-  {
-    F3Wip::insert($data);
   }
 }
