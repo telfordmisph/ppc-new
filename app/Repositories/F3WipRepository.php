@@ -20,8 +20,8 @@ class F3WipRepository
   use TrendAggregationTrait;
   use PackageAliasTrait;
   use F3Trait;
-  protected $table = "f3_wip";
-  protected $tableAlias = "f3_wip";
+  protected $table = "f3";
+  protected $tableAlias = "f3";
   protected $packageGroupRepo;
   protected $analogCalendarRepo;
   protected $packageFilterService;
@@ -45,7 +45,7 @@ class F3WipRepository
       $period,
       $startDate,
       $endDate,
-      'f3_wip.date_received',
+      'f3_wip.date_loaded',
       ['SUM(f3_wip.qty)' => 'total_quantity'],
       workweeks: $workweeks
     );
@@ -69,29 +69,3 @@ class F3WipRepository
     F3Wip::insert($data);
   }
 }
-
-
-
-  //   -- using aliases
-  // SELECT o.*
-  // FROM customer_data_wip_out o
-  // JOIN packages p ON o.package = p.package_name
-  // JOIN package_group_members pgm ON p.id = pgm.package_id
-  // JOIN package_group_members pgm_input ON pgm.group_id = pgm_input.group_id
-  // JOIN packages p_input ON pgm_input.package_id = p_input.id
-  // WHERE p_input.package_name = 'LFCSP';
-
-
-  // WITH wip_packages AS (
-  //     SELECT o.*, p.id AS package_id, p.package_name
-  //     FROM f3_wip o
-  //     JOIN f3_raw_packages f3r ON f3r.id = o.package
-  //     JOIN f3_package_names f3p ON f3p.id = f3r.package_id
-  //     JOIN packages p ON p.package_name = f3p.package_name
-  // )
-  // SELECT w.*
-  // FROM wip_packages w
-  // JOIN package_group_members pgm ON w.package_id = pgm.package_id
-  // JOIN package_group_members pgm_input ON pgm.group_id = pgm_input.group_id
-  // JOIN packages p_input ON pgm_input.package_id = p_input.id
-  // WHERE p_input.package_name = 'QSOP';

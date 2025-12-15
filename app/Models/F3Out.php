@@ -10,6 +10,7 @@ class F3Out extends Model
   public $timestamps = false;
 
   protected $fillable = [
+    'date_loaded',
     'date_received',
     'packing_list_srf',
     'po_number',

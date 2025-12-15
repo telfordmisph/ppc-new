@@ -62,6 +62,18 @@ class WipConstants
   // GT general trias
   // _T telford
   // _B3 special unknown location
+  public const F3_WIP_STATUSES = ["shipped"];
+  public const F3_OUT_STATUSES = [
+    "IQA",
+    "For Process",
+    "In-process",
+    "Hold",
+    "FVI",
+    "OQA",
+    "Boxing",
+    "OQA",
+    "QA Buy-off",
+  ];
   public const TSSOP_240_MILS = "TSSOP (240 MILS)";
   public const SPECIAL_FILTER_VALUE = [self::TSSOP_240_MILS];
   public const F1F2_OUT_PACKAGE_VALUES = ["SOIC_N", "SOIC_N_EP", "QSOP", "150mils", "RN", "150 mils"];
@@ -256,7 +268,7 @@ class WipConstants
           'SUM(f3_wip.qty)' => 'total_quantity',
           'COUNT(f3_wip.lot_number)' => 'total_lots'
         ],
-        'dateColumn' => 'f3_wip.date_received',
+        'dateColumn' => 'f3_wip.date_loaded',
       ],
       'out' => [
         'quantity' => ['SUM(f3_out.qty)' => 'total_quantity'],
@@ -264,7 +276,7 @@ class WipConstants
           'SUM(f3_out.qty)' => 'total_quantity',
           'COUNT(f3_out.lot_number)' => 'total_lots'
         ],
-        'dateColumn' => 'f3_out.date_received',
+        'dateColumn' => 'f3_out.date_loaded',
       ],
     ],
     'All' => [
@@ -335,6 +347,11 @@ class WipConstants
   ];
 
   public const IMPORT_F3_WIP_EXPECTED_HEADERS = [
+    'date_loaded' => [
+      'date',
+      'date today',
+      'Date Today',
+    ],
     'running_ct' => [
       'running ct',
       'run ct',
@@ -477,6 +494,19 @@ class WipConstants
   ];
 
   public const IMPORT_F3_OUT_EXPECTED_HEADERS = [
+    'date_loaded' => [
+      'date',
+      'date today',
+      'Date Today',
+    ],
+    'running_ct' => [
+      'running ct',
+      'run ct',
+      'running_count',
+      'run_count',
+      'RUNNING CT',
+      'RUN CT'
+    ],
     'date_received' => [
       'date received',
       'received date',

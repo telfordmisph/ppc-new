@@ -22,8 +22,8 @@ trait F3Trait
     }
 
     return DB::table($this->table)
-      ->select('lot_number', 'date_received')
-      ->where('date_received', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
+      ->select('lot_number', 'date_loaded')
+      ->where('date_loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
       ->get();
   }
   public function filterByPackageName($query, ?array $packageNames, $column = 'f3_pkg.package_name')

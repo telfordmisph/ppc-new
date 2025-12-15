@@ -10,6 +10,7 @@ class F3Wip extends Model
   public $timestamps = false;
 
   protected $fillable = [
+    'date_loaded',
     'running_ct',
     'date_received',
     'packing_list_srf',

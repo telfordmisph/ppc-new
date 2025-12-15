@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class ImportTraceRepository
 {
   private const TABLE = 'latest_imports';
-  private const TYPES = ['f1f2_wip', 'f1f2_out', 'f3_wip', 'f3_out', 'capacity'];
+  private const TYPES = ['f1f2_wip', 'f1f2_out', 'f3_wip', 'f3_out', 'capacity', 'f3'];
 
   // Get latest import for any type
   public function getImport($type)

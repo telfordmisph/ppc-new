@@ -93,11 +93,11 @@ class WipService
       $startDate = Carbon::now()->subDays(25)->startOfDay();
 
       $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
-        ->selectRaw('DATE(date_received) AS report_date, SUM(f3_wip.qty) AS f3_wip')
-        // ->whereBetween('date_received', [$startDate, $endDate])
-        ->where('date_received', ">=", $startDate)
-        ->where('date_received', "<", $endDate)
-        ->groupBy(DB::raw('date_received'))
+        ->selectRaw('DATE(date_loaded) AS report_date, SUM(f3_wip.qty) AS f3_wip')
+        // ->whereBetween('date_loaded', [$startDate, $endDate])
+        ->where('date_loaded', ">=", $startDate)
+        ->where('date_loaded', "<", $endDate)
+        ->groupBy(DB::raw('date_loaded'))
         ->get();
 
       $f3Data = [];
@@ -223,7 +223,7 @@ class WipService
     $f3Total = $this->f3WipRepo->baseF3Query()
       ->selectRaw("SUM(f3_wip.Qty) AS f3_total_quantity");
 
-    $f3Total = $this->applyDateOrWorkweekFilter($f3Total, 'f3_wip.date_received', $useWorkweek, $workweek, $startDate, $endDate)
+    $f3Total = $this->applyDateOrWorkweekFilter($f3Total, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
     $f3PlTotals = $this->f3WipRepo->baseF3Query(true)
@@ -232,7 +232,7 @@ class WipService
           SUM(CASE WHEN plref.production_line = 'PL6' THEN f3_wip.Qty ELSE 0 END) AS f3pl6_total_quantity
       ");
 
-    $f3PlTotals = $this->applyDateOrWorkweekFilter($f3PlTotals, 'f3_wip.date_received', $useWorkweek, $workweek, $startDate, $endDate)
+    $f3PlTotals = $this->applyDateOrWorkweekFilter($f3PlTotals, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
     $f3TotalQty = (int) $f3Total->f3_total_quantity;
@@ -514,7 +514,7 @@ class WipService
     //  F3 QUERIES
     // -----------------------------
     $f3Query = $this->f3WipRepo->baseF3Query($includePL);
-    $f3Query = $this->applyDateOrWorkweekFilter($f3Query, 'f3_wip.date_received', $useWorkweek, $workweek, $startDate, $endDate);
+    $f3Query = $this->applyDateOrWorkweekFilter($f3Query, 'f3_wip.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3Query = $f3Query->selectRaw(
       $includePL
         ? 'f3_pkg.package_name as Package_Name, plref.production_line as PL, SUM(f3_wip.qty) AS total_quantity, COUNT(DISTINCT f3_wip.lot_number) AS total_lots'

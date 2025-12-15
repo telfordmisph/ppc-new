@@ -206,7 +206,7 @@ class WipImportService
     $map = [];
 
     foreach ($records as $r) {
-      $map["{$r->lot_number}-{$r->date_received}"] = true;
+      $map["{$r->lot_number}-{$r->date_loaded}"] = true;
     }
 
     // Log::info("prepareExistingF3WipRecords: " . print_r($map, true));
@@ -220,7 +220,7 @@ class WipImportService
     $map = [];
 
     foreach ($records as $r) {
-      $map["{$r->lot_number}-{$r->date_received}"] = true;
+      $map["{$r->lot_number}-{$r->date_loaded}"] = true;
     }
 
     return $map;
@@ -487,6 +487,7 @@ class WipImportService
 
       $rowData['imported_by'] = $importedBy;
       $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
+      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
       $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
       $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
 
@@ -503,7 +504,7 @@ class WipImportService
       // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
       // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
 
-      $key = "{$rowData['lot_number']}-{$rowData['date_received']}";
+      $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
 
       // Log::info("Key: " . $key);
 
@@ -579,6 +580,7 @@ class WipImportService
 
       $rowData['imported_by'] = $importedBy;
       $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
+      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
       $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
       $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
 
@@ -592,7 +594,7 @@ class WipImportService
 
       $rowData['package'] = $packageID;
 
-      if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_received']}"])) {
+      if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_loaded']}"])) {
         continue;
       }
 
@@ -623,6 +625,109 @@ class WipImportService
       'data' => [
         'total' => $successCount,
         // 'ignored' => $ignoredRows,
+        'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
+        'ignored_unknown_package_count' => count($ignoredRows)
+      ]
+    ];
+  }
+
+  public function importF3($importedBy = null, $file)
+  {
+    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheetData = $sheet->toArray(null, true, false, false);
+
+    $expectedHeaders = WipConstants::IMPORT_F3_OUT_EXPECTED_HEADERS;
+
+    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, $expectedHeaders);
+    if ($headersData['status'] === 'error') {
+      return $headersData;
+    }
+
+    $found_headers = $headersData['found_headers'];
+    $headerRowIndex = $headersData['headerRowIndex'];
+    $map_headers = $headersData['map_headers'];
+
+    $chunksWip = [];
+    $chunksOut = [];
+    $ignoredRows = [];
+    $successCount = 0;
+
+    $existingWipRecords = $this->prepareExistingF3WipRecords();
+    $existingOutRecords = $this->prepareExistingF3OutRecords();
+
+    $f3wipStatuses = WipConstants::F3_WIP_STATUSES;
+    $f3outStatuses = WipConstants::F3_OUT_STATUSES;
+
+    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+      if ($this->isEmptyRow($row)) {
+        continue;
+      }
+
+      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+      $status = $rowData['status'] ?? null;
+
+      if (!$status) {
+        $ignoredRows[] = $rowData;
+        continue;
+      }
+
+      $rowData['imported_by'] = $importedBy;
+      $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
+      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
+      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
+      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
+
+      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
+      if (!$packageID) {
+        Log::info("Package not found: " . $rowData['package']);
+        $ignoredRows[] = $rowData;
+        continue;
+      }
+      $rowData['package'] = $packageID;
+
+      $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
+
+      if (in_array(strtolower($status), array_map('strtolower', $f3wipStatuses))) {
+        if (isset($existingWipRecords[$key])) continue;
+        $chunksWip[] = $rowData;
+
+        if (count($chunksWip) >= self::CHUNK_SIZE) {
+          $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
+          if ($resultError) return $resultError;
+          $chunksWip = [];
+        }
+      } elseif (in_array(strtolower($status), array_map('strtolower', $f3outStatuses))) {
+        if (isset($existingOutRecords[$key])) continue;
+        $chunksOut[] = $rowData;
+
+        if (count($chunksOut) >= self::CHUNK_SIZE) {
+          $resultError = $this->insertChunk($chunksOut, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
+          if ($resultError) return $resultError;
+          $chunksOut = [];
+        }
+      } else {
+        $ignoredRows[] = $rowData;
+      }
+    }
+
+    // Insert remaining chunks
+    if (!empty($chunksWip)) {
+      $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
+      if ($resultError) return $resultError;
+    }
+    if (!empty($chunksOut)) {
+      $resultError = $this->insertChunk($chunksOut, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
+      if ($resultError) return $resultError;
+    }
+
+    $this->importTraceRepository->upsertImport('f3', $importedBy, $successCount);
+
+    return [
+      'status' => 'success',
+      'message' => $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+      'data' => [
+        'total' => $successCount,
         'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
         'ignored_unknown_package_count' => count($ignoredRows)
       ]

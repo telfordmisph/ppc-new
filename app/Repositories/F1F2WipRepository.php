@@ -25,7 +25,6 @@ class F1F2WipRepository
   private const DISTINCT_PACKAGE_CACHE_KEY = 'distinct_packages';
   private const DISTINCT_STATION_CACHE_KEY = 'f1f2_distinct_stations';
   private const CACHE_HOURS = 23;
-  private const F3_TABLE = "f3_data_wip";
   private const PPC_TABLE = "ppc_productionline_packagereference";
   protected $packageFilterService;
   protected $packageGroupRepo;
@@ -93,19 +92,6 @@ class F1F2WipRepository
     return self::KEYS;
   }
 
-  public function getExistingRecords()
-  {
-    return DB::table(self::F1F2_TABLE)
-      ->select('Lot_Id', 'Date_Loaded', DB::raw('DATE(Date_Loaded) as dateonly'), 'Focus_Group')
-      ->where('Date_Loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
-      ->unionAll(
-        DB::table('f3_data_wip')
-          ->select('Lot_Id', 'Date_Loaded', DB::raw('DATE(Date_Loaded) as dateonly'), 'Focus_Group')
-          ->where('Date_Loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
-      )
-      ->get();
-  }
-
   public function insertCustomer(array $data)
   {
     CustomerDataWip::create($data);
@@ -154,18 +140,6 @@ class F1F2WipRepository
     // });
 
     $query->whereIn('wip.Station', $includeStations);
-
-    return $query;
-  }
-
-  public function baseF3Query($joinPpc = false): Builder
-  {
-    $query = DB::table(self::F3_TABLE . ' as wip')
-      ->where('wip.Focus_Group', 'F3');
-
-    if ($joinPpc) {
-      $query->join(self::PPC_TABLE . ' as plref', 'wip.Package_Name', '=', 'plref.Package'); // TODO: TO BE CHANGED
-    }
 
     return $query;
   }

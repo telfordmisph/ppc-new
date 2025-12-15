@@ -17,12 +17,16 @@ const F3ImportPage = () => {
 
     const uploaderWIPRef = useRef(null);
     const uploaderOUTRef = useRef(null);
+    const uploaderF3Ref = useRef(null);
     const manualWIPImportRef = useRef(null);
     const manualOUTImportRef = useRef(null);
+    const manualF3ImportRef = useRef(null);
     const [selectedWIPFile, setSelectedWIPFile] = useState(null);
     const [selectedOUTFile, setSelectedOUTFile] = useState(null);
+    const [selectedF3File, setSelectedF3File] = useState(null);
 
     const f3WipLabel = "F3 WIP";
+    const f3Label = "F3 WIP & OUTS";
     const f3OutsLabel = "F3 OUTS";
 
     const {
@@ -40,109 +44,284 @@ const F3ImportPage = () => {
         mutate: importWipOuts,
     } = useMutation();
 
-    const handleManualWIPImport = () => {
-        if (!selectedWIPFile) {
+    const {
+        isLoading: isImportF3Loading,
+        errorMessage: importF3ErrorMessage,
+        errorData: importF3ErrorData,
+        mutate: importF3,
+    } = useMutation();
+
+    // const handleManualWIPImport = () => {
+    //     if (!selectedWIPFile) {
+    //         return;
+    //     }
+
+    //     const formData = new FormData();
+    //     formData.append("file", selectedWIPFile);
+
+    //     runAsyncToast({
+    //         action: () =>
+    //             importWipQuantity(route("import.importF3WIP"), {
+    //                 body: formData,
+    //                 isContentTypeInclude: false,
+    //                 isFormData: true,
+    //             }),
+    //         loadingMessage: `Importing ${f3WipLabel} data...`,
+    //         renderSuccess: (result) => (
+    //             <>
+    //                 <div className="mb-2 font-bold text-success">
+    //                     <span>{f3WipLabel}: </span>{" "}
+    //                     {result?.message || "Successfully imported!"}
+    //                 </div>
+
+    //                 <div className="flex justify-between">
+    //                     <span className="font-light">
+    //                         new {f3WipLabel} entries:
+    //                     </span>
+    //                     <span className="font-bold">
+    //                         {Number(result?.data?.total ?? 0).toLocaleString()}
+    //                     </span>
+    //                 </div>
+
+    //                 <div className="flex justify-between text-warning">
+    //                     <span className="font-light">
+    //                         ignored unknown package entries:
+    //                     </span>
+    //                     <span className="font-bold">
+    //                         {Number(
+    //                             result?.data?.ignored_unknown_package.length ??
+    //                                 0
+    //                         ).toLocaleString()}
+    //                     </span>
+    //                 </div>
+    //             </>
+    //         ),
+    //         errorMessage: importWipQuantityErrorMessage,
+    //     });
+
+    //     uploaderWIPRef.current?.reset();
+    // };
+
+    // const handleManualOUTImport = () => {
+    //     if (!selectedOUTFile) {
+    //         return;
+    //     }
+
+    //     const formData = new FormData();
+    //     formData.append("file", selectedOUTFile);
+    //     runAsyncToast({
+    //         action: () =>
+    //             importWipOuts(route("import.importF3OUTS"), {
+    //                 body: formData,
+    //                 isContentTypeInclude: false,
+    //                 isFormData: true,
+    //             }),
+    //         loadingMessage: "Importing F3 OUTs data...",
+    //         renderSuccess: (result) => (
+    //             <>
+    //                 <div className="mb-2 font-bold text-success">
+    //                     <span>F3 OUTs: </span>{" "}
+    //                     {result?.message || "Successfully imported!"}
+    //                 </div>
+
+    //                 <div className="flex justify-between">
+    //                     <span className="font-light">new F3 OUTs entries:</span>
+    //                     <span className="font-bold">
+    //                         {Number(result?.data?.total ?? 0).toLocaleString()}
+    //                     </span>
+    //                 </div>
+    //             </>
+    //         ),
+    //         errorMessage: importOutQuantityErrorMessage,
+    //     });
+
+    //     uploaderOUTRef.current?.reset();
+    // };
+
+    const handleManualF3Import = () => {
+        if (!selectedF3File) {
             return;
         }
 
         const formData = new FormData();
-        formData.append("file", selectedWIPFile);
-
+        formData.append("file", selectedF3File);
         runAsyncToast({
             action: () =>
-                importWipQuantity(route("import.importF3WIP"), {
+                importF3(route("import.importF3"), {
                     body: formData,
                     isContentTypeInclude: false,
                     isFormData: true,
                 }),
-            loadingMessage: `Importing ${f3WipLabel} data...`,
+            loadingMessage: "Importing F3 data...",
             renderSuccess: (result) => (
                 <>
                     <div className="mb-2 font-bold text-success">
-                        <span>{f3WipLabel}: </span>{" "}
+                        <span>F3s: </span>{" "}
                         {result?.message || "Successfully imported!"}
                     </div>
 
                     <div className="flex justify-between">
-                        <span className="font-light">
-                            new {f3WipLabel} entries:
-                        </span>
-                        <span className="font-bold">
-                            {Number(result?.data?.total ?? 0).toLocaleString()}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-between text-warning">
-                        <span className="font-light">
-                            ignored unknown package entries:
-                        </span>
-                        <span className="font-bold">
-                            {Number(
-                                result?.data?.ignored_unknown_package.length ??
-                                    0
-                            ).toLocaleString()}
-                        </span>
-                    </div>
-                </>
-            ),
-            errorMessage: importWipQuantityErrorMessage,
-        });
-
-        uploaderWIPRef.current?.reset();
-    };
-
-    const handleManualOUTImport = () => {
-        if (!selectedOUTFile) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", selectedOUTFile);
-        runAsyncToast({
-            action: () =>
-                importWipOuts(route("import.importF3OUTS"), {
-                    body: formData,
-                    isContentTypeInclude: false,
-                    isFormData: true,
-                }),
-            loadingMessage: "Importing F3 OUTs data...",
-            renderSuccess: (result) => (
-                <>
-                    <div className="mb-2 font-bold text-success">
-                        <span>F3 OUTs: </span>{" "}
-                        {result?.message || "Successfully imported!"}
-                    </div>
-
-                    <div className="flex justify-between">
-                        <span className="font-light">new F3 OUTs entries:</span>
+                        <span className="font-light">new F3 entries:</span>
                         <span className="font-bold">
                             {Number(result?.data?.total ?? 0).toLocaleString()}
                         </span>
                     </div>
                 </>
             ),
-            errorMessage: importOutQuantityErrorMessage,
+            errorMessage: importF3ErrorMessage,
         });
 
-        uploaderOUTRef.current?.reset();
+        uploaderF3Ref.current?.reset();
     };
 
-    useEffect(() => {
-        if (importWipQuantityErrorMessage) {
-            setSelectedWIPFile(null);
-        }
-    }, [importWipQuantityErrorMessage]);
+    // useEffect(() => {
+    //     if (importWipQuantityErrorMessage) {
+    //         setSelectedWIPFile(null);
+    //     }
+    // }, [importWipQuantityErrorMessage]);
+
+    // useEffect(() => {
+    //     if (importOutQuantityErrorMessage) {
+    //         setSelectedOUTFile(null);
+    //     }
+    // }, [importOutQuantityErrorMessage]);
 
     useEffect(() => {
-        if (importOutQuantityErrorMessage) {
-            setSelectedOUTFile(null);
+        if (importF3ErrorMessage) {
+            setSelectedF3File(null);
         }
-    }, [importOutQuantityErrorMessage]);
+    }, [importF3ErrorMessage]);
 
     return (
         <ImportPageLayout pageName="F3">
             <div className="grid grid-cols-1 w-full gap-4">
-                <div className="card border bg-base-100 border-base-content/20">
+                <div className="card flex-1 bg-base-100 border border-base-content/20">
+                    <div className="card-body">
+                        <h2 className="card-title">Upload Daily {f3Label}</h2>
+                        <p>Upload latest data for F3 WIPs and OUTs.</p>
+                        <ImportLabel
+                            data={importTraceData?.f3}
+                            loading={isImportTraceLoading}
+                        />
+                        <div className="card-actions justify-end">
+                            <Modal
+                                ref={manualF3ImportRef}
+                                id="f3ImportModal"
+                                title={`Confirm upload ${f3Label} import`}
+                                onClose={() =>
+                                    manualF3ImportRef.current?.close()
+                                }
+                                className="max-w-lg"
+                            >
+                                <p className="py-4">
+                                    Are you sure? This will start the {f3Label}{" "}
+                                    import. Current import progress (if any)
+                                    will block this action.
+                                </p>
+
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        className="btn btn-soft btn-warning"
+                                        onClick={async () => {
+                                            manualF3ImportRef.current?.close();
+                                            handleManualF3Import();
+                                        }}
+                                        disabled={isImportF3Loading}
+                                    >
+                                        {isImportF3Loading && (
+                                            <span className="loading loading-spinner"></span>
+                                        )}
+                                        Proceed
+                                    </button>
+
+                                    <button
+                                        className="btn"
+                                        onClick={() =>
+                                            manualF3ImportRef.current?.close()
+                                        }
+                                        disabled={isImportF3Loading}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </Modal>
+                        </div>
+                        <ExcelUploader
+                            ref={uploaderF3Ref}
+                            legend="Pick an Excel file"
+                            onFileValid={(file) => {
+                                setSelectedF3File(file);
+                            }}
+                        />
+                        <button
+                            className="btn btn-primary w-54"
+                            onClick={() => manualF3ImportRef.current?.open()}
+                            disabled={isImportF3Loading || !selectedF3File}
+                        >
+                            Upload {f3Label}
+                        </button>
+                    </div>
+
+                    {importF3ErrorMessage && importF3ErrorData?.data && (
+                        <Collapse
+                            title={`${importF3ErrorMessage}. Click to see details.`}
+                            className={
+                                "border-red-500 hover:border-red-500 bg-error/10"
+                            }
+                        >
+                            {importF3ErrorData?.data?.missing_headers.length >
+                                0 && (
+                                <div className="mt-2">Missing headers: </div>
+                            )}
+                            <ul className="list">
+                                {importF3ErrorData?.data?.missing_headers.map(
+                                    (missing) => (
+                                        <li
+                                            className="list-row h-8 leading-none"
+                                            key={missing}
+                                        >
+                                            {missing}
+                                        </li>
+                                    )
+                                )}
+                            </ul>
+                            {importF3ErrorData?.data?.unknown_headers.length >
+                                0 && (
+                                <div className="mt-2">Unknown (ignored): </div>
+                            )}
+                            <ul className="list">
+                                {importF3ErrorData?.data?.unknown_headers.map(
+                                    (unknown) => (
+                                        <li
+                                            className="list-row h-8 leading-none"
+                                            key={unknown}
+                                        >
+                                            {unknown}
+                                        </li>
+                                    )
+                                )}
+                            </ul>
+                        </Collapse>
+                    )}
+
+                    <Collapse title={`${f3Label} Excel Headers Required`}>
+                        <div className="text-secondary">
+                            space and whitespace are the same. Case insensitive
+                        </div>
+                        <ul className="list">
+                            {F3_OUTS_HEADERS.map((header) => (
+                                <li
+                                    className="list-row h-8 leading-none"
+                                    key={header}
+                                >
+                                    {header}
+                                </li>
+                            ))}
+                        </ul>
+                    </Collapse>
+                </div>
+
+                {/* <div className="card border bg-base-100 border-base-content/20">
                     <div className="card-body">
                         <h2 className="card-title">
                             Upload Daily {f3WipLabel}
@@ -315,9 +494,9 @@ const F3ImportPage = () => {
                             ))}
                         </ul>
                     </Collapse>
-                </div>
+                </div> */}
 
-                <div className="card flex-1 bg-base-100 border border-base-content/20">
+                {/* <div className="card flex-1 bg-base-100 border border-base-content/20">
                     <div className="card-body">
                         <h2 className="card-title">
                             Upload Daily {f3OutsLabel}
@@ -384,7 +563,7 @@ const F3ImportPage = () => {
                             className="btn btn-primary w-54"
                             onClick={() => manualOUTImportRef.current?.open()}
                             disabled={
-                                isImportWipOutsLoading || !setSelectedOUTFile
+                                isImportWipOutsLoading || !selectedOUTFile
                             }
                         >
                             Upload {f3OutsLabel}
@@ -453,7 +632,7 @@ const F3ImportPage = () => {
                             ))}
                         </ul>
                     </Collapse>
-                </div>
+                </div> */}
             </div>
         </ImportPageLayout>
     );

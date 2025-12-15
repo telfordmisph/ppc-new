@@ -20,8 +20,8 @@ class F3OutRepository
   use TrendAggregationTrait;
   use PackageAliasTrait;
   use F3Trait;
-  protected $table = "f3_out";
-  protected $tableAlias = "f3_out";
+  protected $table = "f3";
+  protected $tableAlias = "f3";
   protected $packageGroupRepo;
   protected $analogCalendarRepo;
   protected $packageFilterService;
@@ -44,7 +44,7 @@ class F3OutRepository
       $period,
       $startDate,
       $endDate,
-      'f3_out.date_received',
+      'f3_out.date_loaded',
       ['SUM(f3_out.qty)' => 'total_outs'],
       workweeks: $workweeks
     );

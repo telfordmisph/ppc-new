@@ -121,4 +121,25 @@ class AutoImportController extends Controller
             'data' => $result['data'] ?? [],
         ]);
     }
+
+    public function importF3(Request $request)
+    {
+        $user = $request->user();
+        $empId = $request->get('emp_id');
+
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx|max:10240',
+        ]);
+
+        $file = $request->file('file');
+
+        $result = $this->wipImportService->importF3($empId, $file);
+
+        return response()->json([
+            'status' => $result['status'] ?? 'success',
+            'message' => $result['message'] ?? 'Import completed',
+            'data' => $result['data'] ?? [],
+        ]);
+    }
 }

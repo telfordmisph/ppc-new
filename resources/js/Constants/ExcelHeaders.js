@@ -18,6 +18,7 @@ export const F1F2_OUTS_HEADERS = [
 ]
 
 export const F3_OUTS_HEADERS = [
+  'date_loaded',
   "running_ct",
   "date_received",
   "packing_list_srf#",
@@ -43,6 +44,7 @@ export const F3_OUTS_HEADERS = [
 ]
 
 export const F3_WIP_HEADERS = [
+  'date_loaded',
   "running_ct",
   "date_received",
   "packing_list_srf#",
