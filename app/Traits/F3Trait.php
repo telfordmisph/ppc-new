@@ -58,6 +58,9 @@ trait F3Trait
 
     if ($type == 'out') {
       $query->where($this->tableAlias . '.status', 'shipped');
+    } else {
+      // IQA, For Process, In-process, Hold, FVI, OQA, Boxing, OQA, QA Buy-off
+      $query->whereIn($this->tableAlias . '.status', ['iqa', 'for process', 'in-process', 'hold', 'fvi', 'oqa', 'boxing', 'qa-buy-off']);
     }
 
     if ($joinPpc) {
