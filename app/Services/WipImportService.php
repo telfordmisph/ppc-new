@@ -130,10 +130,8 @@ class WipImportService
         throw new Exception("CSV contains no data rows.");
       }
 
-      $firstRow = $this->sanitizeRow($firstRow, $importedBy);
-      $businessDate = Carbon::parse($firstRow['Date_Loaded'])->toDateString();
+      CustomerDataWip::where('import_date', Carbon::today())->delete();
 
-      CustomerDataWip::whereDate('date_loaded', $businessDate)->delete();
       rewind($handle);
       fgetcsv($handle, 0, ','); // skip header
 
@@ -368,16 +366,8 @@ class WipImportService
     }
 
     $headers = $headersData['found_headers'];
-    $dateLoadedIndex = array_search('date_loaded', $headers);
 
-    $businessDate = $firstRow[$dateLoadedIndex] ?? null;
-    if (!$businessDate) {
-      return ['status' => 'error', 'message' => 'date_loaded not found in first row.'];
-    }
-
-    $businessDate = Carbon::parse($businessDate);
-
-    F1F2Out::whereDate('date_loaded', $businessDate)->delete();
+    F1F2Out::where('import_date', Carbon::today())->delete();
 
     foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
       $rowData = [];
