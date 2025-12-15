@@ -45,10 +45,13 @@ const WipOutTrendByPackage = ({
         setSelectedFactory: setSavedSelectedFactory,
     } = useSelectedFilteredStore();
 
-    const [selectedPackageNames, setSelectedPackageNames] = useState(savedSelectedPackageNames);
+    const [selectedPackageNames, setSelectedPackageNames] = useState(
+        savedSelectedPackageNames
+    );
     const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(savedWorkWeeks);
     const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
-    const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(savedOffset);
+    const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
+        useState(savedOffset);
     const [selectPeriod, setSelectedPeriod] = useState(savedPeriod);
     const [selectedFactory, setSelectedFactory] = useState(savedFactory);
 
@@ -150,7 +153,7 @@ const WipOutTrendByPackage = ({
 
     const disableSearch =
         (selectPeriod === "weekly" && selectedWorkWeeks.length === 0) ||
-        selectedLookBack === 0;
+        (selectPeriod !== "weekly" && selectedLookBack === 0);
 
     const lines = useMemo(
         () =>
