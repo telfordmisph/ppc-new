@@ -266,19 +266,19 @@ const PickupTable = ({ data, onSummaryView }) => {
             key: "F1",
             pl1: "total_f1_pl1",
             pl6: "total_f1_pl6",
-            total: "f1_total_quantity",
+            total: "f1_total_wip",
         },
         {
             key: "F2",
             pl1: "total_f2_pl1",
             pl6: "total_f2_pl6",
-            total: "f2_total_quantity",
+            total: "f2_total_wip",
         },
         {
             key: "F3",
             pl1: "total_f3_pl1",
             pl6: "total_f3_pl6",
-            total: "f3_total_quantity",
+            total: "f3_total_wip",
         },
     ];
 
@@ -290,7 +290,7 @@ const PickupTable = ({ data, onSummaryView }) => {
         (sum, row) => sum + (data?.[row.pl6] || 0),
         0
     );
-    const overallTotal = data?.total_quantity || 0;
+    const overallTotal = data?.total_wip || 0;
 
     return (
         <table className="table w-full">

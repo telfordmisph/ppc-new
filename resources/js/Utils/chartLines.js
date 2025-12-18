@@ -18,10 +18,10 @@ export const visibleLines = (options = {}) => {
             
             if (showQuantities) {
                 result.push({
-                    dataKey: `${key}_total_quantity`,
+                    dataKey: `${key}_total_wip`,
                     yAxisId: "left",
-                    stroke: colorVar.quantity,
-                    fill: colorVar.quantity,
+                    stroke: colorVar.wip,
+                    fill: colorVar.wip,
                     strokeWidth: strokeWidth,
                     className: className,
                     r: r,

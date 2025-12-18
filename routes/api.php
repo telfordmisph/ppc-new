@@ -29,8 +29,8 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::get('/residual', [WipController::class, 'getOverallResidual'])->name('residual');
       Route::get('/residual-summary', [WipController::class, 'getPackageResidualSummary'])->name('residualSummary');
       Route::get('/package-pickup-summary', [WipController::class, 'getPackagePickUpSummary'])->name('packagePickupSummary');
-      Route::get('/quantity-lot-totals', [WipController::class, 'getWIPQuantityAndLotsTotal'])->name('quantityLotTotals');
-      // Route::get('/quantity-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('quantityLotTotalsNew');
+      Route::get('/wip-lot-totals', [WipController::class, 'getWIPQuantityAndLotsTotal'])->name('wipLotTotals');
+      // Route::get('/wip-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('wipLotTotalsNew');
     });
 
     Route::prefix('wip-out')->name('api.wip.')->group(function () {
@@ -93,6 +93,10 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::post('/importF3OUTS', [AutoImportController::class, 'importF3OUTS'])->name('importF3OUTS');
       Route::post('/autoImportWIPOUTS', [AutoImportController::class, 'autoImportWIPOUTS'])->name('autoImportWIPOUTS');
       Route::post('/capacity', [AutoImportController::class, 'importCapacity'])->name('capacity');
+    });
+
+    Route::prefix('download')->name('api.download.')->group(function () {
+      Route::get('/factoryWipOutTrendRaw', [WipController::class, 'getWipOutTrendRawData'])->name('factoryWipOutTrendRaw');
     });
   });
 

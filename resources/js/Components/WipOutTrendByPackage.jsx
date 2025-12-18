@@ -2,7 +2,7 @@ import { useFetch } from "@/Hooks/useFetch";
 import React, { useEffect, useState, useMemo } from "react";
 import TrendLineChart from "./Charts/TrendLineChart";
 import FloatingLabelInput from "./FloatingLabelInput";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFileDownload } from "react-icons/fa";
 import TableChart from "./Charts/TableChart";
 import { periodOptions } from "@/Constants/periodOptions";
 import {
@@ -17,6 +17,9 @@ import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import Tabs from "./Tabs";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 import { visibleLines } from "@/Utils/chartLines";
+import { useDownloadFile } from "@/Hooks/useDownload";
+import { addDays, subDays, format } from "date-fns";
+import { MdFileDownload } from "react-icons/md";
 
 const test = ["F1", "F2", "F3", "Overall"];
 
@@ -30,6 +33,9 @@ const WipOutTrendByPackage = ({
     const [isChartTableVisible, setIsChartTableVisible] = useState(
         !noChartTable ? true : false
     );
+
+    const { download, isLoading, errorMessage } = useDownloadFile();
+
     const {
         packageNames: savedSelectedPackageNames,
         workWeeks: savedWorkWeeks,
@@ -77,6 +83,24 @@ const WipOutTrendByPackage = ({
         lookBack: selectedLookBack,
         offsetDays: selectedOffsetPeriod,
         workweek: selectedWorkWeeks.join(","),
+    };
+
+    const handleDownloadClick = () => {
+        const today = new Date();
+
+        const offsetDate = subDays(today, selectedOffsetPeriod);
+
+        const startDate = subDays(offsetDate, selectedLookBack - 1);
+        const endDate = offsetDate; // end date is the offset date
+
+        const formattedStart = format(startDate, "yyyy-MM-dd");
+        const formattedEnd = format(endDate, "yyyy-MM-dd");
+
+        download(route("api.download.factoryWipOutTrendRaw"), {
+            package_name: selectedPackageNames.join(","),
+            start_date: formattedStart,
+            end_date: formattedEnd,
+        });
     };
 
     const {
@@ -309,6 +333,25 @@ const WipOutTrendByPackage = ({
                             <span>Get Trend</span>
                         )}
                     </button>
+
+                    <button
+                        className="btn btn-accent flex items-center gap-2"
+                        onClick={handleDownloadClick}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <MdFileDownload className="w-5 h-5 animate-bounce" />
+                            </>
+                        ) : (
+                            <>
+                                <MdFileDownload className="w-5 h-5" />
+                            </>
+                        )}
+                    </button>
+                    {errorMessage && (
+                        <p style={{ color: "red" }}>{errorMessage}</p>
+                    )}
 
                     {!noChartTable && (
                         <button

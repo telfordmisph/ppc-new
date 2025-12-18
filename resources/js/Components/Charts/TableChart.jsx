@@ -2,10 +2,10 @@ import React, { useMemo } from "react";
 
 const preferredOrder = [
     "label",
-    "f1_total_quantity",
-    "f2_total_quantity",
-    "f3_total_quantity",
-    "overall_total_quantity",
+    "f1_total_wip",
+    "f2_total_wip",
+    "f3_total_wip",
+    "overall_total_wip",
     "f1_total_lots",
     "f2_total_lots",
     "f3_total_lots",

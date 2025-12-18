@@ -53,7 +53,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
     );
     const [visibleLines, setVisibleLines] = useState({
         totalLots: true,
-        totalQuantity: true,
+        totalwip: true,
     });
 
     const {
@@ -116,7 +116,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
     const lines = useMemo(
         () =>
             chartLines({
-                showQuantities: visibleLines.totalQuantity,
+                showQuantities: visibleLines.totalwip,
                 showLots: visibleLines.totalLots,
                 showFactories: { f1: true, f2: true, f3: true, overall: true },
                 keyLines: WIP_LOTS,

@@ -209,17 +209,17 @@ class WipConstants
   public const FACTORY_AGGREGATES = [
     'F1F2' => [
       'wip' => [
-        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(wip.Qty)' => 'total_quantity',
+        'wip' => ['SUM(wip.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(wip.Qty)' => 'total_wip',
           'COUNT(wip.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(out.Qty)' => 'total_quantity',
+        'wip' => ['SUM(out.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(out.Qty)' => 'total_wip',
           'COUNT(out.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'out.Date_Loaded',
@@ -227,17 +227,17 @@ class WipConstants
     ],
     'F1' => [
       'wip' => [
-        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(wip.Qty)' => 'total_quantity',
+        'wip' => ['SUM(wip.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(wip.Qty)' => 'total_wip',
           'COUNT(wip.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(out.Qty)' => 'total_quantity',
+        'wip' => ['SUM(out.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(out.Qty)' => 'total_wip',
           'COUNT(out.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'out.Date_Loaded',
@@ -245,17 +245,17 @@ class WipConstants
     ],
     'F2' => [
       'wip' => [
-        'quantity' => ['SUM(wip.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(wip.Qty)' => 'total_quantity',
+        'wip' => ['SUM(wip.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(wip.Qty)' => 'total_wip',
           'COUNT(wip.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(out.Qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(out.Qty)' => 'total_quantity',
+        'wip' => ['SUM(out.Qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(out.Qty)' => 'total_wip',
           'COUNT(out.Lot_Id)' => 'total_lots'
         ],
         'dateColumn' => 'out.Date_Loaded',
@@ -263,17 +263,17 @@ class WipConstants
     ],
     'F3' => [
       'wip' => [
-        'quantity' => ['SUM(f3.qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(f3.qty)' => 'total_quantity',
+        'wip' => ['SUM(f3.qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(f3.qty)' => 'total_wip',
           'COUNT(f3.lot_number)' => 'total_lots'
         ],
         'dateColumn' => 'f3.date_loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(f3.qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(f3.qty)' => 'total_quantity',
+        'wip' => ['SUM(f3.qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(f3.qty)' => 'total_wip',
           'COUNT(f3.lot_number)' => 'total_lots'
         ],
         'dateColumn' => 'f3.date_loaded',
@@ -281,17 +281,17 @@ class WipConstants
     ],
     'All' => [
       'wip' => [
-        'quantity' => ['SUM(wip.qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(wip.qty)' => 'total_quantity',
+        'wip' => ['SUM(wip.qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(wip.qty)' => 'total_wip',
           'COUNT(wip.lot_id)' => 'total_lots'
         ],
         'dateColumn' => 'wip.date_loaded',
       ],
       'out' => [
-        'quantity' => ['SUM(out.qty)' => 'total_quantity'],
-        'quantity-lot' => [
-          'SUM(out.qty)' => 'total_quantity',
+        'wip' => ['SUM(out.qty)' => 'total_wip'],
+        'wip-lot' => [
+          'SUM(out.qty)' => 'total_wip',
           'COUNT(out.lot_id)' => 'total_lots'
         ],
         'dateColumn' => 'out.date_loaded',

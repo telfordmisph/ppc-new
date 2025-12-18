@@ -232,7 +232,7 @@ class F1F2WipRepository
     $selectColumns = !empty($selectColumns) ? implode(', ', $selectColumns) : "1";
 
     if ($aggregateColumns === null) {
-      $aggregateColumns = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot'];
+      $aggregateColumns = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['wip-lot'];
     }
 
     switch ($factory) {
@@ -304,7 +304,15 @@ class F1F2WipRepository
         throw new \InvalidArgumentException("Unknown factory: $factory");
     }
 
+    if ($aggregateColumns === false) {
+      // just apply date filters
+      $dateColumn = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'];
+      $query->where($dateColumn, '>=', $startDate)
+        ->where($dateColumn, '<', $endDate);
+      return $query;
+    }
 
+    // Otherwise, apply aggregation as usual
     return $this->applyTrendAggregation(
       $query,
       $period,
@@ -312,9 +320,18 @@ class F1F2WipRepository
       $endDate,
       column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
       aggregateColumns: $aggregateColumns,
-      // additionalFields: ['wip.Package_Name as package_name'],
       workweeks: $workweeks,
     );
+    // return $this->applyTrendAggregation(
+    //   $query,
+    //   $period,
+    //   $startDate,
+    //   $endDate,
+    //   column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
+    //   aggregateColumns: $aggregateColumns,
+    //   // additionalFields: ['wip.Package_Name as package_name'],
+    //   workweeks: $workweeks,
+    // );
   }
 
   public function refreshDistinctPackagesCache(): void

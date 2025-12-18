@@ -218,6 +218,19 @@ class WipController extends Controller
     );
   }
 
+  public function getWipOutTrendRawData(Request $request)
+  {
+
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    Log::info("getWipOutTrendRawDatagetWipOutTrendRawDatagetWipOutTrendRawData ..." . json_encode($periodParams));
+    return $this->wipService->downloadAllFactoriesRawXlsx(
+      $packageName,
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+    );
+  }
+
   public function wipStation()
   {
     return Inertia::render('WIPStation');

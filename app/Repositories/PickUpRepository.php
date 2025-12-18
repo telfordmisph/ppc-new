@@ -102,7 +102,7 @@ class PickUpRepository
     $tomorrow = Carbon::tomorrow()->toDateString();
 
     $query = DB::table(self::TABLE_NAME . ' as pickup')
-      ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_quantity, COUNT(DISTINCT pickup.LOTID) as total_lots')
+      ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_wip, COUNT(DISTINCT pickup.LOTID) as total_lots')
       // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate]);
       ->where('pickup.DATE_CREATED', ">=", $startDate)
       ->where('pickup.DATE_CREATED', "<", $endDate);
@@ -133,7 +133,7 @@ class PickUpRepository
     }
 
     return $query->groupBy('pickup.PACKAGE')
-      ->orderByDesc('total_quantity')
+      ->orderByDesc('total_wip')
       ->get();
   }
   public function getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks)
@@ -141,7 +141,7 @@ class PickUpRepository
     $trends = [];
 
     $aggregateColumn = [
-      'SUM(pickup.QTY)' => 'total_quantity',
+      'SUM(pickup.QTY)' => 'total_wip',
       'COUNT(DISTINCT pickup.LOTID)' => 'total_lots'
     ];
 
@@ -152,7 +152,7 @@ class PickUpRepository
       $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
         ->where('part.Factory', strtoupper($factory));
       // $query->groupBy('pickup.PACKAGE')
-      // ->orderByDesc('total_quantity');
+      // ->orderByDesc('total_wip');
 
       $query = $this->filterByPackageName($query, $packageName, $factory);
       $query = $this->applyTrendAggregation(

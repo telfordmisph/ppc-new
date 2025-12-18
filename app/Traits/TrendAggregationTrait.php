@@ -17,7 +17,7 @@ trait TrendAggregationTrait
     $endDate,
     string $column = 'Date_Loaded',
     array $aggregateColumns = [
-      'SUM(Qty)' => 'total_quantity',
+      'SUM(Qty)' => 'total_wip',
       'COUNT(DISTINCT Lot_Id)' => 'total_lots'
     ],
     array $additionalFields = [],

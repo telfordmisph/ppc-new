@@ -11,7 +11,7 @@
  *
  * @param {Array<Object>} data - The array of objects to sort.
  * @param {Object} sorter - Sorting options.
- * @param {string[]} [sorter.keys=['total_quantity']] - Keys to sort by.
+ * @param {string[]} [sorter.keys=['total_wip']] - Keys to sort by.
  * @param {'asc'|'desc'} [sorter.order='asc'] - Sort order.
  * @param {Function|null} [sorter.compute=null] - Function returning a numeric value for sorting.
  *
@@ -20,12 +20,12 @@
 
 function sortObjectArray(
   data = [],
-  sorter = { keys: ['total quantity'], order: 'asc', compute: null }
+  sorter = { keys: ['total wip'], order: 'asc', compute: null }
 ) {
   if (!Array.isArray(data)) return [];
 
   const {
-    keys = ['total quantity'],
+    keys = ['total wip'],
     order = 'asc',
     compute = null,
   } = sorter;

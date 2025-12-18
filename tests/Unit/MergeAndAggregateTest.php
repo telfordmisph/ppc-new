@@ -11,18 +11,18 @@ class MergeAndAggregateTest extends TestCase
   public function test_it_merges_and_sums_numeric_fields_by_single_group_key()
   {
     $data1 = [
-      ['day' => '2025-11-06', 'total_quantity' => 100, 'remarks' => 'A'],
-      ['day' => '2025-11-07', 'total_quantity' => 200, 'remarks' => 'B'],
+      ['day' => '2025-11-06', 'total_wip' => 100, 'remarks' => 'A'],
+      ['day' => '2025-11-07', 'total_wip' => 200, 'remarks' => 'B'],
     ];
 
     $data2 = [
-      ['day' => '2025-11-06', 'total_quantity' => 50, 'remarks' => 'C'],
+      ['day' => '2025-11-06', 'total_wip' => 50, 'remarks' => 'C'],
     ];
 
     $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
 
     $this->assertCount(2, $result);
-    $this->assertEquals(150, $result[0]['total_quantity']);
+    $this->assertEquals(150, $result[0]['total_wip']);
     $this->assertEquals('2025-11-06', $result[0]['day']);
 
     // remarks overwritten by last occurrence
@@ -33,36 +33,36 @@ class MergeAndAggregateTest extends TestCase
   {
     // Log::info("test");
     $f1 = [
-      ['production_line' => 'PL6', 'day' => '2025-10-22', 'total_quantity' => 2113398],
-      ['production_line' => 'PL6', 'day' => '2025-10-23', 'total_quantity' => 1740507],
+      ['production_line' => 'PL6', 'day' => '2025-10-22', 'total_wip' => 2113398],
+      ['production_line' => 'PL6', 'day' => '2025-10-23', 'total_wip' => 1740507],
     ];
 
     $f2 = [
-      ['production_line' => 'PL6', 'day' => '2025-10-22', 'total_quantity' => 72323],
-      ['production_line' => 'PL6', 'day' => '2025-10-23', 'total_quantity' => 124087],
+      ['production_line' => 'PL6', 'day' => '2025-10-22', 'total_wip' => 72323],
+      ['production_line' => 'PL6', 'day' => '2025-10-23', 'total_wip' => 124087],
     ];
 
     $result = MergeAndAggregate::mergeAndAggregate([$f1, $f2], ['production_line', 'day']);
 
     $this->assertCount(2, $result);
-    $this->assertEquals(2185721, $result[0]['total_quantity']);
-    $this->assertEquals(1864594, $result[1]['total_quantity']);
+    $this->assertEquals(2185721, $result[0]['total_wip']);
+    $this->assertEquals(1864594, $result[1]['total_wip']);
   }
 
   public function test_it_ignores_specified_fields_during_merge()
   {
     // Log::info("test");
     $data1 = [
-      ['day' => '2025-11-06', 'total_quantity' => 100, 'ignore_me' => 5],
+      ['day' => '2025-11-06', 'total_wip' => 100, 'ignore_me' => 5],
     ];
 
     $data2 = [
-      ['day' => '2025-11-06', 'total_quantity' => 200, 'ignore_me' => 10],
+      ['day' => '2025-11-06', 'total_wip' => 200, 'ignore_me' => 10],
     ];
 
     $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day', ['ignore_me']);
 
-    $this->assertEquals(300, $result[0]['total_quantity']);
+    $this->assertEquals(300, $result[0]['total_wip']);
     $this->assertEquals(5, $result[0]['ignore_me']);
   }
 
@@ -70,16 +70,16 @@ class MergeAndAggregateTest extends TestCase
   {
     // Log::info("test");
     $data1 = [
-      ['day' => '2025-11-06', 'total_quantity' => 100, 'status' => 'ok'],
+      ['day' => '2025-11-06', 'total_wip' => 100, 'status' => 'ok'],
     ];
 
     $data2 = [
-      ['day' => '2025-11-06', 'total_quantity' => '50', 'status' => 'ok'],
+      ['day' => '2025-11-06', 'total_wip' => '50', 'status' => 'ok'],
     ];
 
     $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
 
-    $this->assertEquals(150, $result[0]['total_quantity']);
+    $this->assertEquals(150, $result[0]['total_wip']);
     $this->assertEquals('ok', $result[0]['status']);
   }
 
@@ -94,7 +94,7 @@ class MergeAndAggregateTest extends TestCase
   {
     // Log::info("test");
     $data1 = [
-      ['day' => '2025-11-06', 'total_quantity' => 100, 'status' => 'ok'],
+      ['day' => '2025-11-06', 'total_wip' => 100, 'status' => 'ok'],
     ];
 
     $data_none = [];
@@ -132,27 +132,27 @@ class MergeAndAggregateTest extends TestCase
       [
         "year" => 2025,
         "month" => 7,
-        "total_quantity" => "1809399"
+        "total_wip" => "1809399"
       ],
       [
         "year" => 2025,
         "month" => 8,
-        "total_quantity" => "2113442"
+        "total_wip" => "2113442"
       ],
       [
         "year" => 2025,
         "month" => 9,
-        "total_quantity" => "1345601"
+        "total_wip" => "1345601"
       ],
       [
         "year" => 2025,
         "month" => 10,
-        "total_quantity" => "533872"
+        "total_wip" => "533872"
       ],
       [
         "year" => 2025,
         "month" => 11,
-        "total_quantity" => "1019285"
+        "total_wip" => "1019285"
       ]
     ];
 
@@ -160,22 +160,22 @@ class MergeAndAggregateTest extends TestCase
       [
         "year" => 2025,
         "month" => 8,
-        "total_quantity" => "10683521"
+        "total_wip" => "10683521"
       ],
       [
         "year" => 2025,
         "month" => 9,
-        "total_quantity" => "24319695"
+        "total_wip" => "24319695"
       ],
       [
         "year" => 2025,
         "month" => 10,
-        "total_quantity" => "6977840"
+        "total_wip" => "6977840"
       ],
       [
         "year" => 2025,
         "month" => 11,
-        "total_quantity" => "16466602"
+        "total_wip" => "16466602"
       ]
     ];
 
@@ -187,27 +187,27 @@ class MergeAndAggregateTest extends TestCase
       [
         "year" => 2025,
         "month" => 7,
-        "total_quantity" => 1809399
+        "total_wip" => 1809399
       ],
       [
         "year" => 2025,
         "month" => 8,
-        "total_quantity" => 2113442 + 10683521
+        "total_wip" => 2113442 + 10683521
       ],
       [
         "year" => 2025,
         "month" => 9,
-        "total_quantity" => 1345601 + 24319695
+        "total_wip" => 1345601 + 24319695
       ],
       [
         "year" => 2025,
         "month" => 10,
-        "total_quantity" => 533872 + 6977840
+        "total_wip" => 533872 + 6977840
       ],
       [
         "year" => 2025,
         "month" => 11,
-        "total_quantity" => 1019285 + 16466602
+        "total_wip" => 1019285 + 16466602
       ]
     ];
 

@@ -58,8 +58,8 @@ export const TOGGLE_PL_BUTTONS = [
 
 export const TOGGLE_TOTAL_BUTTONS = [
     {
-        key: "totalQuantity",
-        label: "Total Quantity",
+        key: "totalwip",
+        label: "Total wip",
         activeClass: "bg-primary/20 border-primary text-base-content",
         inactiveClass:
             "border-base-content text-base-content hover:bg-base-content/50-content",

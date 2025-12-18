@@ -110,7 +110,7 @@ const StackedBarChart = memo(function StackedBarChart({
                     />
                     <Legend />
                     <Bar
-                        dataKey="total_quantity"
+                        dataKey="total_wip"
                         hide
                         className="hidden"
                         fill={"var(--color-neutral-content)"}

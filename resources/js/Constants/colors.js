@@ -5,7 +5,7 @@ export const DARK_THEME_NAME = "lofi-dark";
 export const WIP_OUT_CAPACITY = [
     { key: "f1", 
         colorVar: { 
-            quantity: "var(--color-primary)", 
+            wip: "var(--color-primary)", 
             out: "var(--color-secondary)", 
             capacity: "var(--color-accent)"
         },
@@ -15,7 +15,7 @@ export const WIP_OUT_CAPACITY = [
     },
     { key: "f2", 
         colorVar: { 
-            quantity: "var(--color-primary)", 
+            wip: "var(--color-primary)", 
             out: "var(--color-secondary)", 
             capacity: "var(--color-accent)"
         },
@@ -25,7 +25,7 @@ export const WIP_OUT_CAPACITY = [
     },
     { key: "f3", 
         colorVar: { 
-            quantity: "var(--color-primary)", 
+            wip: "var(--color-primary)", 
             out: "var(--color-secondary)", 
             capacity: "var(--color-accent)"
         },
@@ -35,7 +35,7 @@ export const WIP_OUT_CAPACITY = [
     },
     { key: "overall", 
         colorVar: { 
-            quantity: "var(--color-primary)", 
+            wip: "var(--color-primary)", 
             out: "var(--color-secondary)", 
             capacity: "var(--color-accent)"
         },
@@ -48,7 +48,7 @@ export const WIP_OUT_CAPACITY = [
 export const WIP_LOTS = [
     { key: "f1", 
         colorVar: { 
-            quantity: "var(--color-f1color)", 
+            wip: "var(--color-f1color)", 
             lots: "var(--color-f1color-15)", 
         },
         strokeWidth: 1,
@@ -57,7 +57,7 @@ export const WIP_LOTS = [
     },
     { key: "f2", 
         colorVar: { 
-            quantity: "var(--color-f2color)", 
+            wip: "var(--color-f2color)", 
             lots: "var(--color-f2color-15)", 
         },
         strokeWidth: 1,
@@ -66,7 +66,7 @@ export const WIP_LOTS = [
     },
     { key: "f3", 
         colorVar: { 
-            quantity: "var(--color-f3color)", 
+            wip: "var(--color-f3color)", 
             lots: "var(--color-f3color-15)", 
         },
         strokeWidth: 1,
@@ -75,7 +75,7 @@ export const WIP_LOTS = [
     },
     { key: "overall", 
         colorVar: { 
-            quantity: "var(--color-accent)", 
+            wip: "var(--color-accent)", 
             lots: "var(--color-f2color)", 
         },
         strokeWidth: 2,

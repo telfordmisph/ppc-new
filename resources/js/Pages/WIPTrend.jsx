@@ -22,10 +22,7 @@ import {
 import { sumByKey } from "@/Utils/sumByKey";
 import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
 import WipTrendByPackage from "@/Components/WipTrendByPackage";
-import {
-    summaryWipPLBarsLots,
-    summaryWipPLBarsQuantity,
-} from "@/Utils/chartBars";
+import { summaryWipPLBarsLots, summaryWipPLBarswip } from "@/Utils/chartBars";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 
@@ -39,8 +36,8 @@ function buildComputeFunction(selectedTotal, visibleBars) {
     return (item) =>
         activeKeys.reduce((sum, key) => {
             const field =
-                selectedTotal === "quantity"
-                    ? `${key}_total_quantity`
+                selectedTotal === "wip"
+                    ? `${key}_total_wip`
                     : `${key}_total_lots`;
             return sum + Number(item[field] || 0);
         }, 0);
@@ -69,7 +66,7 @@ const WIPTrend = () => {
     const [selectedWorkWeek, setSelectedWorkWeek] = useState([]);
     const [tempSelectedWorkWeek, setTempSelectedWorkWeek] = useState([]);
 
-    const [selectedTotal, setSelectedTotal] = useState("quantity");
+    const [selectedTotal, setSelectedTotal] = useState("wip");
     const [isTrendByPackageVisible, setIsTrendByPackageVisible] =
         useState(false);
     const [selectedPackageName, setSelectedPackageName] = useState(null);
@@ -117,7 +114,7 @@ const WIPTrend = () => {
     const endpoints = {
         overall: "api.wip.overall",
         overallByPackage: "api.wip.overallByPackage",
-        summary: "api.wip.quantityLotTotals",
+        summary: "api.wip.wipLotTotals",
     };
 
     const {
@@ -202,7 +199,7 @@ const WIPTrend = () => {
         if (e.target.checked) {
             setSelectedTotal("lots");
         } else {
-            setSelectedTotal("quantity");
+            setSelectedTotal("wip");
         }
     };
 
@@ -265,21 +262,20 @@ const WIPTrend = () => {
         );
     }, [isAllPLsSelected, activePLs, plSummed, allPackages]);
 
-    const sortKeys =
-        selectedTotal === "quantity" ? ["total_quantity"] : ["total_lots"];
+    const sortKeys = selectedTotal === "wip" ? ["total_wip"] : ["total_lots"];
 
     // data={sortObjectArray(summaryWipData?.data || [], {
     //                     keys: ["total_lots"],
     //                     order: "desc",
     //                     compute:
-    //                         selectedTotal === "quantity" ? compute : null,
+    //                         selectedTotal === "wip" ? compute : null,
     //                 })}
     const sortedAllPackageFilteredData = useMemo(
         () =>
             sortObjectArray(filteredData, {
                 keys: sortKeys,
                 order: "desc",
-                // compute: selectedTotal === "quantity" ? compute : null,
+                // compute: selectedTotal === "wip" ? compute : null,
                 compute,
             }),
         [filteredData, sortKeys, compute]
@@ -403,7 +399,7 @@ const WIPTrend = () => {
 
             <div className="w-full p-4 mt-4 border border-base-content/10 rounded-lg bg-base-300">
                 <h1 className="text-base divider divider-start">
-                    Total Quantity Graph
+                    Total wip Graph
                 </h1>
 
                 <div className="flex flex-wrap w-full space-x-4">
@@ -420,7 +416,7 @@ const WIPTrend = () => {
                     <div className="divider divider-horizontal"></div>
 
                     <div className="flex items-center space-x-2">
-                        <div>Total Quantity</div>
+                        <div>Total wip</div>
                         <input
                             type="checkbox"
                             checked={selectedTotal === "lots"}
@@ -449,8 +445,8 @@ const WIPTrend = () => {
                         isLoading={isOverallSummaryWipLoading}
                         errorMessage={overallSummaryWipErrorMessage}
                         bars={
-                            selectedTotal === "quantity"
-                                ? summaryWipPLBarsQuantity
+                            selectedTotal === "wip"
+                                ? summaryWipPLBarswip
                                 : summaryWipPLBarsLots
                         }
                         visibleBars={factoryVisibleBars}
@@ -476,19 +472,19 @@ const WIPTable = ({ data }) => {
             key: "F1",
             pl1: "total_f1_pl1",
             pl6: "total_f1_pl6",
-            total: "f1_total_quantity",
+            total: "f1_total_wip",
         },
         {
             key: "F2",
             pl1: "total_f2_pl1",
             pl6: "total_f2_pl6",
-            total: "f2_total_quantity",
+            total: "f2_total_wip",
         },
         {
             key: "F3",
             pl1: "total_f3_pl1",
             pl6: "total_f3_pl6",
-            total: "f3_total_quantity",
+            total: "f3_total_wip",
         },
     ];
 
@@ -500,7 +496,7 @@ const WIPTable = ({ data }) => {
         (sum, row) => sum + (data?.[row.pl6] || 0),
         0
     );
-    const overallTotal = data?.total_quantity || 0;
+    const overallTotal = data?.total_wip || 0;
 
     return (
         <table className="table w-full rounded-lg">

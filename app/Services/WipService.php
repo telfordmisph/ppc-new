@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\TrendAggregationTrait;
 use App\Repositories\PackageGroupRepository;
 use App\Repositories\F3PackageNamesRepository;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Exception;
 
 class WipService
@@ -157,36 +159,36 @@ class WipService
   public function getOverallWip($startDate, $endDate, $useWorkweek, $workweek)
   {
     // return response()->json([
-    //   'f1_total_quantity' => 0,
-    //   'f2_total_quantity' => 0,
-    //   'f3_total_quantity' => 0,
+    //   'f1_total_wip' => 0,
+    //   'f2_total_wip' => 0,
+    //   'f3_total_wip' => 0,
     //   'total_f1_pl1' => 0,
     //   'total_f1_pl6' => 0,
     //   'total_f2_pl1' => 0,
     //   'total_f2_pl6' => 0,
     //   'total_f3_pl1' => 0,
     //   'total_f3_pl6' => 0,
-    //   'total_quantity' => 0,
+    //   'total_wip' => 0,
     //   'status' => 'success',
     //   'message' => 'Data retrieved successfully'
     // ]);
 
     $f1Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f1_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f1_total_wip');
     $f1Query = $this->f1f2WipRepo->f1Filters($f1Query, ['GTREEL'], WipConstants::REEL_EXCLUDED_STATIONS_F1_OVERALL, 'wip');
 
     $f1Query = $this->applyDateOrWorkweekFilter($f1Query, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f1QueryResult = $f1Query->first();
 
     $f2Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f2_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f2_total_wip');
     $f2Query = $this->f1f2WipRepo->applyF2Filters($f2Query, WipConstants::EXCLUDED_STATIONS_F2, 'wip');
 
     $f2Query = $this->applyDateOrWorkweekFilter($f2Query, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f2QueryResult = $f2Query->first();
 
     $f1pl6Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f1pl6_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f1pl6_total_wip');
     $f1pl6Query = $this->f1f2WipRepo->f1Filters($f1pl6Query, ['GTREEL'], WipConstants::REEL_EXCLUDED_STATIONS_F1_PL, 'wip');
     $f1pl6Query = $this->f1f2WipRepo->joinPL($f1pl6Query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
 
@@ -197,7 +199,7 @@ class WipService
     $f1pl6QueryResult = $f1pl6Query->first();
 
     $f1pl1Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f1pl1_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f1pl1_total_wip');
     $f1pl1Query = $this->f1f2WipRepo->f1Filters($f1pl1Query, ['GTREEL'], WipConstants::REEL_EXCLUDED_STATIONS_F1_PL, 'wip');
     $f1pl1Query = $this->f1f2WipRepo->joinPL($f1pl1Query, WipConstants::SPECIAL_PART_NAMES, 'PL1');
 
@@ -205,7 +207,7 @@ class WipService
     $f1pl1QueryResult = $f1pl1Query->first();
 
     $f2pl6Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f2pl6_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f2pl6_total_wip');
     $f2pl6Query = $this->f1f2WipRepo->applyF2Filters($f2pl6Query, WipConstants::EWAN_PROCESS, 'wip');
     $f2pl6Query = $this->f1f2WipRepo->joinPL($f2pl6Query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
 
@@ -213,7 +215,7 @@ class WipService
     $f2pl6QueryResult = $f2pl6Query->first();
 
     $f2pl1Query = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('SUM(wip.Qty) AS f2pl1_total_quantity');
+      ->selectRaw('SUM(wip.Qty) AS f2pl1_total_wip');
     $f2pl1Query = $this->f1f2WipRepo->applyF2Filters($f2pl1Query, WipConstants::EXCLUDED_STATIONS_F2, 'wip');
     $f2pl1Query = $this->f1f2WipRepo->joinPL($f2pl1Query, WipConstants::SPECIAL_PART_NAMES, 'PL1');
 
@@ -221,38 +223,38 @@ class WipService
     $f2pl1QueryResult = $f2pl1Query->first();
 
     $f3Total = $this->f3WipRepo->baseF3Query()
-      ->selectRaw("SUM(f3.Qty) AS f3_total_quantity");
+      ->selectRaw("SUM(f3.Qty) AS f3_total_wip");
 
     $f3Total = $this->applyDateOrWorkweekFilter($f3Total, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
     $f3PlTotals = $this->f3WipRepo->baseF3Query(true)
       ->selectRaw("
-          SUM(CASE WHEN plref.production_line = 'PL1' THEN f3.Qty ELSE 0 END) AS f3pl1_total_quantity,
-          SUM(CASE WHEN plref.production_line = 'PL6' THEN f3.Qty ELSE 0 END) AS f3pl6_total_quantity
+          SUM(CASE WHEN plref.production_line = 'PL1' THEN f3.Qty ELSE 0 END) AS f3pl1_total_wip,
+          SUM(CASE WHEN plref.production_line = 'PL6' THEN f3.Qty ELSE 0 END) AS f3pl6_total_wip
       ");
 
     $f3PlTotals = $this->applyDateOrWorkweekFilter($f3PlTotals, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate)
       ->first();
 
-    $f3TotalQty = (int) $f3Total->f3_total_quantity;
+    $f3TotalQty = (int) $f3Total->f3_total_wip;
 
-    $f1Total = (int) ($f1QueryResult->f1_total_quantity ?? 0);
-    $f2Total = (int) ($f2QueryResult->f2_total_quantity ?? 0);
+    $f1Total = (int) ($f1QueryResult->f1_total_wip ?? 0);
+    $f2Total = (int) ($f2QueryResult->f2_total_wip ?? 0);
 
     $grandTotal = $f1Total + $f2Total + $f3TotalQty;
 
     return response()->json([
-      'f1_total_quantity' => $f1Total,
-      'f2_total_quantity' => $f2Total,
-      'f3_total_quantity' => $f3TotalQty,
-      'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_quantity,
-      'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_quantity,
-      'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_quantity,
-      'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_quantity,
-      'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_quantity,
-      'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_quantity,
-      'total_quantity' => $grandTotal,
+      'f1_total_wip' => $f1Total,
+      'f2_total_wip' => $f2Total,
+      'f3_total_wip' => $f3TotalQty,
+      'total_f1_pl1' => (int) $f1pl1QueryResult->f1pl1_total_wip,
+      'total_f1_pl6' => (int) $f1pl6QueryResult->f1pl6_total_wip,
+      'total_f2_pl1' => (int) $f2pl1QueryResult->f2pl1_total_wip,
+      'total_f2_pl6' => (int) $f2pl6QueryResult->f2pl6_total_wip,
+      'total_f3_pl1' => (int) $f3PlTotals->f3pl1_total_wip,
+      'total_f3_pl6' => (int) $f3PlTotals->f3pl6_total_wip,
+      'total_wip' => $grandTotal,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);
@@ -262,9 +264,9 @@ class WipService
   // private function getOverallTrend($packageName, $period, $startDate, $endDate, $workweek, $trendType, $aggregateColumns)
   // {
   //   $context = $trendType === 'wip' ? 'wip' : 'out';
-  //   $type = $aggregateColumns === 'quantity' || $aggregateColumns === 'quantity-lot'
+  //   $type = $aggregateColumns === 'wip' || $aggregateColumns === 'wip-lot'
   //     ? $aggregateColumns
-  //     : 'quantity-lot';
+  //     : 'wip-lot';
 
   //   $f1f2Query = $this->getFactoryTrend(
   //     "F1F2",
@@ -323,7 +325,7 @@ class WipService
     //     $endDate,
     //     workweeks: $workweek,
     //     dateColumn: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
-    //     aggregateColumns: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['quantity-lot']
+    //     aggregateColumns: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['wip-lot']
     //   )->get();
     // }
 
@@ -356,43 +358,43 @@ class WipService
       ->where('wip.Date_Loaded', "<", $endDate)
       ->where('wip.Station', 'GTTRES_T');
 
-    $result->f1_total_quantity = (clone $fBaseQuery)
+    $result->f1_total_wip = (clone $fBaseQuery)
       ->where(fn($q) => $this->f1f2WipRepo->applyF1Filters($q, WipConstants::F1_EXCLUDED_PLANT, 'wip'))
       ->sum('QTY');
 
-    $result->f2_total_quantity = (clone $fBaseQuery)
+    $result->f2_total_wip = (clone $fBaseQuery)
       ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, [], 'wip'))
       ->sum('QTY');
 
-    $result->total_quantity = $result->f1_total_quantity + $result->f2_total_quantity;
+    $result->total_wip = $result->f1_total_wip + $result->f2_total_wip;
 
-    $result->f1pl1_total_quantity = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL1')
+    $result->f1pl1_total_wip = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL1')
       ->where(fn($q) => $this->f1f2WipRepo->applyF1Filters($q, WipConstants::F1_EXCLUDED_PLANT, 'wip'))
       ->sum('Qty');
 
-    $result->f2pl1_total_quantity = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL1')
+    $result->f2pl1_total_wip = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL1')
       ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, [], 'wip'))
       ->sum('Qty');
 
-    $result->f1pl6_total_quantity = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL6')
+    $result->f1pl6_total_wip = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL6')
       ->where(fn($q) => $this->f1f2WipRepo->applyF1Filters($q, WipConstants::F1_EXCLUDED_PLANT, null))
       ->sum('Qty');
 
-    $result->f2pl6_total_quantity = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL6')
+    $result->f2pl6_total_wip = $this->f1f2WipRepo->joinPL((clone $fBaseQuery), WipConstants::SPECIAL_PART_NAMES, 'PL6')
       ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, [], 'wip'))
       ->sum('Qty');
 
 
     return response()->json([
-      'total_quantity' => (int) $result->total_quantity,
-      'f1_total_quantity' => (int) $result->f1_total_quantity,
-      'f2_total_quantity' => (int) $result->f2_total_quantity,
-      'total_f1_pl1' => (int) $result->f1pl1_total_quantity,
-      'total_f1_pl6' => (int) $result->f1pl6_total_quantity,
-      'total_f2_pl1' => (int) $result->f2pl1_total_quantity,
-      'total_f2_pl6' => (int) $result->f2pl6_total_quantity,
-      'total_pl1' => (int) $result->f1pl1_total_quantity + (int) $result->f2pl1_total_quantity,
-      'total_pl6' => (int) $result->f1pl6_total_quantity + (int) $result->f2pl6_total_quantity,
+      'total_wip' => (int) $result->total_wip,
+      'f1_total_wip' => (int) $result->f1_total_wip,
+      'f2_total_wip' => (int) $result->f2_total_wip,
+      'total_f1_pl1' => (int) $result->f1pl1_total_wip,
+      'total_f1_pl6' => (int) $result->f1pl6_total_wip,
+      'total_f2_pl1' => (int) $result->f2pl1_total_wip,
+      'total_f2_pl6' => (int) $result->f2pl6_total_wip,
+      'total_pl1' => (int) $result->f1pl1_total_wip + (int) $result->f2pl1_total_wip,
+      'total_pl6' => (int) $result->f1pl6_total_wip + (int) $result->f2pl6_total_wip,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);
@@ -403,7 +405,7 @@ class WipService
     switch ($chartStatus) {
       case 'all':
         $query = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots')
+          ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_wip, COUNT(DISTINCT Lot_Id) AS total_lots')
           ->where('wip.Station', 'GTTRES_T')
           // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
           ->where('wip.Date_Loaded', ">=", $startDate)
@@ -421,12 +423,12 @@ class WipService
         }
 
         $query->groupBy('PACKAGE')
-          ->orderByDesc('total_quantity');
+          ->orderByDesc('total_wip');
         break;
 
       case 'F1':
         $query = DB::table(self::F1F2_TABLE . ' as wip')
-          ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_quantity, COUNT(DISTINCT Lot_Id) AS total_lots')
+          ->selectRaw('wip.Package_Name AS PACKAGE, SUM(Qty) AS total_wip, COUNT(DISTINCT Lot_Id) AS total_lots')
           ->where('wip.Station', 'GTTRES_T')
           // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
           ->where('wip.Date_Loaded', ">=", $startDate)
@@ -434,7 +436,7 @@ class WipService
         $query->where(fn($q) => $this->f1f2WipRepo->applyF1Filters($q, WipConstants::F1_EXCLUDED_PLANT, 'wip'));
 
         $query->groupBy('PACKAGE')
-          ->orderByDesc('total_quantity');
+          ->orderByDesc('total_wip');
         break;
 
       case 'F2':
@@ -442,7 +444,7 @@ class WipService
       case 'PL1':
       case 'PL6':
         $query = DB::table('ppc_pickupdb')
-          ->selectRaw('ppc_pickupdb.PACKAGE AS PACKAGE, SUM(QTY) AS total_quantity, COUNT(DISTINCT LOTID) AS total_lots')
+          ->selectRaw('ppc_pickupdb.PACKAGE AS PACKAGE, SUM(QTY) AS total_wip, COUNT(DISTINCT LOTID) AS total_lots')
           ->join('ppc_partnamedb as partname', 'ppc_pickupdb.PARTNAME', '=', 'partname.Partname')
           // ->whereBetween('ppc_pickupdb.DATE_CREATED', [$startDate, $endDate]);
           ->where('ppc_pickupdb.DATE_CREATED', ">=", $startDate)
@@ -455,15 +457,15 @@ class WipService
         }
 
         $query->groupBy('PACKAGE')
-          ->orderByDesc('total_quantity');
+          ->orderByDesc('total_wip');
         break;
 
       default:
         $query = DB::table('ppc_pickupdb')
-          ->selectRaw('PACKAGE AS PACKAGE, SUM(QTY) AS total_quantity, COUNT(DISTINCT LOTID) AS total_lots')
+          ->selectRaw('PACKAGE AS PACKAGE, SUM(QTY) AS total_wip, COUNT(DISTINCT LOTID) AS total_lots')
           ->whereDate('DATE_CREATED', now())
           ->groupBy('PACKAGE')
-          ->orderByDesc('total_quantity');
+          ->orderByDesc('total_wip');
         break;
     }
 
@@ -485,8 +487,8 @@ class WipService
     $baseQuery = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw(
         $includePL
-          ? 'wip.Package_Name, plref.production_line as PL, SUM(wip.Qty) AS total_quantity, COUNT(DISTINCT wip.Lot_Id) as total_lots'
-          : 'wip.Package_Name, SUM(wip.Qty) AS total_quantity, COUNT(DISTINCT wip.Lot_Id) as total_lots'
+          ? 'wip.Package_Name, plref.production_line as PL, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) as total_lots'
+          : 'wip.Package_Name, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) as total_lots'
       );
 
     if ($includePL) {
@@ -517,8 +519,8 @@ class WipService
     $f3Query = $this->applyDateOrWorkweekFilter($f3Query, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3Query = $f3Query->selectRaw(
       $includePL
-        ? 'f3_pkg.package_name as Package_Name, plref.production_line as PL, SUM(f3.qty) AS total_quantity, COUNT(DISTINCT f3.lot_number) AS total_lots'
-        : 'f3_pkg.package_name as Package_Name, SUM(f3.qty) AS total_quantity, COUNT(DISTINCT f3.lot_number) AS total_lots'
+        ? 'f3_pkg.package_name as Package_Name, plref.production_line as PL, SUM(f3.qty) AS total_wip, COUNT(DISTINCT f3.lot_number) AS total_lots'
+        : 'f3_pkg.package_name as Package_Name, SUM(f3.qty) AS total_wip, COUNT(DISTINCT f3.lot_number) AS total_lots'
     );
     if ($includePL) {
       $f3Query->groupBy('f3_pkg.package_name', 'plref.production_line');
@@ -544,9 +546,9 @@ class WipService
       ->select(
         'f1.Package_Name as Package_Name',
         $includePL ? 'f1.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_quantity, 0) as f1_total_quantity'),
-        DB::raw('COALESCE(f2.total_quantity, 0) as f2_total_quantity'),
-        DB::raw('COALESCE(f3.total_quantity, 0) as f3_total_quantity'),
+        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
+        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
+        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
         DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
         DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
         DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
@@ -564,9 +566,9 @@ class WipService
       ->select(
         'f2.Package_Name as Package_Name',
         $includePL ? 'f2.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_quantity, 0) as f1_total_quantity'),
-        DB::raw('COALESCE(f2.total_quantity, 0) as f2_total_quantity'),
-        DB::raw('COALESCE(f3.total_quantity, 0) as f3_total_quantity'),
+        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
+        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
+        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
         DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
         DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
         DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
@@ -582,9 +584,9 @@ class WipService
       ->select(
         'f3.Package_Name as Package_Name',
         $includePL ? 'f3.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_quantity, 0) as f1_total_quantity'),
-        DB::raw('COALESCE(f2.total_quantity, 0) as f2_total_quantity'),
-        DB::raw('COALESCE(f3.total_quantity, 0) as f3_total_quantity'),
+        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
+        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
+        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
         DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
         DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
         DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
@@ -593,14 +595,14 @@ class WipService
     $lfcspQuery = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw(
         $includePL
-          ? "'LFCSP' AS Package_Name, 'PL1' AS PL, SUM(wip.Qty) AS total_quantity, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
-          : "'LFCSP' AS Package_Name, SUM(wip.Qty) AS total_quantity, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
+          ? "'LFCSP' AS Package_Name, 'PL1' AS PL, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
+          : "'LFCSP' AS Package_Name, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
       )
       ->whereIn('wip.Part_Name', WipConstants::SPECIAL_PART_NAMES);
     $lfcspQuery = $this->f1f2WipRepo->f1Filters($lfcspQuery, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip');
 
     $lfcspQuery = $lfcspQuery->groupBy($includePL ? [DB::raw("'LFCSP'"), DB::raw("'PL1'")] : [DB::raw("'LFCSP'")]);
-    // ->orderByDesc('total_quantity');
+    // ->orderByDesc('total_wip');
     $lfcspQuery = $this->applyDateOrWorkweekFilter($lfcspQuery, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
 
     $lfcspLeft = DB::table(DB::raw("({$lfcspQuery->toSql()}) as f1"))
@@ -612,9 +614,9 @@ class WipService
       ->select(
         'f1.Package_Name as Package_Name',
         $includePL ? 'f1.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_quantity, 0) as f1_total_quantity'),
-        DB::raw('COALESCE(f2.total_quantity, 0) as f2_total_quantity'),
-        DB::raw('COALESCE(f3.total_quantity, 0) as f3_total_quantity'),
+        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
+        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
+        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
         DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
         DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
         DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
@@ -636,23 +638,23 @@ class WipService
       ->select(
         'Package_Name',
         $includePL ? 'PL' : DB::raw("'N/A' as PL"),
-        DB::raw('MAX(f1_total_quantity) as f1_total_quantity'),
-        DB::raw('MAX(f2_total_quantity) as f2_total_quantity'),
-        DB::raw('MAX(f3_total_quantity) as f3_total_quantity'),
-        DB::raw('(MAX(f1_total_quantity) + MAX(f2_total_quantity) + MAX(f3_total_quantity)) as total_quantity'),
+        DB::raw('MAX(f1_total_wip) as f1_total_wip'),
+        DB::raw('MAX(f2_total_wip) as f2_total_wip'),
+        DB::raw('MAX(f3_total_wip) as f3_total_wip'),
+        DB::raw('(MAX(f1_total_wip) + MAX(f2_total_wip) + MAX(f3_total_wip)) as total_wip'),
         DB::raw('MAX(f1_total_lots) as f1_total_lots'),
         DB::raw('MAX(f2_total_lots) as f2_total_lots'),
         DB::raw('MAX(f3_total_lots) as f3_total_lots'),
         DB::raw('(MAX(f1_total_lots) + MAX(f2_total_lots) + MAX(f3_total_lots)) as total_lots')
       )
       ->groupBy($includePL ? ['Package_Name', 'PL'] : ['Package_Name'])
-      ->orderByDesc('total_quantity');
+      ->orderByDesc('total_wip');
 
     Log::info("results: " . SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
 
     $results = $results->get();
 
-    $totalQuantity = $results->sum('total_quantity');
+    $totalwip = $results->sum('total_wip');
 
     // =====================================================================
     //  RESPONSE
@@ -660,7 +662,7 @@ class WipService
     return response()->json([
       'status' => 'success',
       'message' => 'Highly optimized data retrieved successfully',
-      'total_quantity' => $totalQuantity,
+      'total_wip' => $totalwip,
       'data' => $results,
     ]);
   }
@@ -729,7 +731,7 @@ class WipService
           $startDate,
           $endDate,
           "wip.Date_Loaded",
-          ['SUM(wip.Qty)' => "{$type}_total_quantity"],
+          ['SUM(wip.Qty)' => "{$type}_total_wip"],
           ['plref.production_line'],
           $workweek
         );
@@ -1035,36 +1037,36 @@ class WipService
     // throw new Exception("test");
     $result = new \stdClass();
 
-    $result->total_quantity = $this->pickUpRepo->getTotalQuantity($startDate, $endDate);
+    $result->total_wip = $this->pickUpRepo->getTotalQuantity($startDate, $endDate);
 
     foreach (WipConstants::FACTORIES as $factory) {
-      $key = strtolower($factory) . '_total_quantity';
+      $key = strtolower($factory) . '_total_wip';
       $result->{$key} = $this->pickUpRepo->getFactoryTotalQuantityRanged($factory, $startDate, $endDate);
     }
 
     foreach (WipConstants::FACTORIES as $factory) {
       foreach (WipConstants::PRODUCTION_LINES as $pl) {
-        $key = strtolower($factory) . strtolower(string: $pl) . '_total_quantity';
+        $key = strtolower($factory) . strtolower(string: $pl) . '_total_wip';
         $result->{$key} = $this->pickUpRepo->getFactoryPlTotalQuantity($factory, $pl, $startDate, $endDate);
       }
     }
 
-    $pl1_total_quantity = (int) $result->f1pl1_total_quantity + (int) $result->f2pl1_total_quantity + (int) $result->f3pl1_total_quantity;
-    $pl6_total_quantity = (int) $result->f1pl6_total_quantity + (int) $result->f2pl6_total_quantity + (int) $result->f3pl6_total_quantity;
+    $pl1_total_wip = (int) $result->f1pl1_total_wip + (int) $result->f2pl1_total_wip + (int) $result->f3pl1_total_wip;
+    $pl6_total_wip = (int) $result->f1pl6_total_wip + (int) $result->f2pl6_total_wip + (int) $result->f3pl6_total_wip;
 
     return response()->json([
-      'total_quantity'    => (int) $result->total_quantity,
-      'f1_total_quantity' => (int) $result->f1_total_quantity,
-      'f2_total_quantity' => (int) $result->f2_total_quantity,
-      'f3_total_quantity' => (int) $result->f3_total_quantity,
-      'total_f1_pl1'      => (int) $result->f1pl1_total_quantity,
-      'total_f1_pl6'      => (int) $result->f1pl6_total_quantity,
-      'total_f2_pl1'      => (int) $result->f2pl1_total_quantity,
-      'total_f2_pl6'      => (int) $result->f2pl6_total_quantity,
-      'total_f3_pl1'      => (int) $result->f3pl1_total_quantity,
-      'total_f3_pl6'      => (int) $result->f3pl6_total_quantity,
-      'total_pl1'         => $pl1_total_quantity,
-      'total_pl6'         => $pl6_total_quantity,
+      'total_wip'    => (int) $result->total_wip,
+      'f1_total_wip' => (int) $result->f1_total_wip,
+      'f2_total_wip' => (int) $result->f2_total_wip,
+      'f3_total_wip' => (int) $result->f3_total_wip,
+      'total_f1_pl1'      => (int) $result->f1pl1_total_wip,
+      'total_f1_pl6'      => (int) $result->f1pl6_total_wip,
+      'total_f2_pl1'      => (int) $result->f2pl1_total_wip,
+      'total_f2_pl6'      => (int) $result->f2pl6_total_wip,
+      'total_f3_pl1'      => (int) $result->f3pl1_total_wip,
+      'total_f3_pl6'      => (int) $result->f3pl6_total_wip,
+      'total_pl1'         => $pl1_total_wip,
+      'total_pl6'         => $pl6_total_wip,
       'status'            => 'success',
       'message'           => 'Data retrieved successfully',
     ]);
@@ -1091,8 +1093,8 @@ class WipService
     ];
 
     $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Package_Name as package_name'];
-    $aggregateColumnsF1 = WipConstants::FACTORY_AGGREGATES['F1']['wip']['quantity'];
-    $aggregateColumnsF2 = WipConstants::FACTORY_AGGREGATES['F2']['wip']['quantity'];
+    $aggregateColumnsF1 = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip'];
+    $aggregateColumnsF2 = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip'];
 
     $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1);
     // Log::info($trends['f1_trend']->toSql());
@@ -1142,6 +1144,72 @@ class WipService
     ]);
   }
 
+  public function downloadAllFactoriesRawXlsx($packageName, $startDate, $endDate)
+  {
+    $spreadsheet = new Spreadsheet();
+
+    // Fetch raw rows for each factory
+    $f1Rows = $this->f1f2WipRepo->getTrend('F1', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
+    $f2Rows = $this->f1f2WipRepo->getTrend('F2', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
+    $f3Rows = $this->f3WipRepo->getTrend($packageName, null, $startDate, $endDate, null, false);
+
+    // Log::info("Raw WIP by package: " . json_encode($f1Rows));
+    // Log::info("Raw WIP by package: " . json_encode($f2Rows));
+    // Log::info("Raw WIP by package: " . json_encode($f3Rows));
+
+    // Helper to add a sheet
+    $addSheet = function ($rows, $title, $spreadsheet, $sheetIndex) {
+      if ($rows->isEmpty()) {
+        return $sheetIndex;
+      }
+
+      $sheet = $sheetIndex === 0 ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
+      $sheet->setTitle($title);
+
+      // Write headers
+      $columns = array_keys((array) $rows->first());
+      $sheet->fromArray($columns, null, 'A1');
+
+      // Write data
+      $data = $rows->map(fn($row) => (array) $row)->toArray();
+      $sheet->fromArray($data, null, 'A2');
+
+      return $sheetIndex + 1;
+    };
+
+    $sheetIndex = 0;
+    $sheetIndex = $addSheet($f1Rows, 'F1', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f2Rows, 'F2', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f3Rows, 'F3', $spreadsheet, $sheetIndex);
+
+    if ($sheetIndex === 0) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'No data found for any factory.'
+      ]);
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    // $spreadsheet = new Spreadsheet();
+    // $writer = new Xlsx($spreadsheet);
+    $writer->setPreCalculateFormulas(false);
+
+    $fileName = "raw_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His') . ".xlsx";
+
+    $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+    $writer->save($tempFile);
+
+    $headers = [
+      'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ];
+
+    $response = response()->download($tempFile, $fileName, $headers);
+    ob_end_clean();
+
+    return $response->deleteFileAfterSend(true);
+  }
+
+
   public function getPackagePickUpSummary($chartStatus, $startDate, $endDate)
   {
     $results = $this->pickUpRepo->getPackageSummary($chartStatus, $startDate, $endDate);
@@ -1160,6 +1228,7 @@ class WipService
     $f3Packages = $this->f3packageNamesRepo->getAllPackageNames();
 
     $all = array_values(array_unique(array_merge($f1f2Packages, WipConstants::SPECIAL_FILTER_VALUE, $f3Packages)));
+
 
     return array_map('strtoupper', $this->uniqueNormalized($all));
   }

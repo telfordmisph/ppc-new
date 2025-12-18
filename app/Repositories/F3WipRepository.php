@@ -36,19 +36,57 @@ class F3WipRepository
     $this->packageGroupRepo = $packageGroupRepo;
   }
 
-  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks)
+  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
     $query = $this->baseF3Query();
 
-    $query = $this->applyTrendAggregation(
-      $query,
-      $period,
-      $startDate,
-      $endDate,
-      'f3.date_loaded',
-      ['SUM(f3.qty)' => 'total_quantity'],
-      workweeks: $workweeks
-    );
+    if ($aggregate) {
+      $query = $this->applyTrendAggregation(
+        $query,
+        $period,
+        $startDate,
+        $endDate,
+        'f3.date_loaded',
+        ['SUM(f3.qty)' => 'total_wip'],
+        workweeks: $workweeks
+      );
+    } else {
+      // No aggregation: just apply date filter
+      $query->where('f3.date_loaded', '>=', $startDate)
+        ->where('f3.date_loaded', '<', $endDate);
+
+      $query->select([
+        "f3.running_ct",
+        "f3.date_received",
+        "f3.packing_list_srf",
+        "f3.po_number",
+        "f3.machine_number",
+        "f3.part_number",
+        "f3.package_code",
+        "f3.lot_number",
+        "f3.process_req",
+        "f3.qty",
+        "f3.good",
+        "f3.rej",
+        "f3.res",
+        "f3.date_commit",
+        "f3.actual_date_time",
+        "f3.status",
+        "f3.do_number",
+        "f3.remarks",
+        "f3.doable",
+        "f3.focus_group",
+        "f3.gap_analysis",
+        "f3.cycle_time",
+        "f3.imported_by",
+        "f3.date_loaded",
+        "f3.modified_at",
+        "f3.modified_by",
+        'f3_pkg.package_name'
+      ]);
+    }
+
+
 
     $query = $this->filterByPackageName($query, $packageName, 'f3_pkg.package_name');
 
@@ -58,6 +96,7 @@ class F3WipRepository
 
     return $results;
   }
+
 
   public function insertCustomer(array $data)
   {

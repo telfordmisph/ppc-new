@@ -41,7 +41,7 @@ export default function PickupBarChart({
                     <Legend />
                     <Bar
                         yAxisId="left"
-                        dataKey="total_quantity"
+                        dataKey="total_wip"
                         fill={"var(--color-f1color)"}
                         radius={4}
                     />
