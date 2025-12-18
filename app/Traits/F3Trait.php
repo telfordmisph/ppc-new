@@ -16,6 +16,39 @@ trait F3Trait
   public const PACKAGES_TABLE = "f3_package_names";
   public const RAW_PACKAGES = "f3_raw_packages";
   private const PPC_TABLE = "ppc_productionline_packagereference";
+  private const EXTERNAL_FILE_HEADERS = [
+    "f3.running_ct",
+    "f3.date_received",
+    "f3.packing_list_srf",
+    "f3.po_number",
+    "f3.machine_number",
+    "f3.part_number",
+    "f3.package_code",
+    'f3_pkg.package_name',
+    "raw.raw_package",
+    "raw.lead_count",
+    "raw.dimension",
+    "f3.lot_number",
+    "f3.process_req",
+    "f3.qty",
+    "f3.good",
+    "f3.rej",
+    "f3.res",
+    "f3.date_commit",
+    "f3.actual_date_time",
+    "f3.status",
+    "f3.do_number",
+    "f3.remarks",
+    "f3.doable",
+    "f3.focus_group",
+    "f3.gap_analysis",
+    "f3.cycle_time",
+    "f3.imported_by",
+    "f3.date_loaded",
+    "f3.modified_at",
+    "f3.modified_by",
+  ];
+
   public function getExistingRecords()
   {
     if (!isset($this->table)) {

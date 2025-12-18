@@ -1152,6 +1152,10 @@ class WipService
     $f1Rows = $this->f1f2WipRepo->getTrend('F1', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
     $f2Rows = $this->f1f2WipRepo->getTrend('F2', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
     $f3Rows = $this->f3WipRepo->getTrend($packageName, null, $startDate, $endDate, null, false);
+    $f1OutRows = $this->f1f2OutRepo->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false);
+    $f2OutRows = $this->f1f2OutRepo->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false);
+
+    $f3OutRows = $this->f3OutRepo->getOverallTrend($packageName, null, $startDate, $endDate, null, false);
 
     // Log::info("Raw WIP by package: " . json_encode($f1Rows));
     // Log::info("Raw WIP by package: " . json_encode($f2Rows));
@@ -1178,9 +1182,12 @@ class WipService
     };
 
     $sheetIndex = 0;
-    $sheetIndex = $addSheet($f1Rows, 'F1', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f2Rows, 'F2', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f3Rows, 'F3', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f1Rows, 'F1 Wip', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f2Rows, 'F2 Wip', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f3Rows, 'F3 Wip', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f1OutRows, 'F1 Out', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f2OutRows, 'F2 Out', $spreadsheet, $sheetIndex);
+    $sheetIndex = $addSheet($f3OutRows, 'F3 Out', $spreadsheet, $sheetIndex);
 
     if ($sheetIndex === 0) {
       return response()->json([

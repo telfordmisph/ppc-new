@@ -97,9 +97,10 @@ const WipOutTrendByPackage = ({
         const formattedEnd = format(endDate, "yyyy-MM-dd");
 
         download(route("api.download.factoryWipOutTrendRaw"), {
-            package_name: selectedPackageNames.join(","),
-            start_date: formattedStart,
-            end_date: formattedEnd,
+            packageName: selectedPackageNames.join(","),
+            period: selectPeriod,
+            offsetDays: selectedOffsetPeriod,
+            lookBack: selectedLookBack,
         });
     };
 

@@ -307,7 +307,7 @@ class F1F2WipRepository
     if ($aggregateColumns === false) {
       // just apply date filters
       $dateColumn = WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'];
-      $query->where($dateColumn, '>=', $startDate)
+      $query == $query->where($dateColumn, '>=', $startDate)
         ->where($dateColumn, '<', $endDate);
       return $query;
     }

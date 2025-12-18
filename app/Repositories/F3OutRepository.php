@@ -34,46 +34,51 @@ class F3OutRepository
     $this->packageGroupRepo = $packageGroupRepo;
     $this->packageFilterService = $packageFilterService;
   }
-
-  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks)
+  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
-    $query = $this->baseF3Query(type: 'out');
+    $query = $this->baseF3Query(type: 'out'); // 'out' instead of default 'wip'
 
-    $query = $this->applyTrendAggregation(
-      $query,
-      $period,
-      $startDate,
-      $endDate,
-      'f3.date_loaded',
-      ['SUM(f3.qty)' => 'total_outs'],
-      workweeks: $workweeks
-    );
-    $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
+    if ($aggregate) {
+      $query = $this->applyTrendAggregation(
+        $query,
+        $period,
+        $startDate,
+        $endDate,
+        'f3.date_loaded',
+        ['SUM(f3.qty)' => 'total_outs'], // aggregate by outs
+        workweeks: $workweeks
+      );
 
-    $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
+      $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
+      $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
 
-    // Log::info("F3 Out Overall Trend Query: " . SqlDebugHelper::prettify($unionQuery->toSql(), $unionQuery->getBindings()));
+      $results = DB::query()
+        ->fromSub($query, 'combined');
+      foreach ($groupByOrderBy as $col) {
+        $results->orderBy($col);
+      }
 
-    $results = DB::query()
-      ->fromSub($query, 'combined');
-    foreach ($groupByOrderBy as $col) {
-      $results->orderBy($col);
+      $results = $results->orderByDesc('total_outs')
+        ->get();
+
+      $trends['overall_trend'] = $results;
+      $trends['f3_trend'] = $results;
+
+      return WipTrendParser::parseTrendsByPeriod($trends);
+    } else {
+      // No aggregation: just apply date filter
+      $query->where('f3.date_loaded', '>=', $startDate)
+        ->where('f3.date_loaded', '<', $endDate);
+
+      $query->select(self::EXTERNAL_FILE_HEADERS);
+      $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
+
+      $results = DB::query()
+        ->fromSub($query, 'combined')
+        ->get();
+
+      return $results;
     }
-
-    Log::info("F3 Outttt Overall Trend Query: " . SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
-
-    $results = $results->orderByDesc('total_outs')
-      ->get();
-
-
-
-    Log::info("Results: " . json_encode($results));
-
-    $trends['overall_trend'] = $results;
-    $trends['f3_trend'] = $results;
-
-
-    return WipTrendParser::parseTrendsByPeriod($trends);
   }
 
   public function insertManyCustomer(array $data)

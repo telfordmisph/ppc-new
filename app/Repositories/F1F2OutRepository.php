@@ -150,7 +150,7 @@ class F1F2OutRepository
     return null;
   }
 
-  private function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks)
+  public function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
     $query = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
     $query = $this->filterByPackageName($query, $packageName, $factories);
@@ -159,15 +159,20 @@ class F1F2OutRepository
       $query->where($filter);
     }
 
-    $query = $this->applyTrendAggregation(
-      $query,
-      $period,
-      $startDate,
-      $endDate,
-      'wip.date_loaded',
-      ['SUM(wip.qty)' => 'total_outs'],
-      workweeks: $workweeks
-    );
+    if ($aggregate) {
+      $query = $this->applyTrendAggregation(
+        $query,
+        $period,
+        $startDate,
+        $endDate,
+        'wip.date_loaded',
+        ['SUM(wip.qty)' => 'total_outs'],
+        workweeks: $workweeks
+      );
+    } else {
+      $query->where('wip.date_loaded', '>=', $startDate)
+        ->where('wip.date_loaded', '<', $endDate);
+    }
 
     Log::info("F1F2 Out Overall Trend Query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
     Log::info("F1F2 Out Overall Trend Query: " . $query->toSql());
