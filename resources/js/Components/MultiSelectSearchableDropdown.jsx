@@ -171,7 +171,7 @@ const MultiSelectSearchableDropdown = memo(
                                     e.preventDefault();
                                     setSearchInput("");
                                 }}
-                                className="absolute right-2 z-100 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
                             >
                                 <FaTimes />
                             </button>
@@ -211,7 +211,7 @@ const MultiSelectSearchableDropdown = memo(
                             filteredOptions.map((option) => (
                                 <label
                                     key={option.value}
-                                    className="flex z-100 items-center whitespace-nowrap cursor-pointer px-2 py-1 hover:bg-primary/10 rounded"
+                                    className="flex items-center whitespace-nowrap cursor-pointer px-2 py-1 hover:bg-primary/10 rounded"
                                 >
                                     <input
                                         type={
@@ -274,7 +274,7 @@ const MultiSelectSearchableDropdown = memo(
                     {!disableTooltip && (
                         <Tooltip
                             id={tooltipID}
-                            className="custom-tooltip z-1000000"
+                            className="custom-tooltip"
                             hidden={selectedOptions.length === 0}
                         >
                             <div className="text-left p-2 flex flex-wrap gap-1">
@@ -302,7 +302,7 @@ const MultiSelectSearchableDropdown = memo(
                     </div>
                     <ul
                         tabIndex="-1"
-                        className="dropdown-content w-100 z-50 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
+                        className="dropdown-content w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
                     >
                         {isLoading ? (
                             <div className="flex justify-center gap-2 my-auto">
