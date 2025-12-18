@@ -124,6 +124,7 @@ const PickupDashboard = () => {
                         showOuts: false,
                         showCapacities: false,
                     }}
+                    downloadRoute={"api.download.factoryPickUpTrendRaw"}
                 />
             </div>
 

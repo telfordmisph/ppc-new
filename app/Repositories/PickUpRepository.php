@@ -16,6 +16,10 @@ class PickUpRepository
 {
   use TrendAggregationTrait;
   protected $analogCalendarRepo;
+  private const aggregateColumn = [
+    'SUM(pickup.QTY)' => 'total_wip',
+    'COUNT(DISTINCT pickup.LOTID)' => 'total_lots'
+  ];
 
   public function __construct(
     AnalogCalendarRepository $analogCalendarRepo,
@@ -136,25 +140,15 @@ class PickUpRepository
       ->orderByDesc('total_wip')
       ->get();
   }
-  public function getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks)
+
+  public function getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
-    $trends = [];
+    $query = DB::table(self::TABLE_NAME . ' as pickup');
+    $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
+      ->where('part.Factory', strtoupper($factory));
+    $query = $this->filterByPackageName($query, $packageName, $factory);
 
-    $aggregateColumn = [
-      'SUM(pickup.QTY)' => 'total_wip',
-      'COUNT(DISTINCT pickup.LOTID)' => 'total_lots'
-    ];
-
-    foreach (WipConstants::FACTORIES as $factory) {
-      $key = strtolower($factory) . '_trend';
-      $query = DB::table(self::TABLE_NAME . ' as pickup');
-      // ->select(['pickup.PACKAGE']);
-      $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
-        ->where('part.Factory', strtoupper($factory));
-      // $query->groupBy('pickup.PACKAGE')
-      // ->orderByDesc('total_wip');
-
-      $query = $this->filterByPackageName($query, $packageName, $factory);
+    if ($aggregate) {
       $query = $this->applyTrendAggregation(
         $query,
         $period,
@@ -162,12 +156,36 @@ class PickUpRepository
         $endDate,
         'pickup.DATE_CREATED',
         // * If in the future this get complicated, apply WipConstants::FACTORY_AGGREGATES
-        $aggregateColumn,
+        self::aggregateColumn,
         ['pickup.PACKAGE as package'],
         workweeks: $workweeks,
       );
+    } else {
+      $query == $query->where('pickup.DATE_CREATED', '>=', $startDate)
+        ->where('pickup.DATE_CREATED', '<', $endDate);
 
+      $query = $query->select(
+        "pickup.PARTNAME",
+        "pickup.LOTID",
+        "pickup.QTY",
+        "pickup.PACKAGE",
+        "pickup.LC",
+        "pickup.ADDED_BY",
+        "pickup.DATE_CREATED",
+      );
+    }
 
+    return $query;
+  }
+
+  public function getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks)
+  {
+    $trends = [];
+
+    foreach (WipConstants::FACTORIES as $factory) {
+      $key = strtolower($factory) . '_trend';
+
+      $query = $this->getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks);
       $trends[$key] = $query;
     }
 
@@ -175,17 +193,17 @@ class PickUpRepository
 
     $f1Sub = DB::query()
       ->fromSub(clone($trends['f1_trend']), 'f1')
-      ->select([...$groupByOrderBy, ...$aggregateColumn])
+      ->select([...$groupByOrderBy, ...self::aggregateColumn])
       ->selectRaw("'F1' as factory, package");
 
     $f2Sub = DB::query()
       ->fromSub(clone($trends['f2_trend']), 'f2')
-      ->select([...$groupByOrderBy, ...$aggregateColumn])
+      ->select([...$groupByOrderBy, ...self::aggregateColumn])
       ->selectRaw("'F2' as factory, package");
 
     $f3Sub = DB::query()
       ->fromSub(clone($trends['f3_trend']), 'f3')
-      ->select([...$groupByOrderBy, ...$aggregateColumn])
+      ->select([...$groupByOrderBy, ...self::aggregateColumn])
       ->selectRaw("'F3' as factory, package");
 
     Log::info(SqlDebugHelper::prettify($f1Sub->toSql(), $f1Sub->getBindings()));
@@ -201,7 +219,7 @@ class PickUpRepository
     // $combined = $f3Sub;
 
     $finalResults = DB::query()->fromSub($combined, 'wip_union')
-      ->select([...$groupByOrderBy, ...$aggregateColumn, 'factory']);
+      ->select([...$groupByOrderBy, ...self::aggregateColumn, 'factory']);
     foreach ([...$groupByOrderBy, 'factory'] as $col) {
       $finalResults->orderBy($col);
     }

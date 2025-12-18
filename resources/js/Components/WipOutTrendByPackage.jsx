@@ -29,6 +29,7 @@ const WipOutTrendByPackage = ({
     dataAPI = null,
     showLines = {},
     noChartTable = false,
+    downloadRoute = null,
 }) => {
     const [isChartTableVisible, setIsChartTableVisible] = useState(
         !noChartTable ? true : false
@@ -96,7 +97,7 @@ const WipOutTrendByPackage = ({
         const formattedStart = format(startDate, "yyyy-MM-dd");
         const formattedEnd = format(endDate, "yyyy-MM-dd");
 
-        download(route("api.download.factoryWipOutTrendRaw"), {
+        download(route(downloadRoute), {
             packageName: selectedPackageNames.join(","),
             period: selectPeriod,
             offsetDays: selectedOffsetPeriod,
@@ -335,21 +336,24 @@ const WipOutTrendByPackage = ({
                         )}
                     </button>
 
-                    <button
-                        className="btn btn-accent flex items-center gap-2"
-                        onClick={handleDownloadClick}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <>
-                                <MdFileDownload className="w-5 h-5 animate-bounce" />
-                            </>
-                        ) : (
-                            <>
-                                <MdFileDownload className="w-5 h-5" />
-                            </>
-                        )}
-                    </button>
+                    {downloadRoute && (
+                        <button
+                            className="btn btn-accent flex items-center gap-2"
+                            onClick={handleDownloadClick}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <MdFileDownload className="w-5 h-5 animate-bounce" />
+                                </>
+                            ) : (
+                                <>
+                                    <MdFileDownload className="w-5 h-5" />
+                                </>
+                            )}
+                        </button>
+                    )}
+
                     {errorMessage && (
                         <p style={{ color: "red" }}>{errorMessage}</p>
                     )}

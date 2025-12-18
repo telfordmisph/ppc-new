@@ -223,8 +223,19 @@ class WipController extends Controller
 
     $packageName = $this->parsePackageName($request);
     $periodParams = $this->parsePeriodParams($request);
-    Log::info("getWipOutTrendRawDatagetWipOutTrendRawDatagetWipOutTrendRawData ..." . json_encode($periodParams));
     return $this->wipService->downloadAllFactoriesRawXlsx(
+      $packageName,
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+    );
+  }
+
+  public function getPickUpTrendRawData(Request $request)
+  {
+
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    return $this->wipService->downloadPickUpRawXlsx(
       $packageName,
       $periodParams['startDate'],
       $periodParams['endDate'],

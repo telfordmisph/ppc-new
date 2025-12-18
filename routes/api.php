@@ -97,6 +97,7 @@ Route::middleware([ApiAuthMiddleware::class])
 
     Route::prefix('download')->name('api.download.')->group(function () {
       Route::get('/factoryWipOutTrendRaw', [WipController::class, 'getWipOutTrendRawData'])->name('factoryWipOutTrendRaw');
+      Route::get('/factoryPickUpTrendRaw', [WipController::class, 'getPickUpTrendRawData'])->name('factoryPickUpTrendRaw');
     });
   });
 

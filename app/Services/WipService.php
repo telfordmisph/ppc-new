@@ -14,6 +14,7 @@ use App\Helpers\WipTrendParser;
 use App\Helpers\MergeAndAggregate;
 use App\Constants\WipConstants;
 use App\Traits\NormalizeStringTrait;
+use App\Traits\ExportTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +30,7 @@ class WipService
 {
   use TrendAggregationTrait;
   use NormalizeStringTrait;
+  use ExportTrait;
   protected $analogCalendarRepo;
   protected $capacityRepo;
   protected $f1f2WipRepo;
@@ -1146,76 +1148,60 @@ class WipService
 
   public function downloadAllFactoriesRawXlsx($packageName, $startDate, $endDate)
   {
-    $spreadsheet = new Spreadsheet();
+    $sheets = [
+      'F1 Wip' => $this->f1f2WipRepo
+        ->getTrend('F1', $packageName, null, $startDate, $endDate, null, ['*'], false)
+        ->get(),
 
-    // Fetch raw rows for each factory
-    $f1Rows = $this->f1f2WipRepo->getTrend('F1', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
-    $f2Rows = $this->f1f2WipRepo->getTrend('F2', $packageName, null, $startDate, $endDate, workweeks: null, selectColumns: ['*'], aggregateColumns: false)->get();
-    $f3Rows = $this->f3WipRepo->getTrend($packageName, null, $startDate, $endDate, null, false);
-    $f1OutRows = $this->f1f2OutRepo->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false);
-    $f2OutRows = $this->f1f2OutRepo->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false);
+      'F2 Wip' => $this->f1f2WipRepo
+        ->getTrend('F2', $packageName, null, $startDate, $endDate, null, ['*'], false)
+        ->get(),
 
-    $f3OutRows = $this->f3OutRepo->getOverallTrend($packageName, null, $startDate, $endDate, null, false);
+      'F3 Wip' => $this->f3WipRepo
+        ->getTrend($packageName, null, $startDate, $endDate, null, false),
 
-    // Log::info("Raw WIP by package: " . json_encode($f1Rows));
-    // Log::info("Raw WIP by package: " . json_encode($f2Rows));
-    // Log::info("Raw WIP by package: " . json_encode($f3Rows));
+      'F1 Out' => $this->f1f2OutRepo
+        ->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false),
 
-    // Helper to add a sheet
-    $addSheet = function ($rows, $title, $spreadsheet, $sheetIndex) {
-      if ($rows->isEmpty()) {
-        return $sheetIndex;
-      }
+      'F2 Out' => $this->f1f2OutRepo
+        ->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false),
 
-      $sheet = $sheetIndex === 0 ? $spreadsheet->getActiveSheet() : $spreadsheet->createSheet();
-      $sheet->setTitle($title);
-
-      // Write headers
-      $columns = array_keys((array) $rows->first());
-      $sheet->fromArray($columns, null, 'A1');
-
-      // Write data
-      $data = $rows->map(fn($row) => (array) $row)->toArray();
-      $sheet->fromArray($data, null, 'A2');
-
-      return $sheetIndex + 1;
-    };
-
-    $sheetIndex = 0;
-    $sheetIndex = $addSheet($f1Rows, 'F1 Wip', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f2Rows, 'F2 Wip', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f3Rows, 'F3 Wip', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f1OutRows, 'F1 Out', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f2OutRows, 'F2 Out', $spreadsheet, $sheetIndex);
-    $sheetIndex = $addSheet($f3OutRows, 'F3 Out', $spreadsheet, $sheetIndex);
-
-    if ($sheetIndex === 0) {
-      return response()->json([
-        'status' => 'error',
-        'message' => 'No data found for any factory.'
-      ]);
-    }
-
-    $writer = new Xlsx($spreadsheet);
-    // $spreadsheet = new Spreadsheet();
-    // $writer = new Xlsx($spreadsheet);
-    $writer->setPreCalculateFormulas(false);
-
-    $fileName = "raw_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His') . ".xlsx";
-
-    $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-    $writer->save($tempFile);
-
-    $headers = [
-      'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'F3 Out' => $this->f3OutRepo
+        ->getOverallTrend($packageName, null, $startDate, $endDate, null, false),
     ];
 
-    $response = response()->download($tempFile, $fileName, $headers);
-    ob_end_clean();
+    $fileName = "raw_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His');
 
-    return $response->deleteFileAfterSend(true);
+    $response = $this->exportRawXlsx($sheets, $fileName  . ".xlsx");
+
+    return $response ?? response()->json([
+      'status' => 'error',
+      'message' => 'No data found for any factory.'
+    ]);
   }
 
+  public function downloadPickUpRawXlsx($packageName, $startDate, $endDate)
+  {
+    $sheets = [
+      'F1 PickUp' => $this->pickUpRepo
+        ->getBaseTrend('F1', $packageName, null, $startDate, $endDate, null, false)->get(),
+
+      'F2 PickUp' => $this->pickUpRepo
+        ->getBaseTrend('F2', $packageName, null, $startDate, $endDate, null, false)->get(),
+
+      'F3 PickUp' => $this->pickUpRepo
+        ->getBaseTrend('F3', $packageName, null, $startDate, $endDate, null, false)->get(),
+    ];
+
+    $fileName = "pickup_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His');
+
+    $response = $this->exportRawXlsx($sheets, $fileName  . ".xlsx");
+
+    return $response ?? response()->json([
+      'status' => 'error',
+      'message' => 'No data found for any factory.'
+    ]);
+  }
 
   public function getPackagePickUpSummary($chartStatus, $startDate, $endDate)
   {

@@ -102,6 +102,7 @@ export default function Dashboard({ tableData, tableFilters }) {
                         showOuts: true,
                         showCapacities: true,
                     }}
+                    downloadRoute={"api.download.factoryWipOutTrendRaw"}
                 />
             </div>
 

@@ -174,9 +174,6 @@ class F1F2OutRepository
         ->where('wip.date_loaded', '<', $endDate);
     }
 
-    Log::info("F1F2 Out Overall Trend Query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
-    Log::info("F1F2 Out Overall Trend Query: " . $query->toSql());
-
     return $query->get();
   }
 
