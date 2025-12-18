@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, memo } from "react";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { BiSelectMultiple } from "react-icons/bi";
+import { useId } from "react";
 
 const MultiSelectSearchableDropdown = memo(
     function MultiSelectSearchableDropdown({
@@ -27,6 +28,10 @@ const MultiSelectSearchableDropdown = memo(
         disableSelectedContainer = false,
         returnKey = "value",
     }) {
+        const id = useId();
+        const popoverId = `popover-${id}`;
+        const anchorName = `--anchor-${id}`;
+
         const [selectedOptions, setSelectedOptions] = useState(
             defaultSelectedOptions
         );
@@ -147,7 +152,7 @@ const MultiSelectSearchableDropdown = memo(
             );
         };
 
-        const tooltipID = `${itemName}-tooltip`;
+        const tooltipID = `${id}-${itemName}-tooltip`;
 
         const content = (showSearchInput = true) => (
             <>
@@ -289,12 +294,12 @@ const MultiSelectSearchableDropdown = memo(
                             </div>
                         </Tooltip>
                     )}
+                    {/* // fix this */}
                     <button
                         data-tooltip-id={tooltipID}
-                        popoverTarget="popover-multiSelectSearchableDropdown"
+                        popoverTarget={popoverId}
                         style={{
-                            anchorName:
-                                "--anchor-multiSelectSearchableDropdown",
+                            anchorName: anchorName,
                         }}
                         className={clsx(
                             "btn border border-base-content/20",
@@ -304,11 +309,10 @@ const MultiSelectSearchableDropdown = memo(
                         {getButtonLabel()}
                     </button>
                     <ul
-                        id="popover-multiSelectSearchableDropdown"
+                        id={popoverId}
                         popover="auto"
                         style={{
-                            positionAnchor:
-                                "--anchor-multiSelectSearchableDropdown",
+                            positionAnchor: anchorName,
                         }}
                         className="dropdown-content w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
                     >
