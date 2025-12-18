@@ -267,8 +267,8 @@ const MultiSelectSearchableDropdown = memo(
             return (
                 <div
                     className="dropdown"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => e.stopPropagation()}
+                    // onMouseDown={(e) => e.stopPropagation()}
+                    // onClick={(e) => e.stopPropagation()}
                     onFocus={onFocus}
                 >
                     {!disableTooltip && (
@@ -301,7 +301,7 @@ const MultiSelectSearchableDropdown = memo(
                         {getButtonLabel()}
                     </div>
                     <ul
-                        onMouseDown={(e) => e.preventDefault()}
+                        tabIndex="-1"
                         className="dropdown-content w-100 z-50 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
                     >
                         {isLoading ? (
@@ -320,8 +320,8 @@ const MultiSelectSearchableDropdown = memo(
         return (
             <dialog
                 ref={modalRef}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
+                // onMouseDown={(e) => e.stopPropagation()}
+                // onClick={(e) => e.stopPropagation()}
                 onFocus={onFocus}
                 id="multiSelectSearchableDropdown-modal"
                 className="modal"

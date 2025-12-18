@@ -236,7 +236,7 @@ const WIPStation = () => {
                     <span className="join-item btn btn-disabled font-medium">
                         Period
                     </span>
-                    <div className="dropdown dropdown-hover">
+                    <div className="dropdown">
                         <div
                             tabIndex={0}
                             role="button"

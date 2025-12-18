@@ -227,10 +227,10 @@ const WipOutTrendByPackage = ({
                     />
 
                     <div className="join items-center">
-                        <span className="pr-2 btn btn-disabled join-item bg-red-500">
+                        <span className="pr-2 btn btn-disabled join-item">
                             period
                         </span>
-                        <div className="dropdown dropdown-hover">
+                        <div className="dropdown">
                             <div
                                 tabIndex={0}
                                 role="button"
