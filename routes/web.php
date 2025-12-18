@@ -12,6 +12,7 @@ use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Middleware\AuthMiddleware;
+use App\Http\Controllers\F3Controller;
 
 $app_name = env('APP_NAME', '');
 Route::redirect('/', "/$app_name");
@@ -27,11 +28,15 @@ Route::post("/remove-admin", [AdminController::class, 'removeAdmin'])->name('rem
 Route::patch("/change-admin-role", [AdminController::class, 'changeAdminRole'])->name('changeAdminRole');
 
 Route::prefix('import')->name('import.')->group(function () {
-    Route::get("/f1f2", [AutoImportController::class, 'renderF1F2ImportPage'])->name('index');
-    Route::get("/f3", [AutoImportController::class, 'renderF3ImportPage'])->name('f3.index');
+    Route::middleware(AuthMiddleware::class . ':import_f1f2_wip')->group(function () {
+        Route::get("/f1f2", [AutoImportController::class, 'renderF1F2ImportPage'])->name('index');
+    });
+    Route::middleware(AuthMiddleware::class . ':import_f3')->group(function () {
+        Route::get("/f3", [AutoImportController::class, 'renderF3ImportPage'])->name('f3.index');
+    });
 });
 
-Route::middleware(AuthMiddleware::class . ':import_f1f2_wip')->group(function () {
+Route::middleware(AuthMiddleware::class . ':dashboard')->group(function () {
     Route::get("/", [DashboardController::class, 'index'])->name('dashboard');
 });
 
@@ -44,7 +49,7 @@ Route::middleware(AuthMiddleware::class . ':pickup_trend')->group(function () {
 Route::middleware(AuthMiddleware::class . ':residual_trend')->group(function () {
     Route::get("/residual-dashboard", [DashboardController::class, 'residualDashboardIndex'])->name('residual.dashboard');
 });
-Route::middleware(AuthMiddleware::class . ':import_f1f2_wip')->group(function () {
+Route::middleware(AuthMiddleware::class . ':wip_station')->group(function () {
     Route::get("/wip-station", [App\Http\Controllers\WipController::class, 'wipStation'])->name('wipTable');
 });
 
@@ -75,7 +80,19 @@ Route::prefix('package')->name('package.group.')->group(function () {
     });
 });
 
+Route::prefix('f3-wip-out')->name('f3.')->group(function () {
+    Route::prefix('list')->name('list.')->group(function () {
+        Route::middleware(AuthMiddleware::class . ':f3_read')->group(function () {
+            Route::get('/', [F3Controller::class, 'index'])->name('index');
+        });
+        Route::middleware(AuthMiddleware::class . ':f3_edit')->group(function () {
+            Route::get('/{id}/edit', [F3Controller::class, 'upsert'])->name('edit');
+        });
+    });
+});
+
 Route::prefix('f3')->name('f3.')->group(function () {
+
     Route::prefix('package')->name('package.')->group(function () {
         Route::middleware(AuthMiddleware::class . ':f3_package_read')->group(function () {
             Route::get('/', [F3PackageNamesController::class, 'index'])->name('index');

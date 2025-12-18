@@ -108,6 +108,13 @@ export default function NavLinks() {
             />
 
             <SidebarLink
+                href={route("f3.list.index")}
+                label="F3 Wip & Out List"
+                icon={<LuList className="w-4 h-4" />}
+                notifications={false}
+            />
+
+            <SidebarLink
                 href={route("partname.index")}
                 label="Partname List"
                 icon={<LuList className="w-4 h-4" />}

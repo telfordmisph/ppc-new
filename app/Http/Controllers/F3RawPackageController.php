@@ -135,6 +135,16 @@ class F3RawPackageController extends Controller
       ->paginate($perPage)
       ->withQueryString();
 
+    if ($request->wantsJson()) {
+      return response()->json([
+        'data' => $f3RawPackages->items(),
+        'current_page' => $f3RawPackages->currentPage(),
+        'per_page' => $f3RawPackages->perPage(),
+        'total' => $f3RawPackages->total(),
+        'last_page' => $f3RawPackages->lastPage(),
+      ]);
+    }
+
     return Inertia::render('F3RawPackageList', [
       'f3RawPackages' => $f3RawPackages,
       'search' => $search,

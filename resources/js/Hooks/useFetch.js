@@ -34,6 +34,7 @@ export function useFetch(url, options = {}) {
       const response = await fetch(fetchUrl, {
         method: "GET",
         headers: {
+          "Accept": 'application/json',
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -69,30 +70,51 @@ export function useFetch(url, options = {}) {
     }
   };
 
+
   useEffect(() => {
-    if (auto) {
-      fetchData(params);
-    }
+  if (auto) {
+    fetchData(params);
+  }
 
-    const handleInertiaStart = () => {
-      // 2. Abort the fetch when a new Inertia navigation starts
-      // This will run *before* the component unmounts on navigation.
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
+  // const handleInertiaStart = (event) => {
+  //   // Only abort if the navigation is to a different page
+  //   if (abortControllerRef.current) {
+  //     abortControllerRef.current.abort();
+  //   }
+  // };
+  
+  // const removeListener = router.on('start', handleInertiaStart);
+  
+  // return () => {
+  //   removeListener();
+  //   abortControllerRef.current?.abort();
+  // };
+}, [url, auto]);
+
+  // useEffect(() => {
+  //   if (auto) {
+  //     fetchData(params);
+  //   }
+
+  //   const handleInertiaStart = () => {
+  //     // 2. Abort the fetch when a new Inertia navigation starts
+  //     // This will run *before* the component unmounts on navigation.
+  //     if (abortControllerRef.current) {
+  //       abortControllerRef.current.abort();
+  //     }
+  //   };
     
     
-    const removeInertiaListener = router.on('start', handleInertiaStart); 
-    return () => {
-      removeInertiaListener(); 
-      abortControllerRef.current?.abort();
-    };
+  //   const removeInertiaListener = router.on('start', handleInertiaStart); 
+  //   return () => {
+  //     removeInertiaListener(); 
+  //     abortControllerRef.current?.abort();
+  //   };
 
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, [url, auto]);
+  //   return () => {
+  //     abortControllerRef.current?.abort();
+  //   };
+  // }, [url, auto]);
 
   return {
     data, 

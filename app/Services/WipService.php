@@ -93,7 +93,7 @@ class WipService
       $startDate = Carbon::now()->subDays(25)->startOfDay();
 
       $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
-        ->selectRaw('DATE(date_loaded) AS report_date, SUM(f3_wip.qty) AS f3_wip')
+        ->selectRaw('DATE(date_loaded) AS report_date, SUM(f3.qty) AS f3')
         // ->whereBetween('date_loaded', [$startDate, $endDate])
         ->where('date_loaded', ">=", $startDate)
         ->where('date_loaded', "<", $endDate)
@@ -102,7 +102,7 @@ class WipService
 
       $f3Data = [];
       foreach ($f3DataRaw as $row) {
-        $f3Data[$row->report_date] = (int) $row->f3_wip;
+        $f3Data[$row->report_date] = (int) $row->f3;
       }
 
       $f1Data = DB::table(self::F1F2_TABLE . ' as wip')

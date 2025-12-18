@@ -228,6 +228,7 @@ const WIPStation = () => {
                         prompt="Select packages"
                         contentClassName="w-52 h-70"
                         singleSelect
+                        disableSelectedContainer
                     />
                 </div>
 

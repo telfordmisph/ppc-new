@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\F3RawPackage;
 
 class F3 extends Model
 {
@@ -10,10 +11,10 @@ class F3 extends Model
   public $timestamps = false;
 
   protected $fillable = [
-    'date_loaded',
     'date_received',
     'packing_list_srf',
     'po_number',
+    'running_ct',
     'machine_number',
     'part_number',
     'package_code',
@@ -31,6 +32,12 @@ class F3 extends Model
     'remarks',
     'doable',
     'gap_analysis',
+    'modified_by',
     'cycle_time',
   ];
+
+  public function package()
+  {
+    return $this->belongsTo(F3RawPackage::class, 'package');
+  }
 }

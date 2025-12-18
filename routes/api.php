@@ -10,6 +10,7 @@ use App\Http\Controllers\ImportTraceController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\F3PackageNamesController;
+use App\Http\Controllers\F3Controller;
 use App\Http\Controllers\AnalogCalendarController;
 use App\Http\Middleware\ApiAuthMiddleware;
 
@@ -43,9 +44,14 @@ Route::middleware([ApiAuthMiddleware::class])
     });
 
     Route::prefix('f3-raw-package')->name('api.f3.raw.package.')->group(function () {
+      Route::get('/list', [F3RawPackageController::class, 'index'])->name('index');
       Route::post('/', [F3RawPackageController::class, 'store'])->name('store');
       Route::patch('/{id}', [F3RawPackageController::class, 'update'])->name('update');
       Route::delete('/{id}', [F3RawPackageController::class, 'destroy'])->name('delete');
+    });
+
+    Route::prefix('f3-wip-out')->name('api.f3.')->group(function () {
+      Route::patch('/', [F3Controller::class, 'bulkUpdate'])->name('bulkUpdate');
     });
 
     Route::prefix('f3-package-names')->name('api.f3.package.names.')->group(function () {
