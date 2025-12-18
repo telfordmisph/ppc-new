@@ -292,7 +292,7 @@ const MultiSelectSearchableDropdown = memo(
                     <div
                         data-tooltip-id={tooltipID}
                         role="button"
-                        popoverTarget="popover-period"
+                        popoverTarget="popover-multiSelectSearchableDropdown"
                         style={{ anchorName: "--anchor-period" }}
                         className={clsx(
                             "btn border border-base-content/20",
