@@ -346,6 +346,35 @@ class WipConstants
     'ADXL314WBCPZ-RL',
   ];
 
+  public const IMPORT_PICKUP_EXPECTED_HEADERS = [
+    "PARTNAME" => [
+      "PARTNAME",
+      "part_name",
+      "PART NAME",
+      "partname",
+      "Part Name",
+    ],
+    "LOTID" => [
+      "LOTID",
+      "lot_id",
+      "lotId",
+      "LOT ID",
+    ],
+    "QTY" => [
+      "QTY",
+      "qty",
+      "quantity",
+    ],
+    "PACKAGE" => [
+      "PACKAGE",
+      "package",
+    ],
+    "LC" => [
+      "LC",
+      'lc',
+    ],
+  ];
+
   public const IMPORT_F3_WIP_EXPECTED_HEADERS = [
     'date_loaded' => [
       'date',

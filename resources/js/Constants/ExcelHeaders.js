@@ -17,6 +17,14 @@ export const F1F2_OUTS_HEADERS = [
 'ramp_time',
 ]
 
+export const PICKUP_HEADERS = [
+  "PARTNAME",
+  "LOTID",
+  "QTY",
+  "PACKAGE",
+  "LC",
+]
+
 export const F3_OUTS_HEADERS = [
   'date_loaded',
   "running_ct",

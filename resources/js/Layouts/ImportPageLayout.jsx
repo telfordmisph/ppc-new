@@ -26,13 +26,17 @@ const ImportPageLayout = ({ pageName = "F1/F2", children }) => {
         if (selectedFactory === "F3") {
             router.visit(route("import.f3.index"));
         }
+
+        if (selectedFactory === "PickUp") {
+            router.visit(route("import.pickup.index"));
+        }
     };
 
     return (
         <>
             <h1 className="font-semibold mb-4">Import {pageName} Data</h1>
             <Tabs
-                options={["F1/F2", "F3"]}
+                options={["F1/F2", "F3", "PickUp"]}
                 selectedFactory={selectedFactory}
                 handleFactoryChange={handleFactoryChange}
                 tabClassName={"mb-2"}

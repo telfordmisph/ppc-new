@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Helpers\SqlDebugHelper;
 use App\Helpers\MergeAndAggregate;
 use Carbon\Carbon;
+use App\Models\PickUp;
 
 class PickUpRepository
 {
@@ -243,5 +244,10 @@ class PickUpRepository
       'status' => 'success',
       'message' => 'Data retrieved successfully',
     ]));
+  }
+
+  public function insertMany(array $data)
+  {
+    PickUp::insert($data);
   }
 }

@@ -27,6 +27,11 @@ class AutoImportController extends Controller
         return Inertia::render('Import/F3ImportPage');
     }
 
+    public function renderPickUpImportPage()
+    {
+        return Inertia::render('Import/PickUpImportPage');
+    }
+
     public function autoImportWIP(Request $request)
     {
         $empId = $request->get('emp_id');
@@ -93,6 +98,26 @@ class AutoImportController extends Controller
         $file = $request->file('file');
 
         $result = $this->wipImportService->importF3WIP($empId, $file);
+
+        return response()->json([
+            'status' => $result['status'] ?? 'success',
+            'message' => $result['message'] ?? 'Import completed',
+            'data' => $result['data'] ?? [],
+        ]);
+    }
+
+    public function importPickUp(Request $request)
+    {
+        $user = $request->user();
+        $empId = $request->get('emp_id');
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx|max:10240',
+        ]);
+
+        $file = $request->file('file');
+
+        $result = $this->wipImportService->importPickUp($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

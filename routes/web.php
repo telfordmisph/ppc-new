@@ -34,6 +34,9 @@ Route::prefix('import')->name('import.')->group(function () {
     Route::middleware(AuthMiddleware::class . ':import_f3')->group(function () {
         Route::get("/f3", [AutoImportController::class, 'renderF3ImportPage'])->name('f3.index');
     });
+    // Route::middleware(AuthMiddleware::class . ':import_f3')->group(function () {
+    Route::get("/pickup", [AutoImportController::class, 'renderPickUpImportPage'])->name('pickup.index');
+    // });
 });
 
 Route::middleware(AuthMiddleware::class . ':dashboard')->group(function () {

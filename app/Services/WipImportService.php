@@ -8,6 +8,7 @@ use App\Services\ExcelValidatorService;
 use App\Services\PackageCapacityService;
 use App\Repositories\F3RawPackageRepository;
 use App\Repositories\ImportTraceRepository;
+use App\Repositories\PickUpRepository;
 use App\Traits\ParseDateTrait;
 use App\Constants\WipConstants;
 use App\Repositories\F3OutRepository;
@@ -32,6 +33,7 @@ class WipImportService
   protected $importTraceRepository;
   protected $f1f2WipOutRepository;
   protected $f3WipRepository;
+  protected $pickUpRepository;
   protected $f3OutRepository;
   protected $fileValidator;
   protected $f3RawPackageRepository;
@@ -58,6 +60,7 @@ class WipImportService
   public function __construct(
     F1F2WipRepository $f1f2WipRepository,
     F1F2OutRepository $f1f2WipOutRepository,
+    PickUpRepository $pickUpRepository,
     F3WipRepository $f3WipRepository,
     F3OutRepository $f3OutRepository,
     F3RawPackageRepository $f3RawPackageRepository,
@@ -65,6 +68,7 @@ class WipImportService
     PackageCapacityService $packageCapacityService,
     ExcelValidatorService $fileValidator
   ) {
+    $this->pickUpRepository = $pickUpRepository;
     $this->f1f2WipRepository = $f1f2WipRepository;
     $this->f1f2WipOutRepository = $f1f2WipOutRepository;
     $this->f3WipRepository = $f3WipRepository;
@@ -443,6 +447,62 @@ class WipImportService
     }
 
     return $rowData;
+  }
+
+  public function importPickUp($importedBy = null, $file)
+  {
+    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheetData = $sheet->toArray(null, true, false, false);
+
+    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_PICKUP_EXPECTED_HEADERS);
+
+    if ($headersData['status'] === 'error') {
+      return $headersData;
+    }
+
+    $found_headers = $headersData['found_headers'];
+    $headerRowIndex = $headersData['headerRowIndex'];
+    $map_headers = $headersData['map_headers'];
+
+    $chunks = [];
+    $successCount = 0;
+
+    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+      if ($this->isEmptyRow($row)) {
+        continue;
+      }
+
+      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+      $rowData['ADDED_BY'] = $importedBy;
+
+      $chunks[] = $rowData;
+
+      if (count($chunks) >= self::CHUNK_SIZE) {
+        $resultError = $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
+
+        if ($resultError) return $resultError;
+        $chunks = [];
+      }
+    }
+
+    if (!empty($chunks)) {
+      $resultError = $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
+
+      if ($resultError) return $resultError;
+    }
+
+    $this->importTraceRepository->upsertImport('pickup', $importedBy, $successCount);
+
+    return [
+      'status' => 'success',
+      'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+      'data' => [
+        'total' => $successCount,
+      ]
+    ];
   }
 
   public function importF3WIP($importedBy = null, $file)
