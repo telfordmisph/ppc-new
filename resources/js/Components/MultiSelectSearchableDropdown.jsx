@@ -289,22 +289,27 @@ const MultiSelectSearchableDropdown = memo(
                             </div>
                         </Tooltip>
                     )}
-                    <div
+                    <button
                         data-tooltip-id={tooltipID}
-                        role="button"
                         popoverTarget="popover-multiSelectSearchableDropdown"
-                        style={{ anchorName: "--anchor-period" }}
+                        style={{
+                            anchorName:
+                                "--anchor-multiSelectSearchableDropdown",
+                        }}
                         className={clsx(
                             "btn border border-base-content/20",
                             buttonSelectorClassName
                         )}
                     >
                         {getButtonLabel()}
-                    </div>
+                    </button>
                     <ul
                         id="popover-multiSelectSearchableDropdown"
                         popover="auto"
-                        style={{ positionAnchor: "--anchor-period" }}
+                        style={{
+                            positionAnchor:
+                                "--anchor-multiSelectSearchableDropdown",
+                        }}
                         className="dropdown-content w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
                     >
                         {isLoading ? (
