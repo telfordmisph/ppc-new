@@ -236,30 +236,33 @@ const WIPStation = () => {
                     <span className="join-item btn btn-disabled font-medium">
                         Period
                     </span>
-                    <div className="dropdown">
-                        <div
-                            tabIndex={0}
-                            role="button"
-                            className="join-item btn rounded-r-lg border-base-content/10 w-20"
-                        >
-                            {selectedPeriod}
-                        </div>
-                        <ul
-                            tabIndex="-1"
-                            className="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm"
-                        >
-                            {periodOptions.map((option) => (
-                                <li
-                                    key={option.value}
+
+                    <button
+                        className="join-item btn rounded-r-lg border-base-content/10 w-20"
+                        popoverTarget="popover-period"
+                        style={{ anchorName: "--anchor-period" }}
+                    >
+                        {selectedPeriod}
+                    </button>
+
+                    <ul
+                        className="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
+                        popover="auto"
+                        id="popover-period"
+                        style={{ positionAnchor: "--anchor-period" }}
+                    >
+                        {periodOptions.map((option) => (
+                            <li key={option.value}>
+                                <a
                                     onClick={() => {
                                         handlePeriodSelect(option.value);
                                     }}
                                 >
-                                    <a>{option.label}</a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                                    {option.label}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
 
                 <div
