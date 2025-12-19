@@ -84,7 +84,7 @@ const PackageCapacityList = () => {
                 </tr>
             </thead>
             <tbody>
-                {serverPackageCapacity.map((packageGroup, idx) => (
+                {serverPackageCapacity?.map((packageGroup, idx) => (
                     <tr key={idx}>
                         <td>{packageGroup.package_name}</td>
 
