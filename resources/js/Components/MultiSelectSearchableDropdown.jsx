@@ -4,6 +4,7 @@ import { FaTimes, FaTrash } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { BiSelectMultiple } from "react-icons/bi";
 import { useId } from "react";
+import Pagination from "./Pagination";
 
 const MultiSelectSearchableDropdown = memo(
     function MultiSelectSearchableDropdown({
@@ -27,6 +28,11 @@ const MultiSelectSearchableDropdown = memo(
         modalRef = null,
         disableSelectedContainer = false,
         returnKey = "value",
+        paginated = false,
+        links = null,
+        disableClearSelection = false,
+        currentPage = null,
+        goToPage = () => {},
     }) {
         const id = useId();
         const popoverId = `popover-${id}`;
@@ -154,6 +160,31 @@ const MultiSelectSearchableDropdown = memo(
 
         const tooltipID = `${id}-${itemName}-tooltip`;
 
+        const searchBar = () => (
+            <>
+                <div className="relative w-full mb-2">
+                    <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search..."
+                        className="input input-sm w-full pr-8"
+                    />
+                    {searchInput && (
+                        <button
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                setSearchInput("");
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+                        >
+                            <FaTimes />
+                        </button>
+                    )}
+                </div>
+            </>
+        );
+
         const content = (showSearchInput = true) => (
             <>
                 {prompt && (
@@ -161,39 +192,21 @@ const MultiSelectSearchableDropdown = memo(
                         {prompt}
                     </div>
                 )}
-                {showSearchInput && !disableSearch && (
-                    <div className="relative w-full mb-2">
-                        <input
-                            type="text"
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder="Search..."
-                            className="input input-sm w-full pr-8"
-                        />
-                        {searchInput && (
-                            <button
-                                onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setSearchInput("");
-                                }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
-                            >
-                                <FaTimes />
-                            </button>
-                        )}
-                    </div>
-                )}
+
+                {showSearchInput && searchBar()}
 
                 <div className="flex items-center mb-2 gap-2">
-                    <button
-                        onClick={handleClearSelectionClick}
-                        onMouseDown={(e) => e.preventDefault()}
-                        disabled={!isClearSelectionEnabled}
-                        className="flex items-center gap-2 text-warning w-full px-2 py-1 rounded-lg hover:bg-primary/10 disabled:opacity-50"
-                    >
-                        <FaTrash />
-                        Clear selection
-                    </button>
+                    {!disableClearSelection && (
+                        <button
+                            onClick={handleClearSelectionClick}
+                            onMouseDown={(e) => e.preventDefault()}
+                            disabled={!isClearSelectionEnabled}
+                            className="flex items-center gap-2 text-warning w-full px-2 py-1 rounded-lg hover:bg-primary/10 disabled:opacity-50"
+                        >
+                            <FaTrash />
+                            Clear selection
+                        </button>
+                    )}
                     {!singleSelect && (
                         <button
                             onClick={handleSelectAll}
@@ -265,6 +278,16 @@ const MultiSelectSearchableDropdown = memo(
                         </div>
                     )}
                 </div>
+                {paginated && (
+                    <Pagination
+                        showMeta={false}
+                        links={links}
+                        currentPage={currentPage}
+                        goToPage={goToPage}
+                        filteredTotal={options.length || 0}
+                        contentClassName="bg-base-100 justify-center"
+                    />
+                )}
             </>
         );
 
@@ -353,15 +376,18 @@ const MultiSelectSearchableDropdown = memo(
                         </div>
                     )}
 
-                    {isLoading ? (
-                        <div className="h-120 flex justify-center items-center flex-col gap-2">
-                            <div className="bg-red-500 loading loading-spinner"></div>
-                            <div>loading {itemName}</div>
-                            {!disableSearch && content(true)}
-                        </div>
-                    ) : (
-                        content(true)
-                    )}
+                    <div>
+                        {searchBar()}
+                        {isLoading ? (
+                            <div className="h-120 flex justify-center items-center flex-col gap-2">
+                                <div className="bg-red-500 loading loading-spinner"></div>
+                                <div>loading {itemName}</div>
+                                {/* {!disableSearch && content(true)} */}
+                            </div>
+                        ) : (
+                            content(false)
+                        )}
+                    </div>
                 </div>
 
                 <form method="dialog" className="modal-backdrop">

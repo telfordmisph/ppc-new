@@ -14,6 +14,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import DatePicker from "react-datepicker";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import Pagination from "@/Components/Pagination";
 
 const statusOptions = [
     "Shipped",
@@ -179,6 +180,7 @@ export default function F3List() {
         emp_data,
     } = usePage().props;
 
+    console.log("🚀 ~ F3List ~ serverF3WipAndOut:", serverF3WipAndOut);
     console.log("🚀 ~ F3List ~ emp_data:", emp_data);
 
     const hasFullF3Access = fullF3Roles.some(
@@ -200,7 +202,7 @@ export default function F3List() {
     );
     const [searchedF3RawPackage, setSearchedF3RawPackage] = useState(null);
     const [currentPageF3RawPackage, setCurrentPageF3RawPackage] = useState(1);
-    const perPageF3RawPackage = 25;
+    const perPageF3RawPackage = 50;
 
     const [rowSelection, setRowSelection] = useState({});
     const [selectedRowIndex, setSelectedRowIndex] = useState(null);
@@ -210,6 +212,7 @@ export default function F3List() {
     const [originalData, setOriginalData] = useState({});
     const [showChangeModal, setShowChangeModal] = useState(false);
     const [changesToReview, setChangesToReview] = useState([]);
+    const [f3RawPackageSearchInput, setF3RawPackageSearchInput] = useState("");
 
     const getChanges = () => {
         const changes = [];
@@ -296,6 +299,7 @@ export default function F3List() {
     } = useFetch(route("api.f3.raw.package.index"), {
         auto: false,
     });
+    console.log("🚀 ~ F3List ~ f3RawPackages:", f3RawPackages);
 
     const readOnlyColumns = React.useCallback(
         ({ accessorKey, header, options = {} }) => ({
@@ -740,13 +744,21 @@ export default function F3List() {
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    const goToPage = (page) => {
+    const goToPageF3List = (page) => {
         router.reload({
             data: { search: searchInput, perPage: maxItem, page },
             preserveState: true,
             preserveScroll: true,
         });
         setCurrentPage(page);
+    };
+
+    const goToPageF3RawPackage = (page) => {
+        fetchF3RawPackages({
+            search: f3RawPackageSearchInput,
+            page: page,
+            perPage: perPageF3RawPackage,
+        });
     };
 
     const changeMaxItemPerPage = (maxItem) => {
@@ -798,12 +810,13 @@ export default function F3List() {
         return count;
     }, 0);
 
-    const handleSearchChange = useCallback((searchValue) => {
+    const handleF3RawPackageSearchChange = useCallback((searchValue) => {
         fetchF3RawPackages({
             search: searchValue,
             page: 1,
             perPage: perPageF3RawPackage,
         });
+        setF3RawPackageSearchInput(searchValue);
     }, []);
 
     const columnSizeVars = React.useMemo(() => {
@@ -939,7 +952,7 @@ export default function F3List() {
             <h1 className="text-lg font-semibold">F3 Wip & Out List</h1>
             <MultiSelectSearchableDropdown
                 options={
-                    f3RawPackages?.data?.map((item) => ({
+                    f3RawPackages?.f3RawPackages?.data?.map((item) => ({
                         value: String(item.raw_package),
                         label: String(
                             `${item.f3_package_name?.package_name} : ${item.dimension} : ${item.lead_count}` ||
@@ -958,11 +971,17 @@ export default function F3List() {
                 prompt="Select F3 Raw Package"
                 debounceDelay={500}
                 contentClassName={"w-250 h-120"}
-                onSearchChange={handleSearchChange}
+                onSearchChange={handleF3RawPackageSearchChange}
                 singleSelect
                 disableTooltip
+                disableClearSelection={true}
                 useModal={true}
                 disableSelectedContainer
+                paginated={true}
+                // paginated={false}
+                links={f3RawPackages?.f3RawPackages?.links || null}
+                currentPage={f3RawPackages?.f3RawPackages?.current_page || 1}
+                goToPage={goToPageF3RawPackage}
             />
 
             <div className="">
@@ -1152,65 +1171,15 @@ export default function F3List() {
                         {renderedRows}
                     </div>
 
-                    <div className="flex justify-between w-full mt-4 sticky -bottom-8 bg-base-200 inset-shadow-lg rounded-lg p-2">
-                        <div className="content-center my-2 sticky left-0 text-sm text-gray-600">
-                            {`Showing ${start ?? 0} to ${
-                                end ?? 0
-                            } of ${filteredTotal.toLocaleString()} entries`}
-                            {overallTotal && overallTotal !== filteredTotal
-                                ? ` (filtered from ${overallTotal.toLocaleString()} total entries)`
-                                : ""}
-                        </div>
-                        <div className="join sticky right-0">
-                            {serverF3WipAndOut.links.map((link, index) => {
-                                const page = link.url
-                                    ? parseInt(
-                                          new URL(link.url).searchParams.get(
-                                              "page"
-                                          )
-                                      )
-                                    : currentPage;
-
-                                return (
-                                    <button
-                                        key={index}
-                                        className={`join-item btn ${
-                                            link.active || page === currentPage
-                                                ? "text-white bg-primary"
-                                                : "bg-base-200/50"
-                                        }`}
-                                        dangerouslySetInnerHTML={{
-                                            __html: link.label,
-                                        }}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-
-                                            if (
-                                                Object.keys(editedRows).length >
-                                                0
-                                            ) {
-                                                const confirmed = confirm(
-                                                    "You have unsaved changes. Navigating will discard these changes. Are you sure you want to continue?"
-                                                );
-                                                if (!confirmed) return;
-
-                                                // Discard all edited rows
-                                                setEditedRows({});
-                                                // Optionally reset data to original
-                                                // const originalRows =
-                                                //     Object.values(originalData);
-                                                // setData(originalRows);
-                                            }
-
-                                            if (!link.url) return;
-                                            goToPage(page);
-                                        }}
-                                        disabled={!link.url}
-                                    />
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <Pagination
+                        links={serverF3WipAndOut.links}
+                        currentPage={currentPage}
+                        goToPage={goToPageF3List}
+                        filteredTotal={filteredTotal}
+                        overallTotal={overallTotal}
+                        start={start}
+                        end={end}
+                    />
                 </div>
             </div>
         </div>

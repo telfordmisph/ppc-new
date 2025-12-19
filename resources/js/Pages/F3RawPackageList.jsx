@@ -8,6 +8,7 @@ import { useToast } from "@/Hooks/useToast";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import Tabs from "@/Components/Tabs";
 import { TbAlertCircle } from "react-icons/tb";
+import Pagination from "@/Components/Pagination";
 
 const F3RawPackageList = () => {
     const toast = useToast();
@@ -295,45 +296,16 @@ const F3RawPackageList = () => {
                     </tbody>
                 </table>
 
-                <div className="flex justify-between w-full mt-4">
-                    <div className="content-center my-2 text-sm text-gray-600">
-                        {`Showing ${start ?? 0} to ${
-                            end ?? 0
-                        } of ${filteredTotal.toLocaleString()} entries`}
-                        {overallTotal && overallTotal !== filteredTotal
-                            ? ` (filtered from ${overallTotal.toLocaleString()} total entries)`
-                            : ""}
-                    </div>
-                    <div className="join">
-                        {serverF3RawPackages.links.map((link, index) => {
-                            const page = link.url
-                                ? parseInt(
-                                      new URL(link.url).searchParams.get("page")
-                                  )
-                                : currentPage;
-
-                            return (
-                                <button
-                                    key={index}
-                                    className={`join-item btn ${
-                                        link.active || page === currentPage
-                                            ? "text-white bg-primary"
-                                            : "bg-base-200/50"
-                                    }`}
-                                    dangerouslySetInnerHTML={{
-                                        __html: link.label,
-                                    }}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (!link.url) return;
-                                        goToPage(page);
-                                    }}
-                                    disabled={!link.url}
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
+                <Pagination
+                    links={serverF3RawPackages.links}
+                    currentPage={currentPage}
+                    goToPage={goToPage}
+                    filteredTotal={filteredTotal}
+                    overallTotal={overallTotal}
+                    start={start}
+                    end={end}
+                    contentClassName="bg-base-200"
+                />
             </div>
         </>
     );

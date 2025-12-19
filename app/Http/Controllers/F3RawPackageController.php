@@ -137,11 +137,10 @@ class F3RawPackageController extends Controller
 
     if ($request->wantsJson()) {
       return response()->json([
-        'data' => $f3RawPackages->items(),
-        'current_page' => $f3RawPackages->currentPage(),
-        'per_page' => $f3RawPackages->perPage(),
-        'total' => $f3RawPackages->total(),
-        'last_page' => $f3RawPackages->lastPage(),
+        'f3RawPackages' => $f3RawPackages,
+        'search' => $search,
+        'perPage' => $perPage,
+        'totalEntries' => $totalEntries,
       ]);
     }
 
