@@ -1007,7 +1007,7 @@ export default function F3List() {
                     {/* Header */}
                     <div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
                         <div className="flex justify-between items-center gap-2  pt-4">
-                            <div className="flex gap-2 items-center">
+                            <div className="flex gap-2 sticky left-0 items-center">
                                 <div className="w-70">
                                     <label className="input ">
                                         <svg
@@ -1054,7 +1054,7 @@ export default function F3List() {
                         <div className="flex justify-between items-center gap-2">
                             <div className="flex gap-2 sticky left-0 items-center">
                                 <div className="dropdown dropdown-bottom">
-                                    <div tabIndex={0} className="m-1 btn">
+                                    <div tabIndex={0} className="btn">
                                         {`Show ${maxItem} items`}
                                     </div>
                                     <ul
