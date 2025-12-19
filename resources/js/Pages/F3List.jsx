@@ -15,6 +15,7 @@ import DatePicker from "react-datepicker";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import Pagination from "@/Components/Pagination";
+import { MdSchedule } from "react-icons/md";
 
 const statusOptions = [
     "Shipped",
@@ -751,8 +752,11 @@ export default function F3List() {
         return () => clearTimeout(timer);
     }, [f3SearchInput, f3DateInput]);
 
-    const handleF3DateChange = useCallback((date) => {
-        setF3DateInput(date);
+    const handleF3DateChange = useCallback((event) => {
+        const dateStr = event.target.value;
+        if (!dateStr) return;
+
+        setF3DateInput(dateStr);
     }, []);
 
     const goToPageF3List = (page) => {
@@ -1006,7 +1010,7 @@ export default function F3List() {
                 >
                     {/* Header */}
                     <div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
-                        <div className="flex justify-between items-center gap-2  pt-4">
+                        <div className="flex justify-between items-center gap-2 px-2 pt-4">
                             <div className="flex gap-2 sticky left-0 items-center">
                                 <div className="w-70">
                                     <label className="input ">
@@ -1041,17 +1045,19 @@ export default function F3List() {
                                     </label>
                                 </div>
 
-                                <DatePicker
-                                    className="w-full rounded-lg input"
-                                    placeholderText="Select a date range"
-                                    selected={f3DateInput}
-                                    onChange={handleF3DateChange}
-                                    isClearable
-                                />
+                                <label className="input">
+                                    <MdSchedule className="h-4 w-4" />
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        onChange={handleF3DateChange}
+                                        defaultValue={f3DateInput}
+                                    />
+                                </label>
                             </div>
                         </div>
 
-                        <div className="flex justify-between items-center gap-2">
+                        <div className="flex px-2 justify-between items-center gap-2">
                             <div className="flex gap-2 sticky left-0 items-center">
                                 <div className="dropdown dropdown-bottom">
                                     <div tabIndex={0} className="btn">

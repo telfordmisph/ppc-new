@@ -42,7 +42,6 @@ class WipService
   protected $packageGroupRepo;
 
   protected $f3packageNamesRepo;
-  private const TODAY_WIP_CACHE_KEY = "today_wip";
   private const F1F2_TABLE = "customer_data_wip";
   public function __construct(
     AnalogCalendarRepository $analogCalendarRepo,
@@ -92,7 +91,7 @@ class WipService
 
   public function getTodayWip()
   {
-    return Cache::remember(self::TODAY_WIP_CACHE_KEY, now()->addHours(23), function () {
+    return Cache::remember(WipConstants::TODAY_WIP_CACHE_KEY, now()->addHours(23), function () {
       $endDate = Carbon::now()->endOfDay();
       $startDate = Carbon::now()->subDays(25)->startOfDay();
 

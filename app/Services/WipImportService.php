@@ -185,6 +185,7 @@ class WipImportService
       fclose($handle);
 
       $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer + $successF3);
+      Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
 
       return [
         'status' => 'success',

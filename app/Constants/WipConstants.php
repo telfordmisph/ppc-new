@@ -62,6 +62,7 @@ class WipConstants
   // GT general trias
   // _T telford
   // _B3 special unknown location
+  public const TODAY_WIP_CACHE_KEY = "today_wip";
   public const F3_WIP_STATUSES = ["shipped"];
   public const F3_OUT_STATUSES = [
     "IQA",
