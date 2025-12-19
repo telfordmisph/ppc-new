@@ -199,7 +199,13 @@ const PackageCapacityList = () => {
             />
 
             <div className="border rounded-lg border-base-content/10 p-4">
-                {table}
+                {(serverPackageCapacity?.length ?? 0) === 0 ? (
+                    <p className="italic text-center">
+                        No package capacity yet for the {selectedFactory} yet.
+                    </p>
+                ) : (
+                    table
+                )}
             </div>
         </>
     );

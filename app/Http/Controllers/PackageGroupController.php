@@ -22,16 +22,19 @@ class PackageGroupController extends Controller
   public function index(Request $request)
   {
     $perPage = $request->input('perPage', 50);
+    $factory = $request->input('factory', 'F1');
     $totalEntries = PackageGroup::count();
 
-    $packageGroups = PackageGroup::with('packages')->paginate($perPage);
-    // return response()->json($packageGroups);
+    $packageGroups = PackageGroup::with('packages')
+      ->when($factory, function ($query, $factory) {
+        return $query->where('factory', $factory);
+      })->get();
+
+    Log::info("Package Groups: " . json_encode($packageGroups));
 
     return Inertia::render('PackageGroupList', [
       'packageGroups' => $packageGroups,
-      // 'search' => $search,
-      'perPage' => $perPage,
-      'totalEntries' => $totalEntries,
+      'factory' => $factory,
     ]);
   }
 

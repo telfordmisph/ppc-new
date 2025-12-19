@@ -6,28 +6,17 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { BsInfoCircle } from "react-icons/bs";
 import Modal from "@/Components/Modal";
 import { FaPlus } from "react-icons/fa6";
+import Tabs from "@/Components/Tabs";
 
 const F1F2PackageGroupList = () => {
     const toast = useToast();
 
-    const {
-        packageGroups: serverPackageGroup,
-        search: serverSearch,
-        perPage: serverPerPage,
-        totalEntries,
-    } = usePage().props;
+    const { packageGroups: serverPackageGroup, factory: initialFactory } =
+        usePage().props;
 
-    const start = serverPackageGroup.from;
-    const end = serverPackageGroup.to;
-    const filteredTotal = serverPackageGroup.total;
-    const overallTotal = totalEntries ?? filteredTotal;
     const deleteModalRef = useRef(null);
-    const [searchInput, setSearchInput] = useState(serverSearch || "");
-    const [maxItem, setMaxItem] = useState(serverPerPage || 10);
+    const [selectedFactory, setSelectedFactory] = useState(initialFactory);
     const [selectedPackageGroup, setSelectedPackageGroup] = useState(null);
-    const [currentPage, setCurrentPage] = useState(
-        serverPackageGroup.current_page || 1
-    );
 
     const {
         mutate,
@@ -36,45 +25,19 @@ const F1F2PackageGroupList = () => {
         cancel: mutateCancel,
     } = useMutation();
 
-    useEffect(() => {
-        if (serverSearch === searchInput) return;
+    const handleFactoryChange = (selectedFactory) => {
+        setSelectedFactory(selectedFactory);
 
-        const timer = setTimeout(() => {
-            router.reload({
-                data: { search: searchInput, perPage: maxItem, page: 1 },
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            });
-            setCurrentPage(1);
-        }, 700);
-
-        return () => clearTimeout(timer);
-    }, [searchInput]);
-
-    const goToPage = (page) => {
         router.reload({
-            data: { search: searchInput, perPage: maxItem, page },
+            data: { factory: selectedFactory },
             preserveState: true,
             preserveScroll: true,
-            replace: true,
         });
-        setCurrentPage(page);
-    };
-
-    const changeMaxItemPerPage = (maxItem) => {
-        router.reload({
-            data: { search: searchInput, perPage: maxItem, page: 1 },
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-        setMaxItem(maxItem);
     };
 
     const refresh = () => {
         router.reload({
-            data: { search: searchInput, perPage: maxItem, currentPage },
+            data: { factory: selectedFactory },
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -102,6 +65,42 @@ const F1F2PackageGroupList = () => {
         }
     };
 
+    const warningDetails = (
+        <div className="flex gap-2 flex-col text-xs">
+            <div className="bg-base-300 p-4 rounded-lg">
+                <BsInfoCircle className="inline mb-1 mr-2" />
+                Package names that do not exist here will not display any
+                capacity. Please add them to the package group to view their
+                capacity.
+            </div>
+            <div className="bg-base-300 p-4 rounded-lg">
+                <BsInfoCircle className="inline mb-1 mr-2" />
+                All package names on the
+                <Link
+                    href={route("package.capacity.index")}
+                    className="underline text-secondary px-1"
+                >
+                    Capacity Page
+                </Link>
+                should also appear here, along with their corresponding
+                canonical names in the package_name columns from the database.
+            </div>
+            <div className="bg-base-300 p-4 rounded-lg">
+                <BsInfoCircle className="inline mb-1 mr-2" />
+                Package names are case insensitive. That said, be sure to
+                include all possible variants of the name in the group name.
+                <p className="mt-2">
+                    For example,
+                    <span className="font-semibold"> 150 mils</span>,
+                    <span className="font-semibold"> 150Mils </span>, and
+                    <span className="font-semibold"> 150_MILS </span> are
+                    considered different names. To group them together, both
+                    should be included in the same package group.
+                </p>
+            </div>
+        </div>
+    );
+
     return (
         <>
             <div className="flex items-center justify-between text-center mb-4">
@@ -113,40 +112,16 @@ const F1F2PackageGroupList = () => {
                     <FaPlus /> Add Package Group
                 </Link>
             </div>
-            <div className="flex gap-2 flex-col text-xs">
-                <div className="bg-base-300 p-4 rounded-lg">
-                    <BsInfoCircle className="inline mb-1 mr-2" />
-                    Package names that do not exist here will not display any
-                    capacity. Please add them to the package group to view their
-                    capacity.
-                </div>
-                <div className="bg-base-300 p-4 rounded-lg">
-                    <BsInfoCircle className="inline mb-1 mr-2" />
-                    All package names on the
-                    <Link
-                        href={route("package.capacity.index")}
-                        className="underline text-secondary px-1"
-                    >
-                        Capacity Page
-                    </Link>
-                    should also appear here, along with their corresponding
-                    canonical names in the package_name columns from the
-                    database.
-                </div>
-                <div className="bg-base-300 p-4 rounded-lg">
-                    <BsInfoCircle className="inline mb-1 mr-2" />
-                    Package names are case insensitive. That said, be sure to
-                    include all possible variants of the name in the group name.
-                    <p className="mt-2">
-                        For example,
-                        <span className="font-semibold"> 150 mils</span>,
-                        <span className="font-semibold"> 150Mils </span>, and
-                        <span className="font-semibold"> 150_MILS </span> are
-                        considered different names. To group them together, both
-                        should be included in the same package group.
-                    </p>
-                </div>
-            </div>
+
+            {warningDetails}
+
+            <Tabs
+                options={["F1", "F2", "F3"]}
+                selectedFactory={selectedFactory}
+                handleFactoryChange={handleFactoryChange}
+                tabClassName={"ml-2 py-4"}
+            />
+
             <table className="table w-full table-zebra table-auto table-xs mt-4">
                 <thead>
                     <tr>
@@ -157,7 +132,7 @@ const F1F2PackageGroupList = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {serverPackageGroup.data.map((packageGroup) => (
+                    {serverPackageGroup?.map((packageGroup) => (
                         <tr key={packageGroup.id}>
                             <td>{packageGroup.id}</td>
                             <td className="uppercase">
@@ -184,9 +159,6 @@ const F1F2PackageGroupList = () => {
                                 <Link
                                     href={route("package.group.edit", {
                                         id: packageGroup.id,
-                                        search: searchInput,
-                                        perPage: maxItem,
-                                        page: currentPage,
                                     })}
                                     className="btn btn-ghost btn-sm btn-primary"
                                 >
