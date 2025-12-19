@@ -117,9 +117,11 @@ class F3Controller extends Controller
   {
     $search = $request->input('search', '');
     $perPage = $request->input('perPage', 25);
-    $dateLoaded = $request->input('dateLoaded'); // expects 'YYYY-MM-DD' format or null
+    $dateLoaded = $request->input('dateLoaded', null); // expects 'YYYY-MM-DD' format or null
     $statuses = $request->input('statuses');
     $totalEntries = F3::count();
+
+    Log::info("dateloaded", [$dateLoaded]);
 
     $f3WipAndOut = F3::query()
       ->with('package.f3_package_name')
@@ -134,9 +136,13 @@ class F3Controller extends Controller
           });
         });
       })
+
       ->when($dateLoaded, function ($query, $dateLoaded) {
-        $query->whereDate('date_loaded', $dateLoaded);
+        $start = date('Y-m-d 00:00:00', strtotime($dateLoaded));
+        $end = date('Y-m-d 23:59:59', strtotime($dateLoaded));
+        $query->whereBetween('date_loaded', [$start, $end]);
       })
+
       ->when(is_array($statuses) && count($statuses) > 0, function ($query) use ($statuses) {
         $query->whereIn('status', $statuses);
       })

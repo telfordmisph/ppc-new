@@ -176,6 +176,7 @@ export default function F3List() {
         f3WipAndOut: serverF3WipAndOut,
         search: serverSearch,
         perPage: serverPerPage,
+        dateLoaded: serverDateLoaded,
         totalEntries,
         emp_data,
     } = usePage().props;
@@ -194,7 +195,8 @@ export default function F3List() {
     const filteredTotal = serverF3WipAndOut.total;
     const overallTotal = totalEntries ?? filteredTotal;
     const [data, setData] = React.useState(serverF3WipAndOut.data || []);
-    const [searchInput, setSearchInput] = useState(serverSearch || "");
+    const [f3SearchInput, setF3SearchInput] = useState(serverSearch || "");
+    const [f3DateInput, setF3DateInput] = useState(serverDateLoaded || null);
     const [maxItem, setMaxItem] = useState(serverPerPage || 25);
     const [editedRows, setEditedRows] = React.useState({});
     const [currentPage, setCurrentPage] = useState(
@@ -734,7 +736,12 @@ export default function F3List() {
     useEffect(() => {
         const timer = setTimeout(() => {
             router.reload({
-                data: { search: searchInput, perPage: maxItem, page: 1 },
+                data: {
+                    search: f3SearchInput,
+                    perPage: maxItem,
+                    page: 1,
+                    dateLoaded: f3DateInput,
+                },
                 preserveState: true,
                 preserveScroll: true,
             });
@@ -742,11 +749,15 @@ export default function F3List() {
         }, 700);
 
         return () => clearTimeout(timer);
-    }, [searchInput]);
+    }, [f3SearchInput, f3DateInput]);
+
+    const handleF3DateChange = useCallback((date) => {
+        setF3DateInput(date);
+    }, []);
 
     const goToPageF3List = (page) => {
         router.reload({
-            data: { search: searchInput, perPage: maxItem, page },
+            data: { search: f3SearchInput, perPage: maxItem, page },
             preserveState: true,
             preserveScroll: true,
         });
@@ -763,7 +774,7 @@ export default function F3List() {
 
     const changeMaxItemPerPage = (maxItem) => {
         router.reload({
-            data: { search: searchInput, perPage: maxItem, page: 1 },
+            data: { search: f3SearchInput, perPage: maxItem, page: 1 },
             preserveState: true,
             preserveScroll: true,
         });
@@ -776,7 +787,11 @@ export default function F3List() {
 
     const refresh = () => {
         router.reload({
-            data: { search: searchInput, perPage: maxItem, page: currentPage },
+            data: {
+                search: f3SearchInput,
+                perPage: maxItem,
+                page: currentPage,
+            },
             preserveState: true,
             preserveScroll: true,
         });
@@ -991,8 +1006,8 @@ export default function F3List() {
                 >
                     {/* Header */}
                     <div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
-                        <div className="flex justify-between items-center gap-2 py-4">
-                            <div className="flex gap-2 sticky left-0 items-center">
+                        <div className="flex justify-between items-center gap-2">
+                            <div className="flex gap-2 sticky left-0 items-center pt-4">
                                 <div className="dropdown dropdown-bottom">
                                     <div tabIndex={0} className="m-1 btn">
                                         {`Show ${maxItem} items`}
@@ -1040,39 +1055,6 @@ export default function F3List() {
                             </div>
 
                             <div className="flex gap-2 sticky right-0">
-                                <div className="w-70">
-                                    <label className="input ">
-                                        <svg
-                                            className="h-[1em] opacity-50"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g
-                                                strokeLinejoin="round"
-                                                strokeLinecap="round"
-                                                strokeWidth="2.5"
-                                                fill="none"
-                                                stroke="currentColor"
-                                            >
-                                                <circle
-                                                    cx="11"
-                                                    cy="11"
-                                                    r="8"
-                                                ></circle>
-                                                <path d="m21 21-4.3-4.3"></path>
-                                            </g>
-                                        </svg>
-                                        <input
-                                            type="search"
-                                            placeholder="search by raw package"
-                                            value={searchInput}
-                                            onChange={(e) =>
-                                                setSearchInput(e.target.value)
-                                            }
-                                        />
-                                    </label>
-                                </div>
-
                                 <div className="flex gap-2 sticky right-0">
                                     <button
                                         className="btn btn-primary"
@@ -1118,6 +1100,51 @@ export default function F3List() {
                                         refresh();
                                     }}
                                     isLoading={isMutateF3Loading}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-center gap-2">
+                            <div className="flex gap-2 sticky left-0 items-center">
+                                <div className="w-70">
+                                    <label className="input ">
+                                        <svg
+                                            className="h-[1em] opacity-50"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <g
+                                                strokeLinejoin="round"
+                                                strokeLinecap="round"
+                                                strokeWidth="2.5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                            >
+                                                <circle
+                                                    cx="11"
+                                                    cy="11"
+                                                    r="8"
+                                                ></circle>
+                                                <path d="m21 21-4.3-4.3"></path>
+                                            </g>
+                                        </svg>
+                                        <input
+                                            type="search"
+                                            placeholder="search by raw package"
+                                            value={f3SearchInput}
+                                            onChange={(e) =>
+                                                setF3SearchInput(e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                </div>
+
+                                <DatePicker
+                                    className="w-full rounded-lg input"
+                                    placeholderText="Select a date range"
+                                    selected={f3DateInput}
+                                    onChange={handleF3DateChange}
+                                    isClearable
                                 />
                             </div>
                         </div>
