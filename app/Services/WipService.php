@@ -1169,9 +1169,7 @@ class WipService
         ->getOverallTrend($packageName, null, $startDate, $endDate, null, false),
     ];
 
-    $fileName = "raw_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His');
-
-    $response = $this->exportRawXlsx($sheets, $fileName  . ".xlsx");
+    $response = $this->exportRawXlsxSpout($sheets, "wip_out_trends_" . now()->format('Ymd_His'));
 
     return $response ?? response()->json([
       'status' => 'error',
@@ -1192,9 +1190,7 @@ class WipService
         ->getBaseTrend('F3', $packageName, null, $startDate, $endDate, null, false)->get(),
     ];
 
-    $fileName = "pickup_trends_" . implode('_', $packageName) . "_" . now()->format('Ymd_His');
-
-    $response = $this->exportRawXlsx($sheets, $fileName  . ".xlsx");
+    $response = $this->exportRawXlsxSpout($sheets, "pickup_trends_" . now()->format('Ymd_His'));
 
     return $response ?? response()->json([
       'status' => 'error',
