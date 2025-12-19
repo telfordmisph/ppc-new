@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useState, useEffect, useMemo, memo } from "react";
+import { useState, useEffect, useMemo, memo, useRef } from "react";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
 import { BiSelectMultiple } from "react-icons/bi";
@@ -37,7 +37,9 @@ const MultiSelectSearchableDropdown = memo(
         const id = useId();
         const popoverId = `popover-${id}`;
         const anchorName = `--anchor-${id}`;
+        const wrapperRef = useRef(null);
 
+        const [open, setOpen] = useState(false);
         const [selectedOptions, setSelectedOptions] = useState(
             defaultSelectedOptions
         );
@@ -162,37 +164,43 @@ const MultiSelectSearchableDropdown = memo(
 
         const searchBar = () => (
             <>
-                <div className="relative w-full mb-2">
-                    <input
-                        type="text"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Search..."
-                        className="input input-sm w-full pr-8"
-                    />
-                    {searchInput && (
-                        <button
-                            onMouseDown={(e) => {
-                                e.preventDefault();
-                                setSearchInput("");
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
-                        >
-                            <FaTimes />
-                        </button>
-                    )}
-                </div>
+                {!disableSearch && (
+                    <div className="relative w-full mb-2">
+                        <input
+                            type="text"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder="Search..."
+                            className="input input-sm w-full pr-8"
+                        />
+                        {searchInput && (
+                            <button
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    setSearchInput("");
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+                            >
+                                <FaTimes />
+                            </button>
+                        )}
+                    </div>
+                )}
             </>
         );
 
-        const content = (showSearchInput = true) => (
+        const promptLabel = () => (
             <>
                 {prompt && (
                     <div className="font-semibold text-center mb-2">
                         {prompt}
                     </div>
                 )}
+            </>
+        );
 
+        const content = (showSearchInput = true) => (
+            <>
                 {showSearchInput && searchBar()}
 
                 <div className="flex items-center mb-2 gap-2">
@@ -294,10 +302,14 @@ const MultiSelectSearchableDropdown = memo(
         if (!useModal) {
             return (
                 <div
+                    ref={wrapperRef}
                     className="dropdown"
-                    // onMouseDown={(e) => e.stopPropagation()}
-                    // onClick={(e) => e.stopPropagation()}
                     onFocus={onFocus}
+                    onBlur={(e) => {
+                        if (!wrapperRef.current?.contains(e.relatedTarget)) {
+                            setOpen(false);
+                        }
+                    }}
                 >
                     {!disableTooltip && (
                         <Tooltip
@@ -317,37 +329,37 @@ const MultiSelectSearchableDropdown = memo(
                             </div>
                         </Tooltip>
                     )}
-                    {/* // fix this */}
-                    <button
+                    <div
+                        tabIndex={0}
+                        role="button"
                         data-tooltip-id={tooltipID}
-                        popoverTarget={popoverId}
-                        style={{
-                            anchorName: anchorName,
-                        }}
+                        onClick={() => setOpen(true)}
+                        onFocus={() => setOpen(true)}
                         className={clsx(
                             "btn border border-base-content/20",
                             buttonSelectorClassName
                         )}
                     >
                         {getButtonLabel()}
-                    </button>
-                    <ul
-                        id={popoverId}
-                        popover="auto"
-                        style={{
-                            positionAnchor: anchorName,
-                        }}
-                        className="dropdown-content w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
-                    >
-                        {isLoading ? (
-                            <div className="flex justify-center gap-2 my-auto">
-                                <div className="loading loading-spinner"></div>
-                                <div>loading {itemName}</div>
-                            </div>
-                        ) : (
-                            content()
-                        )}
-                    </ul>
+                    </div>
+                    {open && (
+                        <>
+                            <ul
+                                tabIndex="-1"
+                                className="dropdown-content menu z-1 w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
+                            >
+                                {promptLabel()}
+                                {isLoading ? (
+                                    <div className="flex justify-center gap-2 my-auto">
+                                        <div className="loading loading-spinner"></div>
+                                        <div>loading {itemName}</div>
+                                    </div>
+                                ) : (
+                                    content()
+                                )}
+                            </ul>
+                        </>
+                    )}
                 </div>
             );
         }
@@ -355,8 +367,6 @@ const MultiSelectSearchableDropdown = memo(
         return (
             <dialog
                 ref={modalRef}
-                // onMouseDown={(e) => e.stopPropagation()}
-                // onClick={(e) => e.stopPropagation()}
                 onFocus={onFocus}
                 id="multiSelectSearchableDropdown-modal"
                 className="modal"
@@ -375,14 +385,13 @@ const MultiSelectSearchableDropdown = memo(
                             ))}
                         </div>
                     )}
-
+                    {promptLabel()}
                     <div>
                         {searchBar()}
                         {isLoading ? (
                             <div className="h-120 flex justify-center items-center flex-col gap-2">
                                 <div className="bg-red-500 loading loading-spinner"></div>
                                 <div>loading {itemName}</div>
-                                {/* {!disableSearch && content(true)} */}
                             </div>
                         ) : (
                             content(false)

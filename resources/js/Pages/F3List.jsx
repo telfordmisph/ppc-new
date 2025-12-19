@@ -970,7 +970,7 @@ export default function F3List() {
                 isLoading={isLoadingF3RawPackages}
                 prompt="Select F3 Raw Package"
                 debounceDelay={500}
-                contentClassName={"w-250 h-120"}
+                contentClassName={"w-250 h-100"}
                 onSearchChange={handleF3RawPackageSearchChange}
                 singleSelect
                 disableTooltip
