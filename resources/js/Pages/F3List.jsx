@@ -1006,8 +1006,53 @@ export default function F3List() {
                 >
                     {/* Header */}
                     <div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
+                        <div className="flex justify-between items-center gap-2  pt-4">
+                            <div className="flex gap-2 items-center">
+                                <div className="w-70">
+                                    <label className="input ">
+                                        <svg
+                                            className="h-[1em] opacity-50"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <g
+                                                strokeLinejoin="round"
+                                                strokeLinecap="round"
+                                                strokeWidth="2.5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                            >
+                                                <circle
+                                                    cx="11"
+                                                    cy="11"
+                                                    r="8"
+                                                ></circle>
+                                                <path d="m21 21-4.3-4.3"></path>
+                                            </g>
+                                        </svg>
+                                        <input
+                                            type="search"
+                                            placeholder="search by raw package"
+                                            value={f3SearchInput}
+                                            onChange={(e) =>
+                                                setF3SearchInput(e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                </div>
+
+                                <DatePicker
+                                    className="w-full rounded-lg input"
+                                    placeholderText="Select a date range"
+                                    selected={f3DateInput}
+                                    onChange={handleF3DateChange}
+                                    isClearable
+                                />
+                            </div>
+                        </div>
+
                         <div className="flex justify-between items-center gap-2">
-                            <div className="flex gap-2 sticky left-0 items-center pt-4">
+                            <div className="flex gap-2 sticky left-0 items-center">
                                 <div className="dropdown dropdown-bottom">
                                     <div tabIndex={0} className="m-1 btn">
                                         {`Show ${maxItem} items`}
@@ -1100,51 +1145,6 @@ export default function F3List() {
                                         refresh();
                                     }}
                                     isLoading={isMutateF3Loading}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center gap-2">
-                            <div className="flex gap-2 sticky left-0 items-center">
-                                <div className="w-70">
-                                    <label className="input ">
-                                        <svg
-                                            className="h-[1em] opacity-50"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <g
-                                                strokeLinejoin="round"
-                                                strokeLinecap="round"
-                                                strokeWidth="2.5"
-                                                fill="none"
-                                                stroke="currentColor"
-                                            >
-                                                <circle
-                                                    cx="11"
-                                                    cy="11"
-                                                    r="8"
-                                                ></circle>
-                                                <path d="m21 21-4.3-4.3"></path>
-                                            </g>
-                                        </svg>
-                                        <input
-                                            type="search"
-                                            placeholder="search by raw package"
-                                            value={f3SearchInput}
-                                            onChange={(e) =>
-                                                setF3SearchInput(e.target.value)
-                                            }
-                                        />
-                                    </label>
-                                </div>
-
-                                <DatePicker
-                                    className="w-full rounded-lg input"
-                                    placeholderText="Select a date range"
-                                    selected={f3DateInput}
-                                    onChange={handleF3DateChange}
-                                    isClearable
                                 />
                             </div>
                         </div>
