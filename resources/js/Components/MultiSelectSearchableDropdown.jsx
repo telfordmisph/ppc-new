@@ -23,7 +23,7 @@ const MultiSelectSearchableDropdown = memo(
         disableTooltip = false,
         buttonSelectorClassName = "w-52",
         onFocus = () => {},
-        onSearchChange = (search) => {},
+        onSearchChange,
         useModal = false,
         modalRef = null,
         disableSelectedContainer = false,
@@ -124,6 +124,10 @@ const MultiSelectSearchableDropdown = memo(
                         option.label.toLowerCase().includes(search))
             );
         }, [debouncedSearch, options, onSearchChange]);
+        console.log(
+            "🚀 ~ MultiSelectSearchableDropdown ~ filteredOptions:",
+            filteredOptions
+        );
 
         const highlightMatch = (option) => {
             const search = debouncedSearch.trim().toLowerCase();
