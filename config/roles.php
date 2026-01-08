@@ -54,6 +54,7 @@ return [
   'programmer 1' => $permission_sets['f3_limited'],
 
   'PPC Planner' => $full_access,
+  'PPC' => $full_access,
   'PPC Planner 2' => $full_access,
   'PPC Expediter 1' => $full_access,
   'PPC Expediter 2' => $full_access,
