@@ -31,7 +31,7 @@ class AuthMiddleware
         $token = $request->query('key') ?? $request->bearerToken() ?? session('emp_data.token');
         if (!$token) {
             $redirectUrl = urlencode($request->fullUrl());
-            return redirect("http://192.168.2.221/authify/public/login?redirect={$redirectUrl}");
+            return redirect("http://192.168.1.27:8080/authify/public/login?redirect={$redirectUrl}");
         }
 
         Log::info("session('emp_data.token'):" . session('emp_data.token'));
@@ -47,19 +47,48 @@ class AuthMiddleware
                 ->first();
         });
 
-        Log::info("Current User: " . json_encode($currentUser));
+        // Log::info("Current User: " . json_encode($currentUser));
+
+        // $role = strtolower(trim($currentUser->emp_jobtitle));
+        // Log::info("role: " . json_encode($role));
+
+        // $rolesConfig = config('roles');
+        // Log::info("rolesConfig: " . json_encode($rolesConfig));
+
+        // if (!array_key_exists($role, $rolesConfig)) {
+        //     Log::info("ddd: " . json_encode($rolesConfig));
+
+        //     return Inertia::render('Forbidden');
+        // }
+
+        // if ($permission && !in_array($permission, $rolesConfig[$role])) {
+        //     Log::info("xxx: " . json_encode($rolesConfig));
+
+        //     return Inertia::render('Forbidden');
+        // }
 
         $role = strtolower(trim($currentUser->emp_jobtitle));
+        Log::info("role: " . json_encode($role));
 
         $rolesConfig = config('roles');
+        Log::info("rolesConfig: " . json_encode($rolesConfig));
 
-        if (!array_key_exists($role, $rolesConfig)) {
+        // Make a lowercase version of rolesConfig keys for comparison
+        $rolesConfigLower = [];
+        foreach ($rolesConfig as $key => $permissions) {
+            $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
+        }
+
+        if (!array_key_exists($role, $rolesConfigLower)) {
+            Log::info("Role not found: " . json_encode($rolesConfigLower));
             return Inertia::render('Forbidden');
         }
 
-        if ($permission && !in_array($permission, $rolesConfig[$role])) {
+        if ($permission && !in_array(strtolower($permission), $rolesConfigLower[$role])) {
+            Log::info("Permission not allowed: " . json_encode($rolesConfigLower[$role]));
             return Inertia::render('Forbidden');
         }
+
 
         // Log::info($request->headers->all());
 
@@ -76,7 +105,7 @@ class AuthMiddleware
 
         //     $redirectUrl = urlencode($request->fullUrl());
         //     Log::info('Redirect URL: ' . $redirectUrl);
-        //     return redirect("http://192.168.2.221/authify/public/login?redirect={$redirectUrl}");
+        //     return redirect("http://192.168.1.27:8080/authify/public/login?redirect={$redirectUrl}");
         // }
 
         // Assign system roles

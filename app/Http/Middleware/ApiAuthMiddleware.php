@@ -43,13 +43,23 @@ class ApiAuthMiddleware
     $role = strtolower(trim($currentUser->emp_jobtitle));
     $rolesConfig = config('roles');
 
-    if (!array_key_exists($role, $rolesConfig) || (!in_array($permission, $rolesConfig[$role]) && $permission !== null)) {
+    // Convert roles keys and permissions to lowercase for comparison
+    $rolesConfigLower = [];
+    foreach ($rolesConfig as $key => $permissions) {
+      $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
+    }
+
+    if (
+      !array_key_exists($role, $rolesConfigLower) ||
+      ($permission !== null && !in_array(strtolower($permission), $rolesConfigLower[$role]))
+    ) {
       return response()->json([
         'status' => 'error',
         'error' => 'Unauthorized',
         'message' => 'You are not authorized to access this resource',
       ], 403);
     }
+
 
     $request->attributes->set('emp_id', $currentUser->emp_id);
 
