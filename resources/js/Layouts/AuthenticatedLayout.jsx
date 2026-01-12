@@ -90,7 +90,7 @@ export default function AuthenticatedLayout({ header, children }) {
             const token = localStorage.getItem("authify-token");
     
             if (!token) {
-                window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
+                window.location.href = `http://192.168.1.27:8080/authify/public/login?redirect=${encodeURIComponent(
                     route("dashboard")
                 )}`;
                 return;
@@ -98,7 +98,7 @@ export default function AuthenticatedLayout({ header, children }) {
     
             try {
                 const isTokenValid = await axios.get(
-                    `http://192.168.2.221/authify/public/api/validate?token=${encodeURIComponent(
+                    `http://192.168.1.27:8080/authify/public/api/validate?token=${encodeURIComponent(
                         token
                     )}`
                 );
@@ -106,7 +106,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 if (isTokenValid.data.status !== "success") {
                     localStorage.removeItem("authify-token");
     
-                    window.location.href = `http://192.168.2.221/authify/public/login?redirect=${encodeURIComponent(
+                    window.location.href = `http://192.168.1.27:8080/authify/public/login?redirect=${encodeURIComponent(
                         route("dashboard")
                     )}`;
                     return;
