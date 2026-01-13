@@ -37,9 +37,6 @@ class ApiAuthMiddleware
       return response()->json(['error' => 'Unauthenticated', 'message' => 'You are not logged in'], 401);
     }
 
-    Log::info("Falsjdlfk");
-    Log::info(json_encode($currentUser));
-
     $role = strtolower(trim($currentUser->emp_jobtitle));
     $rolesConfig = config('roles');
 

@@ -32,31 +32,69 @@ class AutoImportController extends Controller
         return Inertia::render('Import/PickUpImportPage');
     }
 
-    public function autoImportWIP(Request $request)
+    public function ftpRootImportWIP(Request $request)
     {
         $empId = $request->get('emp_id');
 
-        $result = $this->wipImportService->autoImportF1F2WIP($empId);
+        $result = $this->wipImportService->ftpRootImportF1F2WIP($empId);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
             'data' => $result['data'] ?? [],
+            'total' => $result['total'] ?? [],
         ]);
     }
 
-    public function autoImportWIPOUTS(Request $request)
+    public function ftpRootImportOUTS(Request $request)
     {
         $empId = $request->get('emp_id');
 
 
-        $result = $this->wipImportService->autoImportF1F2Outs($empId);
+        $result = $this->wipImportService->ftpRootImportF1F2Outs($empId);
 
         Log::info("ttest", $result);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
+            'data' => $result['data'] ?? [],
+            'total' => $result['total'] ?? [],
+        ]);
+    }
+
+    public function manualImportWIP(Request $request)
+    {
+        $empId = $request->get('emp_id');
+        $request->validate([
+            'file' => 'required|file|mimes:csv|max:50000',
+        ]);
+        $file = $request->file('file');
+        Log::info("manual import wip");
+        $result = $this->wipImportService->importF1F2WIP($empId, $file);
+
+        return response()->json([
+            'status' => $result['status'] ?? 'success',
+            'message' => $result['message'] ?? 'Import completed',
+            'data' => $result['data'] ?? [],
+            'total' => $result['total'] ?? [],
+        ]);
+    }
+
+    public function manualImportOUTS(Request $request)
+    {
+        $empId = $request->get('emp_id');
+        $request->validate([
+            'file' => 'required|file|mimes:csv|max:50000',
+        ]);
+        $file = $request->file('file');
+
+        $result = $this->wipImportService->importF1F2OUTS($empId, $file);
+
+        return response()->json([
+            'status' => $result['status'] ?? 'success',
+            'message' => $result['message'] ?? 'Import completed',
+            'data' => $result['data'] ?? [],
             'total' => $result['total'] ?? [],
         ]);
     }

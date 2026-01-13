@@ -76,20 +76,22 @@ export function runAsyncToast({
                 (t) => (
                     <div
                         className={clsx(
-                            "text-sm p-4 m-2 w-60 rounded-lg shadow-lg text-error-content bg-error",
+                            "relative w-60 max-h-40 rounded-lg shadow-lg bg-error text-error-content flex flex-col",
                             toastTransition(t)
                         )}
                     >
-                        <div className="mb-1">
+                        <div className="p-4 flex-1 overflow-y-auto text-sm">
                             {err.message || "Action failed."}
                         </div>
 
-                        <button
-                            className="mt-3 btn btn-wide btn-sm"
-                            onClick={() => toast.dismiss(t.id)}
-                        >
-                            Close
-                        </button>
+                        <div className="p-2 border-t border-error-content flex justify-center">
+                            <button
+                                className="btn btn-wide btn-sm"
+                                onClick={() => toast.dismiss(t.id)}
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 ),
                 { duration: Infinity, removeDelay: 400 }

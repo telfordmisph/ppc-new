@@ -351,7 +351,7 @@ const WIPTrend = () => {
                             />
                         ) : (
                             <DatePicker
-                                className="w-full rounded-lg input"
+                                className="w-full rounded-lg input z-50"
                                 selected={tempStartDate}
                                 onChange={handleDateChange}
                                 startDate={tempStartDate}

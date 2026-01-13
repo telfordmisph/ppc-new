@@ -38,7 +38,6 @@ export default function AuthenticatedLayout({ header, children }) {
         const queryToken = queryParams.get("key");
     }, [url]);
 
-
     const authCheck = async () => {
         setIsLoading(true);
 
@@ -88,24 +87,24 @@ export default function AuthenticatedLayout({ header, children }) {
             // Check if the URL contains a query parameter "key" (token value): END
             // Check if there is a token stored in localStorage, redirect to login if not: START
             const token = localStorage.getItem("authify-token");
-    
+
             if (!token) {
                 window.location.href = `http://192.168.1.27:8080/authify/public/login?redirect=${encodeURIComponent(
                     route("dashboard")
                 )}`;
                 return;
             }
-    
+
             try {
                 const isTokenValid = await axios.get(
                     `http://192.168.1.27:8080/authify/public/api/validate?token=${encodeURIComponent(
                         token
                     )}`
                 );
-    
+
                 if (isTokenValid.data.status !== "success") {
                     localStorage.removeItem("authify-token");
-    
+
                     window.location.href = `http://192.168.1.27:8080/authify/public/login?redirect=${encodeURIComponent(
                         route("dashboard")
                     )}`;
@@ -114,7 +113,7 @@ export default function AuthenticatedLayout({ header, children }) {
             } catch (error) {
                 console.log("with error", error);
             }
-    
+
             setIsLoading(false);
         }
     };

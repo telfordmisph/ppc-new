@@ -1,7 +1,8 @@
-import { useState, forwardRef, useImperativeHandle, useRef } from "react";
+import { useImperativeHandle, useState, useRef, forwardRef } from "react";
 
-const ExcelUploader = forwardRef(
-    ({ legend, onFileValid, acceptedTypes = ".xlsx" }, ref) => {
+const FileUploader = forwardRef(
+    ({ legend, onFileValid, acceptedTypes = ".xlsx,.csv" }, ref) => {
+        // allow CSV by default
         const [error, setError] = useState("");
         const fileInputRef = useRef(null);
 
@@ -23,13 +24,18 @@ const ExcelUploader = forwardRef(
                 return;
             }
 
-            const allowedExtensions = [".xlsx"];
-            const fileExtension = selectedFile.name.slice(
-                selectedFile.name.lastIndexOf(".")
-            );
+            // split the acceptedTypes string into an array and trim whitespace
+            const allowedExtensions = acceptedTypes
+                .split(",")
+                .map((ext) => ext.trim().toLowerCase());
+            const fileExtension = selectedFile.name
+                .slice(selectedFile.name.lastIndexOf("."))
+                .toLowerCase();
 
-            if (!allowedExtensions.includes(fileExtension.toLowerCase())) {
-                setError("Only .xlsx files are allowed.");
+            if (!allowedExtensions.includes(fileExtension)) {
+                setError(
+                    `Only ${allowedExtensions.join(", ")} files are allowed.`
+                );
                 onFileValid(null);
                 return;
             }
@@ -54,4 +60,4 @@ const ExcelUploader = forwardRef(
     }
 );
 
-export default ExcelUploader;
+export default FileUploader;

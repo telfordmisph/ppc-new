@@ -34,6 +34,7 @@ class F3OutRepository
     $this->packageGroupRepo = $packageGroupRepo;
     $this->packageFilterService = $packageFilterService;
   }
+
   public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
     $query = $this->baseF3Query(type: 'out'); // 'out' instead of default 'wip'
@@ -74,8 +75,8 @@ class F3OutRepository
       $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
 
       $results = DB::query()
-        ->fromSub($query, 'combined')
-        ->get();
+        ->fromSub($query, 'combined');
+      // ->fromSub($query, 'combined')->get();
 
       return $results;
     }

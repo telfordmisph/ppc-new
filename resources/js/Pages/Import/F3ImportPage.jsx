@@ -6,7 +6,7 @@ import ImportPageLayout from "../../Layouts/ImportPageLayout";
 import { F3_WIP_HEADERS, F3_OUTS_HEADERS } from "@/Constants/ExcelHeaders";
 import Collapse from "@/Components/Collapse";
 import { FaFileUpload } from "react-icons/fa";
-import ExcelUploader from "@/Components/FileUploader";
+import FileUploader from "@/Components/FileUploader";
 import DataTable from "@/Components/Table";
 import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
@@ -246,7 +246,7 @@ const F3ImportPage = () => {
                                 </div>
                             </Modal>
                         </div>
-                        <ExcelUploader
+                        <FileUploader
                             ref={uploaderF3Ref}
                             legend="Pick an Excel file"
                             onFileValid={(file) => {

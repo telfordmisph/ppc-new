@@ -14,6 +14,8 @@ use App\Helpers\WipTrendParser;
 use App\Helpers\MergeAndAggregate;
 use App\Constants\WipConstants;
 use App\Traits\NormalizeStringTrait;
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use App\Traits\ExportTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -332,7 +334,7 @@ class WipService
 
     $trends["f1_trend"] = $this->f1f2WipRepo->getTrend("F1", $packageName, $period, $startDate, $endDate, workweeks: $workweeks)->get();
     $trends["f2_trend"] = $this->f1f2WipRepo->getTrend("F2", $packageName, $period, $startDate, $endDate, workweeks: $workweeks)->get();
-    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks)->get();
 
     Log::info("getAllWipTrendByPackage trends: " . json_encode($trends));
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
@@ -1109,7 +1111,7 @@ class WipService
 
     $trends['f2_trend'] = $trends['f2_trend']->get();
 
-    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks)->get();
 
     $startDateCopy = is_object($startDate) ? clone $startDate : $startDate;
     foreach (WipConstants::FACTORIES as $factory) {
@@ -1135,7 +1137,6 @@ class WipService
 
     Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
     Log::info("getWipOutCapacitySummaryTrend: f3out: " . json_encode($f3out));
-
     $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends, $f1f2out, $f3out);
 
     return response()->json([
@@ -1148,54 +1149,51 @@ class WipService
   public function downloadAllFactoriesRawXlsx($packageName, $startDate, $endDate)
   {
     $sheets = [
-      'F1 Wip' => $this->f1f2WipRepo
+      'F1 Wip' => fn() => $this->f1f2WipRepo
         ->getTrend('F1', $packageName, null, $startDate, $endDate, null, ['*'], false)
-        ->get(),
+        ->cursor(),
 
-      'F2 Wip' => $this->f1f2WipRepo
+      'F2 Wip' => fn() => $this->f1f2WipRepo
         ->getTrend('F2', $packageName, null, $startDate, $endDate, null, ['*'], false)
-        ->get(),
+        ->cursor(),
 
-      'F3 Wip' => $this->f3WipRepo
-        ->getTrend($packageName, null, $startDate, $endDate, null, false),
+      'F3 Wip' => fn() => $this->f3WipRepo
+        ->getTrend($packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
 
-      'F1 Out' => $this->f1f2OutRepo
-        ->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false),
+      'F1 Out' => fn() => $this->f1f2OutRepo
+        ->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
 
-      'F2 Out' => $this->f1f2OutRepo
-        ->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false),
+      'F2 Out' => fn() => $this->f1f2OutRepo
+        ->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
 
-      'F3 Out' => $this->f3OutRepo
-        ->getOverallTrend($packageName, null, $startDate, $endDate, null, false),
+      'F3 Out' => fn() => $this->f3OutRepo
+        ->getOverallTrend($packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
     ];
 
-    $response = $this->exportRawXlsxSpout($sheets, "wip_out_trends_" . now()->format('Ymd_His'));
-
-    return $response ?? response()->json([
-      'status' => 'error',
-      'message' => 'No data found for any factory.'
-    ]);
+    return $this->downloadRawXlsx($sheets, 'wip_out_trends');
   }
 
   public function downloadPickUpRawXlsx($packageName, $startDate, $endDate)
   {
     $sheets = [
-      'F1 PickUp' => $this->pickUpRepo
-        ->getBaseTrend('F1', $packageName, null, $startDate, $endDate, null, false)->get(),
+      'F1 PickUp' => fn() => $this->pickUpRepo
+        ->getBaseTrend('F1', $packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
 
-      'F2 PickUp' => $this->pickUpRepo
-        ->getBaseTrend('F2', $packageName, null, $startDate, $endDate, null, false)->get(),
+      'F2 PickUp' => fn() => $this->pickUpRepo
+        ->getBaseTrend('F2', $packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
 
-      'F3 PickUp' => $this->pickUpRepo
-        ->getBaseTrend('F3', $packageName, null, $startDate, $endDate, null, false)->get(),
+      'F3 PickUp' => fn() => $this->pickUpRepo
+        ->getBaseTrend('F3', $packageName, null, $startDate, $endDate, null, false)
+        ->cursor(),
     ];
 
-    $response = $this->exportRawXlsxSpout($sheets, "pickup_trends_" . now()->format('Ymd_His'));
-
-    return $response ?? response()->json([
-      'status' => 'error',
-      'message' => 'No data found for any factory.'
-    ]);
+    return $this->downloadRawXlsx($sheets, 'pickup_trends');
   }
 
   public function getPackagePickUpSummary($chartStatus, $startDate, $endDate)

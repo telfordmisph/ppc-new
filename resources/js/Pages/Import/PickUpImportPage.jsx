@@ -5,7 +5,7 @@ import { runAsyncToast } from "@/Utils/runAsyncToast";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 import { PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
 import Collapse from "@/Components/Collapse";
-import ExcelUploader from "@/Components/FileUploader";
+import FileUploader from "@/Components/FileUploader";
 import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 
@@ -124,7 +124,7 @@ const PickUpImportPage = () => {
                                 </div>
                             </Modal>
                         </div>
-                        <ExcelUploader
+                        <FileUploader
                             ref={uploaderPickUpRef}
                             legend="Pick an Excel file"
                             onFileValid={(file) => {

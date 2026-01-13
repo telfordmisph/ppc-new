@@ -3,7 +3,7 @@ import Modal from "@/Components/Modal";
 import React, { useEffect, useRef, useState } from "react";
 import { F3_WIP_HEADERS } from "@/Constants/ExcelHeaders";
 import Collapse from "@/Components/Collapse";
-import ExcelUploader from "@/Components/FileUploader";
+import FileUploader from "@/Components/FileUploader";
 import DataTable from "@/Components/Table";
 import ImportLabel from "@/Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
@@ -151,7 +151,7 @@ const PackageCapacityUpload = () => {
                             </div>
                         </Modal>
                     </div>
-                    <ExcelUploader
+                    <FileUploader
                         ref={uploaderRef}
                         legend="Pick an Excel file"
                         onFileValid={(file) => {

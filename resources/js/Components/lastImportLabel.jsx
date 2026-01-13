@@ -16,10 +16,10 @@ const ImportLabel = ({ data, loading }) => {
                 </span>
             </span>
             <span className="text-secondary px-1">
-                ({formatFriendlyDate(data.latest_import, true)})
+                ({formatAbbreviateNumber(data.latest_import)})
             </span>
             <span>with </span>
-            <span>{formatAbbreviateNumber(data.entries)} entries</span>
+            <span>{data.entries} entries</span>
             {data.imported_by && (
                 <span className="px-1">
                     by employee{" "}

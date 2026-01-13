@@ -87,12 +87,14 @@ Route::middleware([ApiAuthMiddleware::class])
     Route::middleware('auth:sanctum')->group(function () {});
 
     Route::prefix('import')->name('import.')->group(function () {
-      Route::post('/autoImportWIP', [AutoImportController::class, 'autoImportWIP'])->name('autoImportWIP');
+      Route::post('/ftpRootImportWIP', [AutoImportController::class, 'ftpRootImportWIP'])->name('ftpRootImportWIP');
+      Route::post('/ftpRootImportOUTS', [AutoImportController::class, 'ftpRootImportOUTS'])->name('ftpRootImportOUTS');
+      Route::post('/manualImportWIP', [AutoImportController::class, 'manualImportWIP'])->name('manualImportWIP');
+      Route::post('/manualImportOUTS', [AutoImportController::class, 'manualImportOUTS'])->name('manualImportOUTS');
       Route::post('/importF3WIP', [AutoImportController::class, 'importF3WIP'])->name('importF3WIP');
       Route::post('/importF3', [AutoImportController::class, 'importF3'])->name('importF3');
       Route::post('/importPickUp', [AutoImportController::class, 'importPickUp'])->name('importPickUp');
       Route::post('/importF3OUTS', [AutoImportController::class, 'importF3OUTS'])->name('importF3OUTS');
-      Route::post('/autoImportWIPOUTS', [AutoImportController::class, 'autoImportWIPOUTS'])->name('autoImportWIPOUTS');
       Route::post('/capacity', [AutoImportController::class, 'importCapacity'])->name('capacity');
     });
 

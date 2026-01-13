@@ -10,53 +10,12 @@ use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 
 trait ExportTrait
 {
-  protected function exportRawXlsx(array $sheets, string $fileName)
-  {
-    $spreadsheet = new Spreadsheet();
-    $sheetIndex = 0;
-
-    foreach ($sheets as $title => $rows) {
-      if ($rows->isEmpty()) {
-        continue;
-      }
-
-      $sheet = $sheetIndex === 0
-        ? $spreadsheet->getActiveSheet()
-        : $spreadsheet->createSheet();
-
-      $sheet->setTitle($title);
-
-      $columns = array_keys((array) $rows->first());
-      $sheet->fromArray($columns, null, 'A1');
-
-      $data = $rows->map(fn($row) => (array) $row)->toArray();
-      $sheet->fromArray($data, null, 'A2');
-
-      $sheetIndex++;
-    }
-
-    if ($sheetIndex === 0) {
-      return null;
-    }
-
-    $writer = new Xlsx($spreadsheet);
-    $writer->setPreCalculateFormulas(false);
-
-    $tempFile = tempnam(sys_get_temp_dir(), 'xlsx');
-    $writer->save($tempFile);
-
-    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',];
-    $response = response()->download($tempFile, $fileName, $headers);
-    ob_end_clean();
-    return $response->deleteFileAfterSend(true);
-  }
-
-  protected function exportRawXlsxSpout(array $sheets, string $fileName)
+  protected function downloadRawXlsx(array $sheets, string $filenamePrefix)
   {
     $tempFile = tempnam(sys_get_temp_dir(), 'xlsx');
 
     $writer = WriterEntityFactory::createXLSXWriter();
-    $writer->setShouldCreateNewSheetsAutomatically(false); // optional
+    $writer->setShouldCreateNewSheetsAutomatically(false);
     $writer->openToFile($tempFile);
 
     $style = (new StyleBuilder())
@@ -64,37 +23,36 @@ trait ExportTrait
       ->build();
 
     $firstSheet = true;
-    foreach ($sheets as $title => $rows) {
-      if ($rows->isEmpty()) {
+    foreach ($sheets as $sheetName => $queryFn) {
+      $rows = $queryFn();
+
+      if (!$rows->count()) {
         continue;
       }
 
       if ($firstSheet) {
-        $writer->getCurrentSheet()->setName($title);
+        $writer->getCurrentSheet()->setName($sheetName);
         $firstSheet = false;
       } else {
         $writer->addNewSheetAndMakeItCurrent();
-        $writer->getCurrentSheet()->setName($title);
+        $writer->getCurrentSheet()->setName($sheetName);
       }
 
-      $columns = (array) $rows->first();
-      $headerRow = WriterEntityFactory::createRowFromArray(array_keys($columns), $style);
-      $writer->addRow($headerRow);
+      // Write header row
+      $firstRow = $rows->first();
+      $columns = array_keys((array) $firstRow);
+      $writer->addRow(WriterEntityFactory::createRowFromArray($columns, $style));
 
+      // Stream each row
       foreach ($rows as $row) {
-        $rowData = WriterEntityFactory::createRowFromArray((array) $row, $style);
-        $writer->addRow($rowData);
+        $writer->addRow(WriterEntityFactory::createRowFromArray((array) $row, $style));
       }
     }
 
     $writer->close();
 
-    if (empty($sheets)) {
-      return null;
-    }
-
     $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    $response = response()->download($tempFile, $fileName, $headers);
+    $response = response()->download($tempFile, "{$filenamePrefix}_" . now()->format('Ymd_His') . ".xlsx", $headers);
     ob_end_clean();
     return $response->deleteFileAfterSend(true);
   }

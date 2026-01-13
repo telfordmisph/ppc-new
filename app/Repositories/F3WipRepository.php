@@ -62,8 +62,7 @@ class F3WipRepository
     $query = $this->filterByPackageName($query, $packageName, 'f3_pkg.package_name');
 
     $results = DB::query()
-      ->fromSub($query, 'combined')
-      ->get();
+      ->fromSub($query, 'combined');
 
     return $results;
   }

@@ -32,20 +32,21 @@ function useFetchByType(type, commonBaseParams) {
 
 const WIPStation = () => {
     const {
-        packageName: savedSelectedPackage,
+        packageNames: savedSelectedPackages,
         workWeeks: savedWorkWeeks,
         lookBack: savedLookBack,
         period: savedPeriod,
         offset: savedOffset,
-        setSelectedPackageName: setSavedSelectedPackageName,
+        setSelectedPackageNames: setSavedSelectedPackageName,
         setSelectedWorkWeeks: setSavedWorkWeeks,
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
         setSelectedOffset: setSavedSelectedOffset,
     } = useSelectedFilteredStore();
     const [fullLabel, setFullLabel] = useState("");
-    const [selectedPackageName, setSelectedPackageName] =
-        useState(savedSelectedPackage);
+    const [selectedPackageNames, setSelectedPackageNames] = useState(
+        savedSelectedPackages
+    );
     const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(
         savedWorkWeeks || []
     );
@@ -81,14 +82,14 @@ const WIPStation = () => {
 
     const commonBaseParams = useMemo(
         () => ({
-            packageName: selectedPackageName,
+            packageName: selectedPackageNames,
             period: selectedPeriod,
             lookBack: selectedLookBack,
             offsetDays: selectedOffsetPeriod,
             workweek: selectedWorkWeeks.join(","),
         }),
         [
-            selectedPackageName,
+            selectedPackageNames,
             selectedPeriod,
             selectedLookBack,
             selectedOffsetPeriod,
@@ -186,7 +187,7 @@ const WIPStation = () => {
     };
 
     const handlePackageNamesChange = (selectedPackages) => {
-        setSelectedPackageName(selectedPackages);
+        setSelectedPackageNames(selectedPackages);
         setSavedSelectedPackageName(selectedPackages);
     };
 
@@ -222,13 +223,13 @@ const WIPStation = () => {
                             })) || []
                         }
                         onChange={handlePackageNamesChange}
-                        defaultSelectedOptions={[selectedPackageName]}
+                        defaultSelectedOptions={selectedPackageNames}
                         isLoading={isPackagesLoading}
                         itemName="Package List"
                         prompt="Select packages"
                         contentClassName="w-52 h-70"
-                        singleSelect
-                        disableSelectedContainer
+                        // singleSelect
+                        // disableSelectedContainer
                     />
                 </div>
 

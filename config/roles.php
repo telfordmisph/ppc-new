@@ -51,8 +51,8 @@ return [
   'Senior Production Supervisor' => $permission_sets['f3_limited'],
   'Production Section Head' => $permission_sets['f3_limited'],
   'Section Head' => $permission_sets['f3_limited'],
-  'programmer 1' => $permission_sets['f3_limited'],
 
+  'programmer 1' => $full_access,
   'PPC Planner' => $full_access,
   'PPC' => $full_access,
   'PPC Planner 2' => $full_access,

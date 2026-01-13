@@ -174,7 +174,7 @@ class F1F2OutRepository
         ->where('wip.date_loaded', '<', $endDate);
     }
 
-    return $query->get();
+    return $query;
   }
 
   public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks)
@@ -186,7 +186,7 @@ class F1F2OutRepository
       $startDate,
       $endDate,
       $workweeks
-    );
+    )->get();
 
     $f2Trend = $this->buildTrend(
       ['F2'],
@@ -195,7 +195,7 @@ class F1F2OutRepository
       $startDate,
       $endDate,
       $workweeks
-    );
+    )->get();
 
 
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
