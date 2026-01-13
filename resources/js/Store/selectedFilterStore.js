@@ -11,6 +11,8 @@ export const useSelectedFilteredStore = create((set, get) => {
     period: "selectedPeriod",
     factory: "selectedFactory",
     offset: "selectedOffset",
+    startDate: "selectedStartDate",
+    endDate: "selectedEndDate",
   };
 
   const getJSON = (key, fallback) => {
@@ -50,6 +52,8 @@ export const useSelectedFilteredStore = create((set, get) => {
     period: localStorage.getItem(storageKeys.period) || "weekly",
     factory: localStorage.getItem(storageKeys.factory) || "Overall",
     offset: getNumber(storageKeys.offset, 0),
+    startDate: localStorage.getItem(storageKeys.startDate) || new Date(),
+    endDate: localStorage.getItem(storageKeys.endDate) || new Date(),
 
     setSelectedPackageNames: (packageNames) => {
       set({ packageNames });
@@ -84,6 +88,16 @@ export const useSelectedFilteredStore = create((set, get) => {
     setSelectedOffset: (offset) => {
       set({ offset });
       debouncedSet[storageKeys.offset](offset);
+    },
+
+    setSelectedStartDate: (startDate) => {
+      set({ startDate });
+      localStorage.setItem(storageKeys.startDate, startDate);
+    },
+
+    setSelectedEndDate: (endDate) => {
+      set({ endDate });
+      localStorage.setItem(storageKeys.endDate, endDate);
     },
 
     flushDebounced: () => {

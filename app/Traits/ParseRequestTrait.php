@@ -6,42 +6,66 @@ namespace App\Traits;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Traits\ParseDateTrait;
+
 
 trait ParseRequestTrait
 {
+  use ParseDateTrait;
+
   protected function parsePeriodParams(Request $request, int $defaultLookBack = 20): array
   {
-    $period = $request->input('period', 'daily') ?? 'daily';
-    $offsetDays = $request->input('offsetDays', 0) ?? 0;
-    $lookBack = $request->input('lookBack', $defaultLookBack) ?? $defaultLookBack;
-    $endDate = Carbon::now()->subDays($offsetDays)->startOfDay(); // 'YYYY-MM-DD 00:00:00'
+    $period = $request->input('period', 'daily');
+    $offsetDays = (int) $request->input('offsetDays', 0);
+    $lookBack = (int) $request->input('lookBack', $defaultLookBack);
+
+    $endDate = Carbon::now()
+      ->subDays($offsetDays)
+      ->startOfDay();
+
     $startDate = null;
 
-    switch ($period) {
-      case 'daily':
-        $startDate = (clone $endDate)->subDays($lookBack)->startOfDay();
-        break;
-      case 'monthly':
-        $startDate = (clone $endDate)->subMonths($lookBack)->startOfMonth();
-        break;
-      case 'quarterly':
-        $startDate = (clone $endDate)->subQuarters($lookBack)->startOfQuarter();
-        break;
-      case 'yearly':
-        $startDate = (clone $endDate)->subYears($lookBack)->startOfYear();
-        break;
-    }
+    if ($period === 'daily') {
+      $dateRange = $this->parseDateRange($request->input('dateRange', ''));
 
-    $endDateExclusive = (clone $endDate)->addDay();
+      if ($dateRange) {
+        $startDate = $dateRange['start'];
+        $endDateExclusive = $dateRange['end'];
+      } else {
+        $startDate = (clone $endDate)->subDays($lookBack)->startOfDay();
+        $endDateExclusive = (clone $endDate)->addDay();
+      }
+    } else {
+      switch ($period) {
+        case 'monthly':
+          $startDate = (clone $endDate)->subMonths($lookBack)->startOfMonth();
+          break;
+
+        case 'quarterly':
+          $startDate = (clone $endDate)->subQuarters($lookBack)->startOfQuarter();
+          break;
+
+        case 'yearly':
+          $startDate = (clone $endDate)->subYears($lookBack)->startOfYear();
+          break;
+
+        default:
+          $startDate = (clone $endDate)->subDays($lookBack)->startOfDay();
+          break;
+      }
+
+      $endDateExclusive = (clone $endDate)->addDay();
+    }
 
     return [
       'period' => $period,
       'lookBack' => $lookBack,
       'offsetDays' => $offsetDays,
       'startDate' => $startDate,
-      'endDate' => $endDateExclusive
+      'endDate' => $endDateExclusive,
     ];
   }
+
 
   protected function parseWorkweek(Request $request): array
   {

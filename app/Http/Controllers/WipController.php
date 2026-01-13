@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class WipController extends Controller
 {
-  use ParseDateTrait;
   use ParseRequestTrait;
 
   protected $wipService;
@@ -183,21 +182,6 @@ class WipController extends Controller
       $dates['end'],
       $includePL
     );
-  }
-
-  public function getWIPQuantityAndLotsTotalNew(Request $request)
-  {
-    $packageName = $this->parsePackageName($request);
-    $periodParams = $this->parsePeriodParams($request);
-    $workweek = $request->input('workweek', '') ?? '';
-
-    // return $this->wipService->getWIPQuantityAndLotsTotalNew(
-    //   $packageName,
-    //   $periodParams['period'],
-    //   $periodParams['startDate'],
-    //   $periodParams['endDate'],
-    //   $workweek
-    // );
   }
 
   public function getWipOutCapacitySummaryTrend(Request $request)

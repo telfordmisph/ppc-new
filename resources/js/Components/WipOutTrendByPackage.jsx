@@ -20,6 +20,9 @@ import { visibleLines } from "@/Utils/chartLines";
 import { useDownloadFile } from "@/Hooks/useDownload";
 import { addDays, subDays, format } from "date-fns";
 import { MdFileDownload } from "react-icons/md";
+import DatePicker from "react-datepicker";
+import formatDate from "@/Utils/formatDate";
+import "react-datepicker/dist/react-datepicker.css";
 
 const test = ["F1", "F2", "F3", "Overall"];
 
@@ -44,6 +47,8 @@ const WipOutTrendByPackage = ({
         offset: savedOffset,
         period: savedPeriod,
         factory: savedFactory,
+        startDate: savedStartDate,
+        endDate: savedEndDate,
         setSelectedPackageNames: setSavedSelectedPackage,
         setSelectedWorkWeeks: setSavedWorkWeeks,
         setSelectedLookBack: setSavedSelectedLookBack,
@@ -62,6 +67,9 @@ const WipOutTrendByPackage = ({
     const [selectPeriod, setSelectedPeriod] = useState(savedPeriod);
     const [selectedFactory, setSelectedFactory] = useState(savedFactory);
 
+    const [startDate, setStartDate] = useState(savedStartDate);
+    const [endDate, setEndDate] = useState(savedEndDate);
+
     // useEffect(() => {
     //     if (savedSelectedPackageNames?.length) setSelectedPackageNames(savedSelectedPackageNames);
     //     if (savedWorkWeeks?.length) setSelectedWorkWeeks(savedWorkWeeks);
@@ -78,9 +86,12 @@ const WipOutTrendByPackage = ({
     //     savedFactory,
     // ]);
 
+    let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+
     const params = {
         packageName: selectedPackageNames.join(","),
         period: selectPeriod,
+        dateRange: dateRange,
         lookBack: selectedLookBack,
         offsetDays: selectedOffsetPeriod,
         workweek: selectedWorkWeeks.join(","),
@@ -94,12 +105,10 @@ const WipOutTrendByPackage = ({
         const startDate = subDays(offsetDate, selectedLookBack - 1);
         const endDate = offsetDate; // end date is the offset date
 
-        const formattedStart = format(startDate, "yyyy-MM-dd");
-        const formattedEnd = format(endDate, "yyyy-MM-dd");
-
         download(route(downloadRoute), {
             packageName: selectedPackageNames.join(","),
             period: selectPeriod,
+            dateRange: dateRange,
             offsetDays: selectedOffsetPeriod,
             lookBack: selectedLookBack,
         });
@@ -195,6 +204,12 @@ const WipOutTrendByPackage = ({
         [selectedFactory]
     );
 
+    const handleDateChange = (dates) => {
+        const [start, end] = dates;
+        setStartDate(start);
+        setEndDate(end);
+    };
+
     return (
         <>
             <div className="mb-2">{title}</div>
@@ -263,7 +278,29 @@ const WipOutTrendByPackage = ({
                     <div
                         className={clsx(
                             "flex",
-                            selectPeriod === "weekly" ? "hidden" : ""
+                            selectPeriod === "daily" ? "" : "hidden"
+                        )}
+                    >
+                        <DatePicker
+                            className="w-full rounded-lg input z-50"
+                            selected={startDate}
+                            onChange={handleDateChange}
+                            startDate={startDate}
+                            endDate={endDate}
+                            selectsRange
+                            isClearable
+                            placeholderText="Select a date range"
+                            dateFormat="MMM d, yyyy"
+                        />
+                    </div>
+
+                    <div
+                        className={clsx(
+                            "flex",
+                            selectPeriod === "weekly" ||
+                                selectPeriod === "daily"
+                                ? "hidden"
+                                : ""
                         )}
                     >
                         <FloatingLabelInput
@@ -277,6 +314,7 @@ const WipOutTrendByPackage = ({
                             className="h-9 m-1 w-34"
                             labelClassName="bg-base-200"
                         />
+
                         <FloatingLabelInput
                             id="offset"
                             label={`Offset days`}

@@ -22,6 +22,9 @@ import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { WIP_LOTS } from "@/Constants/colors";
+import DatePicker from "react-datepicker";
+import formatDate from "@/Utils/formatDate";
+import "react-datepicker/dist/react-datepicker.css";
 
 function useFetchByType(type, commonBaseParams) {
     return useFetch(route("api.wip.filterSummaryTrend"), {
@@ -37,6 +40,8 @@ const WIPStation = () => {
         lookBack: savedLookBack,
         period: savedPeriod,
         offset: savedOffset,
+        startDate: savedStartDate,
+        endDate: savedEndDate,
         setSelectedPackageNames: setSavedSelectedPackageName,
         setSelectedWorkWeeks: setSavedWorkWeeks,
         setSelectedLookBack: setSavedSelectedLookBack,
@@ -50,6 +55,8 @@ const WIPStation = () => {
     const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(
         savedWorkWeeks || []
     );
+    const [startDate, setStartDate] = useState(savedStartDate);
+    const [endDate, setEndDate] = useState(savedEndDate);
     const [selectedPeriod, setSelectedPeriod] = useState(savedPeriod);
     const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
     const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
@@ -73,6 +80,7 @@ const WIPStation = () => {
         errorMessage: packagesErrorMessage,
     } = useF1F2PackagesStore();
 
+    let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
     // const {
     //     data: packagesData,
     //     isLoading: packagesryLoading,
@@ -84,6 +92,7 @@ const WIPStation = () => {
         () => ({
             packageName: selectedPackageNames,
             period: selectedPeriod,
+            dateRange: dateRange,
             lookBack: selectedLookBack,
             offsetDays: selectedOffsetPeriod,
             workweek: selectedWorkWeeks.join(","),
@@ -92,6 +101,8 @@ const WIPStation = () => {
             selectedPackageNames,
             selectedPeriod,
             selectedLookBack,
+            selectedWorkWeeks,
+            dateRange,
             selectedOffsetPeriod,
         ]
     );
@@ -206,6 +217,12 @@ const WIPStation = () => {
         [factoryVisibleBars.f1, factoryVisibleBars.f2, factoryVisibleBars.f3]
     );
 
+    const handleDateChange = (dates) => {
+        const [start, end] = dates;
+        setStartDate(start);
+        setEndDate(end);
+    };
+
     return (
         <>
             <Head title="WIP Station" />
@@ -269,7 +286,29 @@ const WIPStation = () => {
                 <div
                     className={clsx(
                         "flex",
-                        selectedPeriod === "weekly" ? "hidden" : ""
+                        selectedPeriod === "daily" ? "" : "hidden"
+                    )}
+                >
+                    <DatePicker
+                        className="w-full rounded-lg input z-50"
+                        selected={startDate}
+                        onChange={handleDateChange}
+                        startDate={startDate}
+                        endDate={endDate}
+                        selectsRange
+                        isClearable
+                        placeholderText="Select a date range"
+                        dateFormat="MMM d, yyyy"
+                    />
+                </div>
+
+                <div
+                    className={clsx(
+                        "flex",
+                        selectedPeriod === "weekly" ||
+                            selectedPeriod === "daily"
+                            ? "hidden"
+                            : ""
                     )}
                 >
                     <FloatingLabelInput

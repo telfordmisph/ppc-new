@@ -21,6 +21,9 @@ import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
 import { WIP_LOTS } from "@/Constants/colors";
+import DatePicker from "react-datepicker";
+import formatDate from "@/Utils/formatDate";
+import "react-datepicker/dist/react-datepicker.css";
 
 const WipTrendByPackage = memo(function WipTrendByPackage({
     isVisible,
@@ -32,6 +35,8 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         lookBack: savedLookBack,
         period: savedPeriod,
         offset: savedOffset,
+        startDate: savedStartDate,
+        endDate: savedEndDate,
         setSelectedWorkWeeks: setSavedWorkWeeks,
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
@@ -56,6 +61,11 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         totalwip: true,
     });
 
+    const [startDate, setStartDate] = useState(savedStartDate);
+    const [endDate, setEndDate] = useState(savedEndDate);
+
+    let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+
     const {
         data: workWeekData,
         isLoading: isWorkWeekLoading,
@@ -69,9 +79,16 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
     const params = {
         packageName: packageName,
         period: selectPeriod,
+        dateRange: dateRange,
         lookBack: selectedLookBack,
         offsetDays: selectedOffsetPeriod,
         workweek: selectedWorkWeeks.join(","),
+    };
+
+    const handleDateChange = (dates) => {
+        const [start, end] = dates;
+        setStartDate(start);
+        setEndDate(end);
     };
 
     const {
@@ -88,6 +105,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
 
     useEffect(() => {
         if (packageName === null) return;
+        if (!startDate || !endDate) return;
 
         const fetchData = async () => {
             await overallByPackageWipFetch();
@@ -100,6 +118,8 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         selectedOffsetPeriod,
         packageName,
         selectedWorkWeeks,
+        startDate,
+        endDate,
     ]);
 
     const datePeriod = formatPeriodLabel(selectPeriod);
@@ -177,7 +197,28 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
                 <div
                     className={clsx(
                         "flex",
-                        selectPeriod === "weekly" ? "hidden" : ""
+                        selectPeriod === "daily" ? "" : "hidden"
+                    )}
+                >
+                    <DatePicker
+                        className="w-full rounded-lg input z-50"
+                        selected={startDate}
+                        onChange={handleDateChange}
+                        startDate={startDate}
+                        endDate={endDate}
+                        selectsRange
+                        isClearable
+                        placeholderText="Select a date range"
+                        dateFormat="MMM d, yyyy"
+                    />
+                </div>
+
+                <div
+                    className={clsx(
+                        "flex",
+                        selectPeriod === "weekly" || selectPeriod === "daily"
+                            ? "hidden"
+                            : ""
                     )}
                 >
                     <FloatingLabelInput
