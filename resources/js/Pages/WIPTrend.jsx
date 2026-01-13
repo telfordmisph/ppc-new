@@ -262,7 +262,10 @@ const WIPTrend = () => {
         );
     }, [isAllPLsSelected, activePLs, plSummed, allPackages]);
 
-    const sortKeys = selectedTotal === "wip" ? ["total_wip"] : ["total_lots"];
+    const sortKeys = useMemo(
+        () => (selectedTotal === "wip" ? ["total_wip"] : ["total_lots"]),
+        [selectedTotal]
+    );
 
     // data={sortObjectArray(summaryWipData?.data || [], {
     //                     keys: ["total_lots"],
@@ -281,10 +284,10 @@ const WIPTrend = () => {
         [filteredData, sortKeys, compute]
     );
 
-    const handleShowTrendByPackage = ({ data, dataKey }) => {
+    const handleShowTrendByPackage = useCallback(({ data, dataKey }) => {
         setIsTrendByPackageVisible(true);
         setSelectedPackageName(data?.Package_Name || null);
-    };
+    }, []);
 
     return (
         <>
