@@ -52,8 +52,8 @@ export const useSelectedFilteredStore = create((set, get) => {
     period: localStorage.getItem(storageKeys.period) || "weekly",
     factory: localStorage.getItem(storageKeys.factory) || "Overall",
     offset: getNumber(storageKeys.offset, 0),
-    startDate: localStorage.getItem(storageKeys.startDate) || new Date(),
-    endDate: localStorage.getItem(storageKeys.endDate) || new Date(),
+    startDate: new Date(localStorage.getItem(storageKeys.startDate)) || new Date(),
+    endDate: new Date(localStorage.getItem(storageKeys.endDate)) || new Date(),
 
     setSelectedPackageNames: (packageNames) => {
       set({ packageNames });

@@ -145,7 +145,7 @@ class WipImportService
           continue;
         }
 
-        Log::info("row: " . print_r($row, true));
+        // Log::info("row: " . print_r($row, true));
 
         $row = $this->sanitizeRow($row, $importedBy);
         $focusGroup = $row['Focus_Group'];
@@ -236,7 +236,6 @@ class WipImportService
     // TOOD: OK response from server error ?????? 
 
     $now = Carbon::now();
-    // Log::info("row 10: " . $row[10]);
     $row[10] = $this->parseDate($row[10], $now);
     $row[11] = $this->parseDate($row[11]);
     $row[18] = $this->parseDate($row[18]);
@@ -549,7 +548,7 @@ class WipImportService
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
 
       if (!$packageID) {
-        Log::info("Package not found: " . $rowData['package']);
+        // Log::info("Package not found: " . $rowData['package']);
         $ignoredRows[] = $rowData;
         continue;
       }
@@ -564,7 +563,7 @@ class WipImportService
       // Log::info("Key: " . $key);
 
       if (isset($existingRecords[$key])) {
-        Log::info("Skipping existing record: " . print_r($rowData, true));
+        // Log::info("Skipping existing record: " . print_r($rowData, true));
         continue;
       }
 
@@ -850,7 +849,7 @@ class WipImportService
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
 
       if (!$packageID) {
-        Log::info("Package not found: " . $rowData['package']);
+        // Log::info("Package not found: " . $rowData['package']);
         $ignoredRows[] = $rowData;
         continue;
       }
@@ -931,7 +930,7 @@ class WipImportService
 
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
       if (!$packageID) {
-        Log::info("Package not found: " . ($rowData['package'] ?? 'NULL'));
+        // Log::info("Package not found: " . ($rowData['package'] ?? 'NULL'));
         $ignoredRows[] = $rowData;
         continue;
       }

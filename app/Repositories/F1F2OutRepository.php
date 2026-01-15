@@ -52,11 +52,8 @@ class F1F2OutRepository
     // }
     // $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
     // // separate alias for each packagename
-    // Log::info("package names: " . json_encode($packageNames));
 
     // $aliases = $this->packageGroupRepo->getMembersByPackageName($packageNames, $factory);
-    // Log::info("Aliases f1 f2 OUT : " . json_encode($aliases));
-    // Log::info("factory: " . json_encode($factory));
     // if (!empty($aliases)) {
     //   $query->whereIn('wip.Package', $aliases);
     //   // $this->applyNormalizedDimensionFilter($query, $aliases->toArray(), 'wip.package');
@@ -197,13 +194,8 @@ class F1F2OutRepository
       $workweeks
     )->get();
 
-
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
     $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
-
-    Log::info("f1trend: " . json_encode($f1Trend));
-    Log::info("f2trend: " . json_encode($f2Trend));
-    Log::info("overalltrend: " . json_encode($overallTrend));
 
     return WipTrendParser::parseTrendsByPeriod([
       'f1_trend' => $f1Trend,

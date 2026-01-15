@@ -77,7 +77,7 @@ class WipConstants
   ];
   public const TSSOP_240_MILS = "TSSOP (240 MILS)";
   public const SPECIAL_FILTER_VALUE = [self::TSSOP_240_MILS];
-  public const F1F2_OUT_PACKAGE_VALUES = ["SOIC_N", "SOIC_N_EP", "QSOP", "150mils", "RN", "150 mils"];
+  public const F1F2_150_MILS_OUT_PACKAGE_VALUES = ["SOIC_N", "SOIC_N_EP", "QSOP", "150mils", "RN", "150 mils"];
   // continue this service filter package OCP
   public const DAYS_UNTIL_RECLASSIFIED_AS_NEW = 10;
   public const FACTORIES = ['F1', 'F2', 'F3'];
@@ -301,7 +301,9 @@ class WipConstants
   ];
 
   public const F2_OUT_FOCUS_GROUP_INCLUSION = ['CV', 'LT', 'LTCL', 'LTI'];
+  // public const F2_OUT_FOCUS_GROUP_INCLUSION = ['CV1', 'DLT', 'WLT', 'SOF'];
   public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];
+  // public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV1', 'DLT', 'WLT', 'SOF'];
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];

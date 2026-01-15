@@ -53,8 +53,6 @@ class AutoImportController extends Controller
 
         $result = $this->wipImportService->ftpRootImportF1F2Outs($empId);
 
-        Log::info("ttest", $result);
-
         return response()->json([
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
@@ -70,7 +68,6 @@ class AutoImportController extends Controller
             'file' => 'required|file|mimes:csv|max:50000',
         ]);
         $file = $request->file('file');
-        Log::info("manual import wip");
         $result = $this->wipImportService->importF1F2WIP($empId, $file);
 
         return response()->json([

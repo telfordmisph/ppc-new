@@ -18,6 +18,10 @@ const preferredOrder = [
     "f2_capacity",
     "f3_capacity",
     "overall_capacity",
+    "f1_utilization",
+    "f2_utilization",
+    "f3_utilization",
+    "overall_utilization",
 ];
 
 const TableChart = ({ data = [], exclude = [] }) => {

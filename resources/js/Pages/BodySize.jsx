@@ -1,39 +1,24 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Head, usePage } from "@inertiajs/react";
+import React, { useState } from "react";
+import { Head } from "@inertiajs/react";
 import { useFetch } from "@/Hooks/useFetch";
-import SearchableDropdown from "@/Components/SearchableDropdown";
-import TrendLineChart from "@/Components/Charts/TrendLineChart";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
-import TogglerButton from "@/Components/TogglerButton";
 import {
     formatPeriodLabel,
     formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
-import { periodOptions } from "@/Constants/periodOptions";
-import {
-    TOGGLE_F1F2_BUTTONS,
-    TOGGLE_FACTORY_BUTTONS,
-} from "@/Constants/toggleButtons";
+import { nonTrendPeriodOptions } from "@/Constants/periodOptions";
+import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { visibleLines } from "@/Utils/chartLines";
 import clsx from "clsx";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
-import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import { WIP_LOTS } from "@/Constants/colors";
 import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
+import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import "react-datepicker/dist/react-datepicker.css";
 
-function useFetchByType(type, commonBaseParams) {
-    return useFetch(route("api.wip.filterSummaryTrend"), {
-        params: { ...commonBaseParams, filteringCondition: type },
-        auto: false,
-    });
-}
-
-const WIPStation = () => {
+const BodySize = () => {
     const {
         packageNames: savedSelectedPackages,
         workWeeks: savedWorkWeeks,
@@ -63,18 +48,14 @@ const WIPStation = () => {
     const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
     const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
         useState(savedOffset);
-    const [factoryVisibleBars, setFactoryVisibleBars] = useState({
-        f1: true,
-        f2: true,
-        f3: true,
-        always: true,
-    });
 
     const {
         data: workWeekData,
         isLoading: isWorkWeekLoading,
         errorMessage: WorkWeekErrorMessage,
     } = useWorkweekStore();
+
+    // const packagesData = ["LFCSP", "QFN/DFN"];
 
     const {
         data: packagesData,
@@ -83,69 +64,33 @@ const WIPStation = () => {
     } = useF1F2PackagesStore();
 
     let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
-    // const {
-    //     data: packagesData,
-    //     isLoading: packagesryLoading,
-    //     errorMessage: packagesErrorMessage,
-    //     // fetch: packagesFetch,
-    // } = useFetch(route("api.wip.distinctPackages"));
 
-    const commonBaseParams = useMemo(
-        () => ({
-            packageName: selectedPackageNames,
-            period: selectedPeriod,
-            dateRange: dateRange,
-            lookBack: selectedLookBack,
-            offsetDays: selectedOffsetPeriod,
-            workweek: selectedWorkWeeks.join(","),
-        }),
-        [
-            selectedPackageNames,
-            selectedPeriod,
-            selectedLookBack,
-            selectedWorkWeeks,
-            dateRange,
-            selectedOffsetPeriod,
-        ]
-    );
+    const params = {
+        packageName: selectedPackageNames,
+        period: selectedPeriod,
+        dateRange: dateRange,
+        workweek:
+            selectedPeriod === "weekly" ? selectedWorkWeeks.join(" ") : "",
+    };
 
-    const allFetch = useFetchByType("All", commonBaseParams);
-    const holdFetch = useFetchByType("Hold", commonBaseParams);
-    const pipelineFetch = useFetchByType("Pipeline", commonBaseParams);
-    const bakeFetch = useFetchByType("Bake", commonBaseParams);
-    const processableFetch = useFetchByType("Processable", commonBaseParams);
-    const detapesegregationFetch = useFetchByType(
-        "Detapesegregation",
-        commonBaseParams
-    );
-    const lpiFetch = useFetchByType("Lpi", commonBaseParams);
-    const brandFetch = useFetchByType("Brand", commonBaseParams);
-    const lliFetch = useFetchByType("Lli", commonBaseParams);
-    const sortFetch = useFetchByType("Sort", commonBaseParams);
-
-    const allFetchStates = [
-        { type: "All", ...allFetch },
-        { type: "Hold", ...holdFetch },
-        { type: "Pipeline", ...pipelineFetch },
-        { type: "Bake", ...bakeFetch },
-        { type: "Processable", ...processableFetch },
-        { type: "Detapesegregation", ...detapesegregationFetch },
-        { type: "Lpi", ...lpiFetch },
-        { type: "Brand", ...brandFetch },
-        { type: "Lli", ...lliFetch },
-        { type: "Sort", ...sortFetch },
-    ];
+    const {
+        data: bodySizeWipData,
+        isLoading: isBodySizeWipLoading,
+        errorMessage: bodySizeWipErrorMessage,
+        fetch: bodySizeWipFetch,
+        abort: bodySizeWipAbort,
+    } = useFetch(route("api.wip.wipAndLotsByBodySize"), {
+        params: params,
+    });
 
     const handleSearch = () => {
-        allFetchStates.forEach(({ abort, fetch }) => {
-            abort();
-            fetch();
-        });
+        bodySizeWipAbort();
+        bodySizeWipFetch();
 
         setFullLabel(
             formatPeriodTrendMessage(
                 1,
-                anyLoading,
+                isBodySizeWipLoading,
                 selectedPeriod,
                 selectedLookBack,
                 selectedOffsetPeriod,
@@ -154,30 +99,7 @@ const WIPStation = () => {
         );
     };
 
-    const xAxis = "label";
-
     const datePeriod = formatPeriodLabel(selectedPeriod);
-    const anyLoading = allFetchStates.some((f) => f.isLoading);
-    const anyError = allFetchStates.find((f) => f.errorMessage);
-
-    const handleToggleBar = (name, key) => {
-        if (name === "factory") {
-            setFactoryVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
-        }
-
-        if (name === "production_line") {
-            setPLVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
-        }
-    };
-
-    const toggleAllFactory = () => {
-        const allVisible = Object.values(factoryVisibleBars).every(Boolean);
-        setFactoryVisibleBars({
-            f1: !allVisible,
-            f2: !allVisible,
-            always: true,
-        });
-    };
 
     const handleWorkWeekChange = (selectedWorkWeek) => {
         setSelectedWorkWeeks(selectedWorkWeek);
@@ -204,21 +126,6 @@ const WIPStation = () => {
         setSavedSelectedPackageName(selectedPackages);
     };
 
-    const lines = useMemo(
-        () =>
-            visibleLines({
-                showQuantities: true,
-                showLots: false,
-                showFactories: {
-                    f1: factoryVisibleBars.f1,
-                    f2: factoryVisibleBars.f2,
-                    f3: factoryVisibleBars.f3,
-                },
-                keyLines: WIP_LOTS,
-            }),
-        [factoryVisibleBars.f1, factoryVisibleBars.f2, factoryVisibleBars.f3]
-    );
-
     const handleDateChange = (dates) => {
         const [start, end] = dates;
         setStartDate(start);
@@ -227,6 +134,31 @@ const WIPStation = () => {
         if (!start || !end) return;
         setSavedStartDate(start);
         setSavedEndDate(end);
+    };
+
+    const commonChartProps = ({ fillWip, fillLot }) => {
+        return {
+            xAxisDataKey: "size_bucket",
+            isLoading: isBodySizeWipLoading,
+            errorMessage: bodySizeWipErrorMessage,
+            bars: [
+                {
+                    dataKey: "total_wip",
+                    fill: fillWip,
+                    visibilityKey: "size_bucket",
+                    yAxisId: "left",
+                },
+                {
+                    dataKey: "total_lots",
+                    fill: fillLot,
+                    visibilityKey: "size_bucket",
+                    yAxisId: "right",
+                },
+            ],
+            visibleBars: {
+                size_bucket: true,
+            },
+        };
     };
 
     return (
@@ -250,9 +182,7 @@ const WIPStation = () => {
                         isLoading={isPackagesLoading}
                         itemName="Package List"
                         prompt="Select packages"
-                        contentClassName="w-52 h-70"
-                        // singleSelect
-                        // disableSelectedContainer
+                        contentClassName="w-32 h-70"
                     />
                 </div>
 
@@ -275,7 +205,7 @@ const WIPStation = () => {
                         id="popover-period"
                         style={{ positionAnchor: "--anchor-period" }}
                     >
-                        {periodOptions.map((option) => (
+                        {nonTrendPeriodOptions.map((option) => (
                             <li key={option.value}>
                                 <a
                                     onClick={() => {
@@ -369,16 +299,17 @@ const WIPStation = () => {
                     />
                 </div>
 
-                <TogglerButton
-                    id="factory"
-                    toggleButtons={TOGGLE_F1F2_BUTTONS}
-                    visibleBars={factoryVisibleBars}
-                    toggleBar={handleToggleBar}
-                    toggleAll={toggleAllFactory}
-                />
-
-                <button className="btn btn-primary h-9" onClick={handleSearch}>
-                    Search
+                <button
+                    className="btn btn-primary h-9"
+                    onClick={handleSearch}
+                    disabled={
+                        !selectedPackageNames.length ||
+                        !selectedPeriod ||
+                        (selectedPeriod === "weekly" &&
+                            !selectedWorkWeeks.length)
+                    }
+                >
+                    Get Data
                 </button>
             </div>
             <div
@@ -392,36 +323,52 @@ const WIPStation = () => {
             <div
                 className={clsx(
                     "text-error-content bg-error/10 border border-error rounded-lg p-4 mt-4",
-                    anyError ? "block" : "hidden"
+                    bodySizeWipErrorMessage ? "block" : "hidden"
                 )}
             >
-                {anyError ? anyError.errorMessage : ""}
+                {bodySizeWipErrorMessage ? bodySizeWipErrorMessage : ""}
             </div>
-            <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
-                {allFetchStates.map(
-                    ({ type, data, isLoading, errorMessage }) => {
-                        return (
-                            <div key={type}>
-                                <div className="font-semibold pt-4 pb-2 pl-2">
-                                    {type}
-                                </div>
-                                <div className="p-4 border bg-base-300 border-base-content/10 rounded-lg">
-                                    <TrendLineChart
-                                        key={type}
-                                        data={data?.data || []}
-                                        xKey={xAxis}
-                                        isLoading={isLoading}
-                                        errorMessage={errorMessage}
-                                        lines={lines}
-                                    />
-                                </div>
-                            </div>
-                        );
-                    }
-                )}
+            <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
+                <div className="p-2 text-center w-full border rounded-t-lg border-f1color/50 border-b-transparent">
+                    F1
+                </div>
+                <StackedBarChart
+                    data={bodySizeWipData?.data?.f1}
+                    xAxisDataKey={"size_bucket"}
+                    {...commonChartProps({
+                        fillWip: "var(--color-f1color)",
+                        fillLot: "var(--color-f1color-dim)",
+                    })}
+                />
+            </div>
+            <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
+                <div className="p-2 text-center w-full border rounded-t-lg border-f2color/50 border-b-transparent">
+                    F2
+                </div>
+                <StackedBarChart
+                    data={bodySizeWipData?.data?.f2}
+                    xAxisDataKey={"size_bucket"}
+                    {...commonChartProps({
+                        fillWip: "var(--color-f2color)",
+                        fillLot: "var(--color-f2color-dim)",
+                    })}
+                />
+            </div>
+            <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
+                <div className="p-2 text-center w-full border rounded-t-lg border-f3color/50 border-b-transparent">
+                    F3
+                </div>
+                <StackedBarChart
+                    data={bodySizeWipData?.data?.f3}
+                    xAxisDataKey={"size_bucket"}
+                    {...commonChartProps({
+                        fillWip: "var(--color-f3color)",
+                        fillLot: "var(--color-f3color-dim)",
+                    })}
+                />
             </div>
         </>
     );
 };
 
-export default WIPStation;
+export default BodySize;

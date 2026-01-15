@@ -6,6 +6,7 @@ import React, {
     useRef,
 } from "react";
 import { Head } from "@inertiajs/react";
+import clsx from "clsx";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
@@ -122,22 +123,27 @@ const WIPTrend = () => {
         isLoading: isOverallWipLoading,
         errorMessage: overallWipErrorMessage,
         fetch: overallWipFetch,
-    } = useFetch(route(endpoints.overall), { params: commonParams });
+        abort: overallWipAbort,
+    } = useFetch(route(endpoints.overall), {
+        params: commonParams,
+        auto: false,
+    });
 
     const {
         data: overallSummaryWipData,
         isLoading: isOverallSummaryWipLoading,
         errorMessage: overallSummaryWipErrorMessage,
         fetch: overallSummaryWipFetch,
+        abort: overallSummaryWipAbort,
     } = useFetch(route(endpoints.summary), {
         params: { ...commonParams, includePL: false },
+        auto: false,
     });
 
-    const {
-        isLoading: isImportWipLoading,
-        errorMessage: importWipErrorMessage,
-        mutate: importWip,
-    } = useMutation();
+    const abortAllFetch = () => {
+        overallWipAbort();
+        overallSummaryWipAbort();
+    };
 
     const { message } = formatDataStatusMessage({
         isLoading: isOverallWipLoading,
@@ -371,15 +377,34 @@ const WIPTrend = () => {
                                 Reset
                             </button>
                             <button
-                                className="btn btn-primary"
-                                onClick={handleRefetch}
+                                className={clsx("btn btn-primary", {
+                                    "btn btn-secondary":
+                                        isOverallWipLoading ||
+                                        isOverallSummaryWipLoading,
+                                })}
+                                onClick={() => {
+                                    console.log("ha");
+                                    if (
+                                        isOverallWipLoading ||
+                                        isOverallSummaryWipLoading
+                                    ) {
+                                        abortAllFetch();
+                                    } else {
+                                        handleRefetch();
+                                    }
+                                }}
                                 disabled={
                                     !isWorkweek
                                         ? !tempStartDate || !tempEndDate
                                         : tempSelectedWorkWeek.length === 0
                                 }
                             >
-                                Apply Filter
+                                {isOverallWipLoading ||
+                                isOverallSummaryWipLoading ? (
+                                    <span>Cancel</span>
+                                ) : (
+                                    <span>Apply Filter</span>
+                                )}
                             </button>
                         </div>
                     </div>

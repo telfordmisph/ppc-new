@@ -57,6 +57,8 @@
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
 
+  --color-utilization: #EEA1FF;
+
   --radius-selector: 0.5rem;
   --radius-field: 0.5rem;
   --radius-box: 0.5rem;
@@ -83,6 +85,8 @@
   --color-accent-content: #2C2A00;
   --color-neutral: #1C1B22;      
   --color-neutral-content: #d9dfe5;
+
+  --color-utilization: #EEA1FF;
 
   --radius-selector: 0.5rem;
   --radius-field: 0.5rem;

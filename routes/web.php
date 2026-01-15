@@ -55,6 +55,9 @@ Route::middleware(AuthMiddleware::class . ':residual_trend')->group(function () 
 Route::middleware(AuthMiddleware::class . ':wip_station')->group(function () {
     Route::get("/wip-station", [App\Http\Controllers\WipController::class, 'wipStation'])->name('wipTable');
 });
+Route::middleware(AuthMiddleware::class . ':body_size')->group(function () {
+    Route::get("/body-size", [App\Http\Controllers\WipController::class, 'bodySize'])->name('bodySize');
+});
 
 Route::get("/profile", [ProfileController::class, 'index'])->name('profile.index');
 Route::post("/change-password", [ProfileController::class, 'changePassword'])->name('changePassword');

@@ -64,8 +64,6 @@ class AnalogCalendarController extends Controller
 
   public function getDatesByWorkWeekRange($workweek)
   {
-    \Log::info("Fetching dates by workweek ...");
-
     $result = $this->analogCalendarRepository->getDatesByWorkWeekRange($workweek);
 
     return response()->json([

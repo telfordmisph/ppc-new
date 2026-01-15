@@ -8,7 +8,7 @@ import {
 } from "react-icons/lu";
 
 import { BiImport } from "react-icons/bi";
-
+import { TbResize } from "react-icons/tb";
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { usePage } from "@inertiajs/react";
@@ -50,6 +50,12 @@ export default function NavLinks() {
                         href: route("wip.trend"),
                         label: "WIP Trend",
                         icon: <FaArrowTrendUp className="w-4 h-4" />,
+                        notification: false,
+                    },
+                    {
+                        href: route("bodySize"),
+                        label: "Body Size",
+                        icon: <TbResize className="w-4 h-4" />,
                         notification: false,
                     },
                     {

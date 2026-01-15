@@ -41,6 +41,8 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
         setSelectedOffset: setSavedSelectedOffset,
+        setSelectedStartDate: setSavedStartDate,
+        setSelectedEndDate: setSavedEndDate,
     } = useSelectedFilteredStore();
 
     const [isChartTableVisible, setIsChartTableVisible] = useState(
@@ -89,6 +91,10 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         const [start, end] = dates;
         setStartDate(start);
         setEndDate(end);
+
+        if (!start || !end) return;
+        setSavedStartDate(start);
+        setSavedEndDate(end);
     };
 
     const {

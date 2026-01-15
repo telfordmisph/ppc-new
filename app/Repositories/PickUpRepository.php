@@ -207,10 +207,6 @@ class PickUpRepository
       ->select([...$groupByOrderBy, ...self::aggregateColumn])
       ->selectRaw("'F3' as factory, package");
 
-    Log::info(SqlDebugHelper::prettify($f1Sub->toSql(), $f1Sub->getBindings()));
-    Log::info(SqlDebugHelper::prettify($f2Sub->toSql(), $f2Sub->getBindings()));
-    Log::info(SqlDebugHelper::prettify($f3Sub->toSql(), $f3Sub->getBindings()));
-
     $combined = $f1Sub
       ->unionAll($f3Sub)
       ->unionAll($f2Sub);
@@ -225,17 +221,13 @@ class PickUpRepository
       $finalResults->orderBy($col);
     }
 
-    Log::info(SqlDebugHelper::prettify($finalResults->toSql(), $finalResults->getBindings()));
 
     $trends['f1_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend']->get()], $groupByOrderBy);
     $trends['f2_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f2_trend']->get()], $groupByOrderBy);
     $trends['f3_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f3_trend']->get()], $groupByOrderBy);
 
-    Log::info(json_encode($trends));
-
     $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$finalResults->get()], $groupByOrderBy, ['factory']);
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
-    Log::info(json_encode($mergedTrends));
 
     $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends);
 

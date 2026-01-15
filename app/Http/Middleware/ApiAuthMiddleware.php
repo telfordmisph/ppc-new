@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 
 class ApiAuthMiddleware
 {
+  protected $sessionTimeOutMessage = 'You are either not logged in, or your session has expired. Please log in again.';
+
   /**
    * Handle an incoming request.
    *
@@ -19,7 +21,7 @@ class ApiAuthMiddleware
   {
     $empData = session('emp_data');
     if (!$empData || !isset($empData['token'])) {
-      return response()->json(['error' => 'Unauthenticated', 'message' => 'You are not logged in'], 401);
+      return response()->json(['error' => 'Unauthenticated', 'message' => $this->sessionTimeOutMessage], 401);
     }
 
     $token = $empData['token'];
@@ -34,7 +36,7 @@ class ApiAuthMiddleware
     });
 
     if (!$currentUser) {
-      return response()->json(['error' => 'Unauthenticated', 'message' => 'You are not logged in'], 401);
+      return response()->json(['error' => 'Unauthenticated', 'message' => $this->sessionTimeOutMessage], 401);
     }
 
     $role = strtolower(trim($currentUser->emp_jobtitle));

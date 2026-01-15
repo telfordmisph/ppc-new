@@ -205,7 +205,6 @@ class F1F2WipRepository
   public function filterByPackageName($query, ?array $packageNames, $factories): Builder
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.Package_Name');
-    Log::info("filter query: " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
     // if (is_string($packageNames)) {
     //   $packageNames = explode(',', $packageNames);
     // }

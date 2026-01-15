@@ -33,6 +33,7 @@ $permission_sets = [
   ],
   'dashboard' => ['dashboard'],
   'wip_station' => ['wip_station'],
+  'body_size' => ['body_size'],
   'capacity' => ['capacity_read', 'capacity_upload'],
 ];
 
@@ -43,7 +44,8 @@ $full_access = array_merge(
   $permission_sets['f3_full'],
   $permission_sets['capacity'],
   $permission_sets['dashboard'],
-  $permission_sets['wip_station']
+  $permission_sets['wip_station'],
+  $permission_sets['body_size']
 );
 
 return [

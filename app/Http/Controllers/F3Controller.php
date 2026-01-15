@@ -121,8 +121,6 @@ class F3Controller extends Controller
     $statuses = $request->input('statuses');
     $totalEntries = F3::count();
 
-    Log::info("dateloaded", [$dateLoaded]);
-
     $f3WipAndOut = F3::query()
       ->with('package.f3_package_name')
       ->when($search, function ($query, $search) {

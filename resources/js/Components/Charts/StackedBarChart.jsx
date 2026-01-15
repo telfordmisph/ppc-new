@@ -13,7 +13,7 @@ import BaseChart from "./baseChart";
 import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 import HoveredBar from "./HoverBar";
 
-const HoverableBar = memo(({ bar, visible, onBarClick }) => {
+const HoverableBar = memo(({ bar, visible, onBarClick, yAxisId }) => {
     if (!visible) return null;
 
     return (
@@ -23,6 +23,7 @@ const HoverableBar = memo(({ bar, visible, onBarClick }) => {
             unit={10}
             dataKey={bar.dataKey}
             stackId={bar.stackId || null}
+            yAxisId={yAxisId}
             fill={
                 Array.isArray(bar.fill) ? `url(#grad-${bar.dataKey})` : bar.fill
             }
@@ -75,10 +76,15 @@ const StackedBarChart = memo(function StackedBarChart({
     bars,
     visibleBars,
     onBarClick = () => {},
+    xAxisDataKey = "Package_Name",
     width = 500,
     height = 300,
     margin,
 }) {
+    const totalBarCount = data?.length || 0;
+    const fontSize = totalBarCount > 15 ? 10 : 14;
+    const angle = totalBarCount > 15 ? -45 : 0;
+
     return (
         <BaseChart data={data} isLoading={isLoading} error={errorMessage}>
             {({ tooltip }) => (
@@ -98,29 +104,38 @@ const StackedBarChart = memo(function StackedBarChart({
                         strokeDasharray="2 3"
                     />
                     <XAxis
-                        dataKey="Package_Name"
-                        tick={{ fontSize: 10 }}
-                        angle={-45}
+                        dataKey={xAxisDataKey}
+                        tick={{
+                            fontSize: fontSize,
+                        }}
+                        angle={angle}
                         textAnchor="end"
                         interval={0}
                         height={80}
                     />
                     <YAxis
+                        yAxisId="left"
+                        tickFormatter={(value) => formatAbbreviateNumber(value)}
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
                         tickFormatter={(value) => formatAbbreviateNumber(value)}
                     />
                     <Legend />
-                    <Bar
+                    {/* <Bar
                         dataKey="total_wip"
                         hide
                         className="hidden"
-                        fill={"var(--color-neutral-content)"}
-                    />
+                        fill={"var(--color-primary)"}
+                    /> */}
                     {bars.map((bar) => (
                         <HoverableBar
                             key={bar.dataKey}
                             bar={bar}
                             visible={visibleBars?.[bar.visibilityKey]}
                             onBarClick={onBarClick}
+                            yAxisId={bar.yAxisId || "left"}
                         />
                     ))}
                 </BarChart>

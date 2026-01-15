@@ -47,12 +47,9 @@ class WipController extends Controller
   // ------------------------
   public function getDistinctPackages()
   {
-    Log::info("Fetching getWipOutTrend ...");
-
     // TODO: use a separate table, perhaps use the excel file from PPC portal at 'downloads' folder
 
     $packages = $this->wipService->getAllPackages();
-    Log::info("Packages: " . json_encode($packages));
     return response()->json([
       'data' => $packages,
       // 'data' => WipConstants::DISTINCT_PACKAGES,
@@ -88,6 +85,11 @@ class WipController extends Controller
   {
     $workweekParams = $this->parseWorkweek($request);
     $dates = $this->parseDateRangeFromRequest($request);
+
+    // return response()->json([
+    //   'status' => 'error',
+    //   'message' => 'Invalid chart status: ',
+    // ], 400);
 
     return $this->wipService->getOverallWip(
       $dates['start'],
@@ -184,14 +186,29 @@ class WipController extends Controller
     );
   }
 
+  public function getWipAndLotsByBodySize(Request $request)
+  {
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    $workweekParams = $this->parseWorkweek($request);
+    $dates = $this->parseDateRangeFromRequest($request);
+    // $includePL = $request->input('includePL', true) ?? true;
+    Log::info("workweekParams: " . json_encode($workweekParams));
+    return $this->wipService->getWipAndLotsByBodySize(
+      $packageName,
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek'],
+    );
+  }
+
   public function getWipOutCapacitySummaryTrend(Request $request)
   {
 
     $packageName = $this->parsePackageName($request);
     $periodParams = $this->parsePeriodParams($request);
     $workweeks = $this->parseWorkweek($request);
-
-    Log::info("Fetching getWipOutTrend ..." . json_encode($workweeks['workweek']));
 
     return $this->wipService->getWipOutCapacitySummaryTrend(
       $packageName,
@@ -229,5 +246,10 @@ class WipController extends Controller
   public function wipStation()
   {
     return Inertia::render('WIPStation');
+  }
+
+  public function bodySize()
+  {
+    return Inertia::render('BodySize');
   }
 }

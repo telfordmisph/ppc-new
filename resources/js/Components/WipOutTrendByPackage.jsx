@@ -55,6 +55,8 @@ const WipOutTrendByPackage = ({
         setSelectedPeriod: setSavedSelectedPeriod,
         setSelectedOffset: setSavedSelectedOffset,
         setSelectedFactory: setSavedSelectedFactory,
+        setSelectedStartDate: setSavedStartDate,
+        setSelectedEndDate: setSavedEndDate,
     } = useSelectedFilteredStore();
 
     const [selectedPackageNames, setSelectedPackageNames] = useState(
@@ -208,6 +210,10 @@ const WipOutTrendByPackage = ({
         const [start, end] = dates;
         setStartDate(start);
         setEndDate(end);
+
+        if (!start || !end) return;
+        setSavedStartDate(start);
+        setSavedEndDate(end);
     };
 
     return (
@@ -428,6 +434,9 @@ const WipOutTrendByPackage = ({
                         isLoading={isOveraByPackagellWipLoading}
                         errorMessage={overallByPackageWipErrorMessage}
                         lines={lines}
+                        rightAxisTickFormatter={(value) =>
+                            `${value.toFixed(2)}%`
+                        }
                     />
                     {isChartTableVisible && !isOveraByPackagellWipLoading && (
                         <TableChart

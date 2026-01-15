@@ -17,6 +17,8 @@ const TrendLineChart = memo(function TrendLineChart({
     errorMessage = null,
     lines = [],
     height = 300,
+    leftAxisTickFormatter = (value) => formatAbbreviateNumber(value),
+    rightAxisTickFormatter = (value) => formatAbbreviateNumber(value),
 }) {
     const [lineProps, setLineProps] = useState(
         lines.reduce(
@@ -66,15 +68,11 @@ const TrendLineChart = memo(function TrendLineChart({
                         <XAxis dataKey={xKey} />
 
                         <YAxis
-                            tickFormatter={(value) =>
-                                formatAbbreviateNumber(value)
-                            }
+                            tickFormatter={leftAxisTickFormatter}
                             yAxisId="left"
                         />
                         <YAxis
-                            tickFormatter={(value) =>
-                                formatAbbreviateNumber(value)
-                            }
+                            tickFormatter={rightAxisTickFormatter}
                             yAxisId="right"
                             orientation="right"
                         />
@@ -92,6 +90,10 @@ const TrendLineChart = memo(function TrendLineChart({
                                 key={index}
                                 hide={lineProps[line.dataKey] === true}
                                 animationDuration={1500}
+                                tickFormatter={(value) =>
+                                    // formatAbbreviateNumber(value)
+                                    22
+                                }
                                 activeDot={{ r: 5 }}
                                 animationEasing="cubic-bezier(0, 0, 0, 1)"
                                 opacity={Number(

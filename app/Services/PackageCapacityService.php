@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use App\Repositories\PackageCapacityRepository;
 use App\Repositories\AnalogCalendarRepository;
 use Carbon\Carbon;
+use Faker\Factory as Faker;
 
 class PackageCapacityService
 {
@@ -216,16 +217,57 @@ class PackageCapacityService
     return $this->packageCapacityRepository->getSummaryLatestAndPrevious($factory);
   }
 
+  public function fakeCapacityTrend(
+    string $period,
+    string $startDate,
+    string $endDate,
+    array $factories = ['F1', 'F2', 'F3']
+  ): array {
+    $faker = Faker::create();
+    $faker->seed(20260112); // deterministic
+
+    $start = Carbon::parse($startDate)->startOfDay();
+    $end = Carbon::parse($endDate)->startOfDay();
+
+    $result = [];
+
+    foreach ($factories as $factory) {
+      // stable-ish base per factory
+      $baseCapacity = match ($factory) {
+        'F1' => $faker->numberBetween(200_000, 1_500_000),
+        'F2' => $faker->numberBetween(1_000_000, 5_300_000),
+        'F3' => $faker->numberBetween(50_000, 800_000),
+        default => $faker->numberBetween(10_000, 500_000),
+      };
+
+      $cursor = $start->copy();
+      $trend = [];
+
+      while ($cursor->lte($end)) {
+        // small daily noise ±3%
+        $noise = $faker->randomFloat(2, 0.1, 3.3);
+
+        $trend[] = [
+          'day' => $cursor->toDateString(),
+          'capacity' => (int) round($baseCapacity * $noise),
+        ];
+
+        $cursor->addDay();
+      }
+
+      $result[strtolower($factory) . '_capacity_trend'] = $trend;
+    }
+
+    return $result;
+  }
+
   public function getCapacityTrend($package, $factory, $period, $startDate, $endDate, $workweeks)
   {
-    // Log::info("Getting Capacity Trend for Package: $package, Factory: $factory, Period: $period, Start Date: $startDate, End Date: $endDate, Workweeks: $workweeks");
     $earliestStartDate = $startDate;
 
     $weekRanges = null;
     if ($period == 'weekly') {
       $weekRanges = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks);
-
-      // Log::info("Week Rangessss: " . json_encode($weekRanges));
 
       $earliestStartDate = $weekRanges['earliest_date'];
       $endDate = $weekRanges['latest_date'];
@@ -243,14 +285,6 @@ class PackageCapacityService
     // 340k result on capacity? it might consider the rest day
     // make sure to use the calendar of analog ???
     // the WIP is continuous 7 days a week, so it's fine
-
-    // Log::info("packages: " . json_encode($package));
-    // Log::info("Period: " . $period);
-    // Log::info("Start Date: " . $startDate);
-    // Log::info("End Date: " . $endDate);
-    // Log::info("Factory: " . $factory);
-    // Log::info("Period: " . $period);
-    // Log::info("Week Ranges: " . json_encode($weekRanges));
 
     if ($period == 'weekly') {
       $daily = $this->aggregateWeekly($daily, $weekRanges['range']);

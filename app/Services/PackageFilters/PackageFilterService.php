@@ -10,13 +10,18 @@ class PackageFilterService
 {
   protected PackageGroupRepository $packageGroupRepo;
   protected $tssop240Mils;
-  protected $f1f2OutPackages;
+  protected $f1f2Out150Mils;
 
   public function __construct(PackageGroupRepository $packageGroupRepo)
   {
     $this->packageGroupRepo = $packageGroupRepo;
     $this->tssop240Mils = array_map('strtoupper', WipConstants::SPECIAL_FILTER_VALUE);
-    $this->f1f2OutPackages = array_map('strtoupper', WipConstants::F1F2_OUT_PACKAGE_VALUES);
+    $this->f1f2Out150Mils = array_map('strtoupper', WipConstants::F1F2_150_MILS_OUT_PACKAGE_VALUES);
+  }
+
+  protected function hasAny(array $a, array $b): bool
+  {
+    return !empty(array_intersect($a, $b));
   }
 
   public function applyPackageFilter($query, ?array $packageNames, $factories, $column, $trendType = null)
@@ -25,9 +30,6 @@ class PackageFilterService
       $packageNames = explode(',', $packageNames);
     }
     $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
-
-
-    Log::info("Applying package filter with names: " . json_encode($packageNames) . ", factory: " . json_encode($factories) . ", column: " . $column . ", trendType: " . $trendType);
 
     $strategy = $this->resolveStrategy($packageNames, $column, $factories, $trendType);
     return $strategy->apply($query);
@@ -42,14 +44,12 @@ class PackageFilterService
   {
     $packageNames = array_map('strtoupper', $packageNames);
 
-    Log::info("Resolving strategy for package names: " . json_encode($packageNames) . ", factory: " . json_encode($factories) . ", trendType: " . $trendType);
-
     if (
-      $this->isSubset($packageNames, $this->f1f2OutPackages) &&
+      $this->hasAny($this->f1f2Out150Mils, $packageNames) &&
       (in_array("F1", $factories) || in_array("F2", $factories)) &&
       $trendType === "OUT"
     ) {
-      return new DefaultPackageFilter(["150mils"], column: $column);
+      return new DefaultPackageFilter(array_merge($packageNames, $this->f1f2Out150Mils), column: $column);
     }
 
     if (in_array("F3", $factories)) {

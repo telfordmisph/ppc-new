@@ -31,7 +31,6 @@ class MergeAndAggregateTest extends TestCase
 
   public function test_it_merges_by_multiple_keys_and_sums_correctly()
   {
-    // Log::info("test");
     $f1 = [
       ['production_line' => 'PL6', 'day' => '2025-10-22', 'total_wip' => 2113398],
       ['production_line' => 'PL6', 'day' => '2025-10-23', 'total_wip' => 1740507],
@@ -51,7 +50,6 @@ class MergeAndAggregateTest extends TestCase
 
   public function test_it_ignores_specified_fields_during_merge()
   {
-    // Log::info("test");
     $data1 = [
       ['day' => '2025-11-06', 'total_wip' => 100, 'ignore_me' => 5],
     ];
@@ -68,7 +66,6 @@ class MergeAndAggregateTest extends TestCase
 
   public function test_it_handles_non_numeric_fields_gracefully()
   {
-    // Log::info("test");
     $data1 = [
       ['day' => '2025-11-06', 'total_wip' => 100, 'status' => 'ok'],
     ];
@@ -85,14 +82,12 @@ class MergeAndAggregateTest extends TestCase
 
   public function test_it_returns_empty_array_when_no_data()
   {
-    // Log::info("test");
     $result = MergeAndAggregate::mergeAndAggregate([], 'day');
     $this->assertEquals([], $result);
   }
 
   public function test_it_returns_non_empty_array_while_others_are_empty()
   {
-    // Log::info("test");
     $data1 = [
       ['day' => '2025-11-06', 'total_wip' => 100, 'status' => 'ok'],
     ];

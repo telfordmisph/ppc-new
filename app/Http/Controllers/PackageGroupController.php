@@ -30,8 +30,6 @@ class PackageGroupController extends Controller
         return $query->where('factory', $factory);
       })->get();
 
-    Log::info("Package Groups: " . json_encode($packageGroups));
-
     return Inertia::render('PackageGroupList', [
       'packageGroups' => $packageGroups,
       'factory' => $factory,
@@ -53,8 +51,6 @@ class PackageGroupController extends Controller
     $packageGroup = $id ? PackageGroup::with('packages')->findOrFail($id) : null;
     $packageMembers = $packageGroup ? $packageGroup->packages : [];
 
-    Log::info("Package Members: " . json_encode($packageMembers));
-
     return Inertia::render('PackageGroupUpsert', [
       'packageGroup' => $packageGroup,
       'packageMembers' => $packageMembers
@@ -69,11 +65,6 @@ class PackageGroupController extends Controller
     $factory = $request->input('factory');
     $groupName = $request->input('group_name') ?? null;
     $packageNames = $this->parsePackageName($request);
-
-    Log::info("id: " . json_encode($id));
-    Log::info('Factory: ' . json_encode($factory));
-    Log::info('Package Names: ' . json_encode($packageNames));
-    Log::info('Group Name: ' . json_encode($groupName));
 
     $packageGroup = $this->packageGroupRepo->saveGroup($id, $factory, $groupName, $packageNames);
     return response()->json($packageGroup);
