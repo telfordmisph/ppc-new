@@ -43,6 +43,7 @@ class PackageFilterService
   protected function resolveStrategy(array $packageNames, $column, $factories, $trendType): PackageFilterStrategy
   {
     $packageNames = array_map('strtoupper', $packageNames);
+    Log::info("resolveStrategy Package names: " . json_encode($packageNames));
 
     if (
       $this->hasAny($this->f1f2Out150Mils, $packageNames) &&

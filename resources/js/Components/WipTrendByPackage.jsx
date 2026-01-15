@@ -24,6 +24,7 @@ import { WIP_LOTS } from "@/Constants/colors";
 import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
 import "react-datepicker/dist/react-datepicker.css";
+import { router } from "@inertiajs/react";
 
 const WipTrendByPackage = memo(function WipTrendByPackage({
     isVisible,
@@ -38,6 +39,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
         startDate: savedStartDate,
         endDate: savedEndDate,
         setSelectedWorkWeeks: setSavedWorkWeeks,
+        setSelectedPackageNames: setSavedSelectedPackageNames,
         setSelectedLookBack: setSavedSelectedLookBack,
         setSelectedPeriod: setSavedSelectedPeriod,
         setSelectedOffset: setSavedSelectedOffset,
@@ -149,6 +151,11 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
             }),
         [visibleLines]
     );
+
+    const handleViewBodySizeChart = () => {
+        setSavedSelectedPackageNames([packageName]);
+        router.visit(route("bodySize", packageName));
+    };
 
     return (
         <div
@@ -302,6 +309,13 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
                         </span>
                     </button>
                 )}
+
+                <button
+                    className="btn btn-secondary btn-outline"
+                    onClick={handleViewBodySizeChart}
+                >
+                    view body size chart
+                </button>
             </div>
             <div className="text-sm opacity-80">{fullLabel}</div>
             <div className="w-full">

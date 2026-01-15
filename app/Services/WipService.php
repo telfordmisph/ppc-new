@@ -841,17 +841,6 @@ class WipService
     $f3QueryWip = $this->applyDateOrWorkweekFilter($f3QueryWip, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3QueryWip = $f3QueryWip->get();
 
-    // $f1QueryWip = $this->f1f2WipRepo->filterByPackageName($f1QueryWip, $packageNames, 'f1')->get();
-
-    // $f2QueryWip = (clone $baseQuery)
-    //   ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, WipConstants::EWAN_PROCESS, 'wip'));
-    // $f2QueryWip = $this->f1f2WipRepo->filterByPackageName($f2QueryWip, $packageNames, 'f2')->get();
-
-    // $f3QueryWip = $baseF3Query;
-    // $f3QueryWip = $this->f3WipRepo->filterByPackageName($f3QueryWip, $packageNames, 'f3')->get();
-
-    // Log::info($f1QueryWip);
-
     $f1Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
     $f2Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
     $f3Unknown = $f3QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
@@ -859,8 +848,7 @@ class WipService
     $f1QueryWip = $f1QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f2QueryWip = $f2QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f3QueryWip = $f3QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
-
-    // Log::info(json_encode($f1Unknown));
+    $f3QueryWip = $f3QueryWip->sortByDesc('total_wip')->values();
 
     return response()->json([
       'status' => 'success',

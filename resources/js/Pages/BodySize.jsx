@@ -17,6 +17,7 @@ import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import "react-datepicker/dist/react-datepicker.css";
+import { FaExclamationTriangle } from "react-icons/fa";
 
 const BodySize = () => {
     const {
@@ -328,8 +329,9 @@ const BodySize = () => {
             >
                 {bodySizeWipErrorMessage ? bodySizeWipErrorMessage : ""}
             </div>
+
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
-                <div className="p-2 text-center w-full border rounded-t-lg border-f1color/50 border-b-transparent">
+                <div className="font-semibold text-lg p-2 text-center w-full border rounded-t-lg border-f1color/50 border-b-transparent">
                     F1
                 </div>
                 <StackedBarChart
@@ -342,7 +344,7 @@ const BodySize = () => {
                 />
             </div>
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
-                <div className="p-2 text-center w-full border rounded-t-lg border-f2color/50 border-b-transparent">
+                <div className="font-semibold text-lg p-2 text-center w-full border rounded-t-lg border-f2color/50 border-b-transparent">
                     F2
                 </div>
                 <StackedBarChart
@@ -355,7 +357,7 @@ const BodySize = () => {
                 />
             </div>
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
-                <div className="p-2 text-center w-full border rounded-t-lg border-f3color/50 border-b-transparent">
+                <div className="font-semibold text-lg p-2 text-center w-full border rounded-t-lg border-f3color/50 border-b-transparent">
                     F3
                 </div>
                 <StackedBarChart
@@ -367,6 +369,44 @@ const BodySize = () => {
                     })}
                 />
             </div>
+
+            {/* <div
+                className={clsx(
+                    "bg-warning/20 mt-4 flex alert alert-warning border-warning border",
+                    {
+                        hidden: !bodySizeWipData,
+                    }
+                )}
+            >
+                <FaExclamationTriangle className="text-base-content w-6 h-6" />
+                <div className="flex flex-col text-base-content">
+                    <span>
+                        Some body size value is unknown or invalid from the
+                        database.
+                    </span>
+                    <span>Unknown/invalid data count: </span>
+                    {bodySizeWipData?.data?.f1_unknown > 0 && (
+                        <div className="flex gap-2">
+                            <span className="min-w-5">f1/f2</span>
+                            <span className="font-mono">
+                                {Number(
+                                    bodySizeWipData?.data?.f1_unknown
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+                    )}
+                    {bodySizeWipData?.data?.f3_unknown > 0 && (
+                        <div className="flex gap-2">
+                            <span className="min-w-5">f2</span>
+                            <span className="font-mono">
+                                {Number(
+                                    bodySizeWipData?.data?.f3_unknown
+                                ).toLocaleString()}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div> */}
         </>
     );
 };

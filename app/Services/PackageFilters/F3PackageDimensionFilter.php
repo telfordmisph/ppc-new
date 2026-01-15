@@ -19,17 +19,26 @@ class F3PackageDimensionFilter implements PackageFilterStrategy
     $groups = $this->packageGroupRepo->separateByGroups($this->package, ["F3"]);
 
     $allQueries = [];
+    \Log::info("f3 filter packages: " . json_encode($this->package));
+    \Log::info("f3 filter package groups: " . json_encode($groups));
 
-    foreach ($groups as $groupId => $packagesInGroup) {
-      \Log::info("F3 Package Dimension Filter - Group ID: " . $groupId . ", Packages: " . json_encode($packagesInGroup));
+    $base = (clone $query);
 
-      $base = (clone $query);
+    if (!empty($groups)) {
+      foreach ($groups as $groupId => $packagesInGroup) {
+        // \Log::info("F3 Package Dimension Filter - Group ID: " . $groupId . ", Packages: " . json_encode($packagesInGroup));
 
-      $queryByPackage = (clone $base)->whereIn('f3_pkg.package_name', $packagesInGroup);
-      $queryByDimension = (clone $base)->whereIn('raw.dimension', $packagesInGroup);
+        $queryByPackage = (clone $base)->whereIn('f3_pkg.package_name', $packagesInGroup);
+        $queryByDimension = (clone $base)->whereIn('raw.dimension', $packagesInGroup);
 
-      $allQueries[] = $queryByPackage;
-      $allQueries[] = $queryByDimension;
+        $allQueries[] = $queryByPackage;
+        $allQueries[] = $queryByDimension;
+      }
+    }
+
+    if (empty($groups) && !empty($this->package)) {
+      $allQueries[] = (clone $query)->whereIn('f3_pkg.package_name', $this->package);
+      $allQueries[] = (clone $query)->whereIn('raw.dimension', $this->package);
     }
 
     if (empty($allQueries)) {

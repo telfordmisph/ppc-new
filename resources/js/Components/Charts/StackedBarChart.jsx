@@ -82,8 +82,8 @@ const StackedBarChart = memo(function StackedBarChart({
     margin,
 }) {
     const totalBarCount = data?.length || 0;
-    const fontSize = totalBarCount > 15 ? 10 : 14;
-    const angle = totalBarCount > 15 ? -45 : 0;
+    const fontSize = totalBarCount > 25 ? 10 : 14;
+    const angle = totalBarCount > 25 ? -45 : 0;
 
     return (
         <BaseChart data={data} isLoading={isLoading} error={errorMessage}>

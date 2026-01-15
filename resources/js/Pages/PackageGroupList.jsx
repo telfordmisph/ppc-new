@@ -103,8 +103,19 @@ const F1F2PackageGroupList = () => {
 
     return (
         <>
-            <div className="flex items-center justify-between text-center mb-4">
+            <div className="flex relative items-center justify-between text-center mb-4">
                 <h1 className="text-base font-bold mb-2">Package Groups</h1>
+            </div>
+
+            {warningDetails}
+
+            <div className="flex justify-between bg-base-200 z-10 sticky -top-8 py-4">
+                <Tabs
+                    options={["F1", "F2", "F3"]}
+                    selectedFactory={selectedFactory}
+                    handleFactoryChange={handleFactoryChange}
+                    tabClassName={""}
+                />
                 <Link
                     href={route("package.group.create")}
                     className="btn btn-primary"
@@ -112,15 +123,6 @@ const F1F2PackageGroupList = () => {
                     <FaPlus /> Add Package Group
                 </Link>
             </div>
-
-            {warningDetails}
-
-            <Tabs
-                options={["F1", "F2", "F3"]}
-                selectedFactory={selectedFactory}
-                handleFactoryChange={handleFactoryChange}
-                tabClassName={"ml-2 py-4"}
-            />
 
             <table className="table w-full table-zebra table-auto table-xs mt-4">
                 <thead>
