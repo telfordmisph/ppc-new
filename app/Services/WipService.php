@@ -1191,17 +1191,17 @@ class WipService
     $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks)->get();
 
     $startDateCopy = is_object($startDate) ? clone $startDate : $startDate;
-    // foreach (WipConstants::FACTORIES as $factory) {
-    //   // TODO capacity won't show if there's no wip data for the package in that factory
-    //   // TODO cloning startDate works but it's a bit hacky, find a better way later
-    //   $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDateCopy, $endDate, $workweeks);
-    //   $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
-    // }
+    foreach (WipConstants::FACTORIES as $factory) {
+      // TODO capacity won't show if there's no wip data for the package in that factory
+      // TODO cloning startDate works but it's a bit hacky, find a better way later
+      $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDateCopy, $endDate, $workweeks);
+      $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
+    }
 
-    $fakeCapacity = $this->capacityRepo->fakeCapacityTrend($period, $startDateCopy, $endDate);
-    $trends['f1_capacity_trend'] = $fakeCapacity['f1_capacity_trend'];
-    $trends['f2_capacity_trend'] = $fakeCapacity['f2_capacity_trend'];
-    $trends['f3_capacity_trend'] = $fakeCapacity['f3_capacity_trend'];
+    // $fakeCapacity = $this->capacityRepo->fakeCapacityTrend($period, $startDateCopy, $endDate);
+    // $trends['f1_capacity_trend'] = $fakeCapacity['f1_capacity_trend'];
+    // $trends['f2_capacity_trend'] = $fakeCapacity['f2_capacity_trend'];
+    // $trends['f3_capacity_trend'] = $fakeCapacity['f3_capacity_trend'];
 
     // Log::info("trends: " . json_encode($trends));
 
