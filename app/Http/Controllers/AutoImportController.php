@@ -50,7 +50,6 @@ class AutoImportController extends Controller
     {
         $empId = $request->get('emp_id');
 
-
         $result = $this->wipImportService->ftpRootImportF1F2Outs($empId);
 
         return response()->json([

@@ -10,6 +10,7 @@ import { useImportTraceStore } from "@/Store/importTraceStore";
 import { useMutation } from "@/Hooks/useMutation";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
 import Tabs from "@/Components/Tabs";
+import { useDownloadFile } from "@/Hooks/useDownload";
 
 const PackageCapacityUpload = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
@@ -20,6 +21,16 @@ const PackageCapacityUpload = () => {
     const [selectedCapacityFile, setSelectedCapacityFile] = useState(null);
 
     const packageCapacityLabel = "Package Capacity";
+
+    const {
+        download,
+        isLoading: isDownloadLoading,
+        errorMessage,
+    } = useDownloadFile();
+
+    const handleDownloadCapacityTemplate = () => {
+        download(route("api.download.downloadCapacityTemplate"));
+    };
 
     const {
         isLoading: capacityLoading,
@@ -157,6 +168,8 @@ const PackageCapacityUpload = () => {
                         onFileValid={(file) => {
                             setSelectedCapacityFile(file);
                         }}
+                        downloadClick={handleDownloadCapacityTemplate}
+                        isDownloadLoading={isDownloadLoading}
                     />
                     <button
                         className="btn btn-primary w-60"

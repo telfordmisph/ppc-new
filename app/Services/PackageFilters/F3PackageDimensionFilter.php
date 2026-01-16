@@ -19,8 +19,8 @@ class F3PackageDimensionFilter implements PackageFilterStrategy
     $groups = $this->packageGroupRepo->separateByGroups($this->package, ["F3"]);
 
     $allQueries = [];
-    \Log::info("f3 filter packages: " . json_encode($this->package));
-    \Log::info("f3 filter package groups: " . json_encode($groups));
+    // \Log::info("f3 filter packages: " . json_encode($this->package));
+    // \Log::info("f3 filter package groups: " . json_encode($groups));
 
     $base = (clone $query);
 
@@ -48,7 +48,7 @@ class F3PackageDimensionFilter implements PackageFilterStrategy
     $union = array_shift($allQueries);
 
     foreach ($allQueries as $q) {
-      $union = $union->unionAll($q);
+      $union = $union->union($q);
     }
 
     return $union;

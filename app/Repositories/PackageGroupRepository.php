@@ -99,15 +99,20 @@ class PackageGroupRepository
     //   ->get();
 
     $rows = DB::table('packages as p_input')
-      ->leftJoin('package_group_members as pgm_input', 'pgm_input.package_id', '=', 'p_input.id')
-      ->leftJoin('package_group_members as pgm_group', 'pgm_group.group_id', '=', 'pgm_input.group_id')
+      ->leftjoin('package_group_members as pgm_input', 'pgm_input.package_id', '=', 'p_input.id')
+      ->leftjoin('package_group_members as pgm_group', 'pgm_group.group_id', '=', 'pgm_input.group_id')
       ->leftjoin('packages as p_member', 'p_member.id', '=', 'pgm_group.package_id')
-      ->leftJoin('package_groups as pg', 'pg.id', '=', 'pgm_input.group_id')
+      ->leftjoin('package_groups as pg', 'pg.id', '=', 'pgm_input.group_id')
       ->whereIn('p_input.package_name', $packageNames)
       ->where(function ($q) use ($factory) {
-        $q->whereNull('pg.factory')->orWhereIn('pg.factory', $factory);
+        $q->whereNull('pgm_input.group_id')
+          ->orWhere(function ($q2) use ($factory) {
+            $q2->whereNull('pg.factory')
+              ->orWhereIn('pg.factory', $factory);
+          });
       })
-      ->select('pg.factory', 'pgm_group.group_id', 'p_member.package_name')
+      ->distinct()
+      ->selectRaw('COALESCE(p_member.package_name, p_input.package_name) AS package_name')
       ->get();
 
 

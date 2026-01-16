@@ -243,6 +243,27 @@ class WipController extends Controller
     );
   }
 
+  public function downloadCapacityTemplate()
+  {
+    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+
+    $filePath = public_path('storage/excels/TSPI_Capacity.xlsx');
+    $filename = "tspi_capacity_template_" . now()->format('Ymd_His_u') . ".xlsx";
+
+    ob_end_clean();
+    return response()->download($filePath, $filename, $headers);
+  }
+
+  public function downloadPickUpTemplate()
+  {
+    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    $filePath = public_path('storage/excels/pickup_template.xlsx');
+    $filename = "pickup_template_" . now()->format('Ymd_His_u') . ".xlsx";
+
+    ob_end_clean();
+    return response()->download($filePath, $filename, $headers);
+  }
+
   public function wipStation()
   {
     return Inertia::render('WIPStation');

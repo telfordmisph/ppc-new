@@ -47,20 +47,6 @@ class F1F2OutRepository
   public function filterByPackageName($query, ?array $packageNames, $factories)
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.package', "OUT");
-    // if (is_string($packageNames)) {
-    //   $packageNames = explode(',', $packageNames);
-    // }
-    // $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
-    // // separate alias for each packagename
-
-    // $aliases = $this->packageGroupRepo->getMembersByPackageName($packageNames, $factory);
-    // if (!empty($aliases)) {
-    //   $query->whereIn('wip.Package', $aliases);
-    //   // $this->applyNormalizedDimensionFilter($query, $aliases->toArray(), 'wip.package');
-    // }
-
-    // package
-
     return $query;
   }
 

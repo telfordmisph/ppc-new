@@ -31,6 +31,9 @@ trait PackageAliasTrait
    * @param string $column The column to match against packages (e.g. 'f3_pkg.package_name')
    * @param array|string $packageNames Package aliases to filter
    * @param string $factory
+   * 
+   * * See also PackageGroupRepository::separateByGroups. Almost the same.
+   * * However, this is specific only for capacity repository
    */
   public function applyPackageAliasFilter($query, string $column, array|string $packageNames, $factory = null)
   {

@@ -120,9 +120,9 @@ class WipImportService
 
     try {
       $customerChunk = [];
-      $f3Chunk = [];
+      // $f3Chunk = [];
       $successCustomer = 0;
-      $successF3 = 0;
+      // $successF3 = 0;
 
       if (($handle = fopen($this->WIP_QUANTITY_EXCEL_PATH, 'r')) === false) {
         throw new Exception('Failed to open the CSV file.');
@@ -150,19 +150,19 @@ class WipImportService
         $row = $this->sanitizeRow($row, $importedBy);
         $focusGroup = $row['Focus_Group'];
 
-        if ($focusGroup === 'F3') {
-          $f3Chunk[] = $row;
-        } else {
-          $customerChunk[] = $row;
-        }
+        // if ($focusGroup === 'F3') {
+        //   $f3Chunk[] = $row;
+        // } else {
+        $customerChunk[] = $row;
+        // }
 
-        if (count($f3Chunk) >= self::CHUNK_SIZE) {
-          $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
+        // if (count($f3Chunk) >= self::CHUNK_SIZE) {
+        //   $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
 
-          if ($result) return $result;
+        //   if ($result) return $result;
 
-          $f3Chunk = [];
-        }
+        //   $f3Chunk = [];
+        // }
 
         if (count($customerChunk) >= self::CHUNK_SIZE) {
           $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
@@ -173,26 +173,25 @@ class WipImportService
         }
       }
 
-      foreach (['F3' => $f3Chunk, 'F1F2' => $customerChunk] as $type => $chunk) {
-        $counter = $type === 'F3' ? $successF3 : $successCustomer;
-        $result = $this->insertChunk($chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $counter);
+      if (!empty($customerChunk)) {
+        $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
 
         if ($result) return $result;
       }
 
       fclose($handle);
 
-      $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer + $successF3);
+      $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer);
       Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
 
       return [
         'status' => 'success',
-        'message' =>  $successCustomer + $successF3 === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'message' =>  $successCustomer === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
           'f1f2' => $successCustomer,
-          'f3' => $successF3
+          'f3' => 0 // todo to be removed
         ],
-        'total' => $successF3 + $successCustomer
+        'total' => $successCustomer
       ];
     } catch (Exception $e) {
       Log::error('WIP import failed', ['error' => $e->getMessage()]);
@@ -287,8 +286,8 @@ class WipImportService
     foreach ($rowIterator as $row) {
       $pos = $row->getRowIndex();
 
-      $colA = trim($sheet->getCell('A' . $pos)->getCalculatedValue());
-      $colD = trim($sheet->getCell('D' . $pos)->getCalculatedValue());
+      $colA = trim($sheet->getCell([1, $pos])->getCalculatedValue());
+      $colD = trim($sheet->getCell([4, $pos])->getCalculatedValue());
 
       if (preg_match('/^F\d+/i', $colA)) {
         $currentFactory = $colA;
@@ -298,8 +297,6 @@ class WipImportService
       if (preg_match('/Updated.*Capacity|Capacity.*Updated/i', $colA)) {
         continue;
       }
-
-      // Log::info('Row ' . $pos . ': ' . $colA . ', ' . $colD);
 
       if ($colA == 'Total' || $colA == 'Overall Total') {
         continue;
@@ -419,7 +416,7 @@ class WipImportService
       }
     }
 
-    if (count($preparedRows) > 0) {
+    if (!empty($preparedRows)) {
       $result = $this->insertChunk($preparedRows, fn($preparedRows) => $this->f1f2WipOutRepository->insertManyCustomers($preparedRows), $successCount);
 
       if ($result) return $result;
@@ -685,8 +682,10 @@ class WipImportService
         break;
       }
 
-      $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
-      if ($result) return $result;
+      if (!empty($customerChunk)) {
+        $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
+        if ($result) return $result;
+      }
 
       $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer);
       Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
@@ -782,7 +781,7 @@ class WipImportService
         break;
       }
 
-      if (count($customerChunk) >= 0) {
+      if (!empty($customerChunk)) {
         $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipOutRepository->insertManyCustomers($chunk), $successCustomer);
 
         if ($result) return $result;

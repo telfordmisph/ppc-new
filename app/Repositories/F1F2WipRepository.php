@@ -205,16 +205,6 @@ class F1F2WipRepository
   public function filterByPackageName($query, ?array $packageNames, $factories): Builder
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.Package_Name');
-    // if (is_string($packageNames)) {
-    //   $packageNames = explode(',', $packageNames);
-    // }
-    // $packageNames = array_filter((array) $packageNames, fn($p) => !empty($p));
-    // $aliases = $this->packageGroupRepo->getMembersByPackageName($packageNames, $factory);
-    // Log::info("Aliases f1 f2 wip: " . json_encode($aliases));
-    // if (!empty($aliases)) {
-    //   $query->whereIn('wip.Package_Name', $aliases);
-    // }
-
     return $query;
   }
 
@@ -239,8 +229,6 @@ class F1F2WipRepository
         $f1f2 = DB::table(self::F1F2_TABLE . ' as wip')
           ->selectRaw($selectColumns)
           ->where(function ($sub) {
-            // $sub->whereRaw('0 = 1');
-
             $sub->orWhere(fn($q) => $this->f1Filters(
               $q,
               WipConstants::REEL_TRANSFER_B3,

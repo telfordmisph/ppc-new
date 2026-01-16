@@ -4,6 +4,7 @@ namespace App\Services\PackageFilters;
 
 use App\Constants\WipConstants;
 use App\Repositories\PackageGroupRepository;
+use App\Services\PackageFilters\Tssop240MilsSpecificPackageFilter;
 use Illuminate\Support\Facades\Log;
 
 class PackageFilterService
@@ -19,9 +20,28 @@ class PackageFilterService
     $this->f1f2Out150Mils = array_map('strtoupper', WipConstants::F1F2_150_MILS_OUT_PACKAGE_VALUES);
   }
 
-  protected function hasAny(array $a, array $b): bool
+  protected function hasAtLeastOne(array $a, array $b): bool
   {
     return !empty(array_intersect($a, $b));
+  }
+
+  protected function arraysEqual(array $a, array $b): bool
+  {
+    sort($a);
+    sort($b);
+
+    return $a === $b;
+  }
+
+  protected function hasSpecificAndAtLeastOneOther(array $a, array $required): bool
+  {
+    // Check that all required items exist in $a
+    if (count(array_diff($required, $a)) > 0) {
+      return false;
+    }
+
+    // Check that there's at least one item in $a that's not in $required
+    return count(array_diff($a, $required)) > 0;
   }
 
   public function applyPackageFilter($query, ?array $packageNames, $factories, $column, $trendType = null)
@@ -35,18 +55,26 @@ class PackageFilterService
     return $strategy->apply($query);
   }
 
-  private function isSubset(array $subset, array $set): bool
-  {
-    return empty(array_diff($subset, $set));
-  }
-
   protected function resolveStrategy(array $packageNames, $column, $factories, $trendType): PackageFilterStrategy
   {
     $packageNames = array_map('strtoupper', $packageNames);
-    Log::info("resolveStrategy Package names: " . json_encode($packageNames));
+    // Log::info("resolveStrategy Package names: " . json_encode($packageNames));
+
+    if (($factories === ["F3"]) && $this->arraysEqual($this->tssop240Mils, $packageNames)) {
+      // specific TSSOP (240 mils)
+      return new Tssop240MilsSpecificPackageFilter();
+    }
+
+    // Log::info("zzzzzzzzzzzzzzzzzzz and others package names: " . json_encode($packageNames));
+    if (($factories === ["F3"]) && $this->hasSpecificAndAtLeastOneOther($packageNames, $this->tssop240Mils)
+    ) {
+      // specific TSSOP (240 mils) and others
+      // Log::info("Specific TSSOP (240 mils) and others package names: " . json_encode($packageNames));
+      return new Tssop240MilsAndOtherPackageFilter($packageNames);
+    }
 
     if (
-      $this->hasAny($this->f1f2Out150Mils, $packageNames) &&
+      $this->hasAtLeastOne($this->f1f2Out150Mils, $packageNames) &&
       (in_array("F1", $factories) || in_array("F2", $factories)) &&
       $trendType === "OUT"
     ) {
@@ -54,15 +82,8 @@ class PackageFilterService
     }
 
     if (in_array("F3", $factories)) {
-      return new F3PackageDimensionFilter($this->packageGroupRepo, $packageNames);
+      return new DefaultPackageFilter($packageNames, 'f3_pkg.package_name');
     }
-
-    // if (array_map('strtolower', $packageNames) === $this->tssop240Mils && $factory === "F3") {
-    //   return new Tssop240MilsPackageFilter();
-    // }
-
-    // f1 f2 f3
-    // tssop 240, 150mils, lfcsp
 
     return new DefaultPackageFilter($packageNames, $column);
   }

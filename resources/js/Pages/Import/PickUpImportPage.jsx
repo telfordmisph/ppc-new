@@ -8,6 +8,7 @@ import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
 import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
+import { useDownloadFile } from "@/Hooks/useDownload";
 
 const PickUpImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
@@ -18,6 +19,16 @@ const PickUpImportPage = () => {
     const [selectedPickUpFile, setSelectedPickUpFile] = useState(null);
 
     const pickUpLabel = "PickUPs";
+
+    const {
+        download,
+        isLoading: isDownloadLoading,
+        errorMessage,
+    } = useDownloadFile();
+
+    const handleDownloadPickUpTemplate = () => {
+        download(route("api.download.downloadPickUpTemplate"));
+    };
 
     const {
         isLoading: isImportPickUpLoading,
@@ -130,6 +141,8 @@ const PickUpImportPage = () => {
                             onFileValid={(file) => {
                                 setSelectedPickUpFile(file);
                             }}
+                            downloadClick={handleDownloadPickUpTemplate}
+                            isDownloadLoading={isDownloadLoading}
                         />
                         <button
                             className="btn btn-primary w-54"
