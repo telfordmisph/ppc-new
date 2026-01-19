@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\WipTrendParser;
 use App\Services\PackageFilters\PackageFilterService;
 use App\Traits\PackageAliasTrait;
+use Carbon\Carbon;
 
 class F1F2OutRepository
 {
@@ -86,6 +87,11 @@ class F1F2OutRepository
     }
 
     return $query;
+  }
+
+  public static function getImportKey()
+  {
+    return "f1f2_out";
   }
 
   public function getF1QueryByPackage($packageName)
@@ -190,25 +196,16 @@ class F1F2OutRepository
     ]);
   }
 
+  public function deleteTodayRecords()
+  {
+    return F1F2Out::where('import_date', Carbon::today())->delete();
+  }
+
 
   public function insertCustomer(array $data)
   {
     F1F2Out::create($data);
   }
-
-  // public function insertManyCustomers(array $data)
-  // {
-  //   $uniqueKeys = ['lot_id', 'date_loaded'];
-
-  //   $allColumns = array_keys($data[0]);
-  //   $updateColumns = array_diff($allColumns, $uniqueKeys);
-
-  //   F1F2Out::upsert(
-  //     $data,
-  //     $uniqueKeys,
-  //     $updateColumns
-  //   );
-  // }
 
   public function insertManyCustomers(array $data)
   {

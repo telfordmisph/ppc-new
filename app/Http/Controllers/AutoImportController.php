@@ -50,7 +50,7 @@ class AutoImportController extends Controller
     {
         $empId = $request->get('emp_id');
 
-        $result = $this->wipImportService->ftpRootImportF1F2Outs($empId);
+        $result = $this->wipImportService->ftpRootImportF1F2OUT($empId);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -85,7 +85,7 @@ class AutoImportController extends Controller
         ]);
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF1F2OUTS($empId, $file);
+        $result = $this->wipImportService->importF1F2OUT($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

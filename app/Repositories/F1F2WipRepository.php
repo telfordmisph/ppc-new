@@ -15,6 +15,7 @@ use App\Constants\WipConstants;
 use App\Services\PackageFilters\PackageFilterService;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\SqlDebugHelper;
+use Carbon\Carbon;
 
 class F1F2WipRepository
 {
@@ -29,6 +30,7 @@ class F1F2WipRepository
   protected $packageFilterService;
   protected $packageGroupRepo;
   protected $analogCalendarRepo;
+
 
   public function __construct(
     PackageFilterService $packageFilterService,
@@ -86,6 +88,11 @@ class F1F2WipRepository
     'Bake_Time_Temp',
     'imported_by'
   ];
+
+  public static function getImportKey()
+  {
+    return "f1f2_wip";
+  }
 
   public static function getKeys(): array
   {
@@ -206,6 +213,11 @@ class F1F2WipRepository
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.Package_Name');
     return $query;
+  }
+
+  public function deleteTodayRecords()
+  {
+    return CustomerDataWip::where('import_date', Carbon::today())->delete();
   }
 
   public function getTrend(
