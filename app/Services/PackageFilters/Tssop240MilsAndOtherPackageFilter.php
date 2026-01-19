@@ -14,14 +14,16 @@ class Tssop240MilsAndOtherPackageFilter implements PackageFilterStrategy
   {
     return (clone $query)
       ->where(function ($q) {
-        // First group: TSSOP + 240mils
-        $q->where('f3_pkg.package_name', 'TSSOP')
-          ->where('raw.dimension', '240mils');
-      })
-      ->orWhere(function ($q) {
-        // Second group: other packages
-        $q->whereIn('f3_pkg.package_name', $this->package)
-          ->where('f3_pkg.package_name', '!=', 'TSSOP');
+        $q->where(function ($q) {
+          // TSSOP + 240mils
+          $q->where('f3_pkg.package_name', 'TSSOP')
+            ->where('raw.dimension', '240mils');
+        })
+          ->orWhere(function ($q) {
+            // Other packages
+            $q->whereIn('f3_pkg.package_name', $this->package)
+              ->where('f3_pkg.package_name', '!=', 'TSSOP');
+          });
       });
   }
 }

@@ -190,7 +190,8 @@ const WipOutTrendByPackage = ({
 
     const disableSearch =
         (selectPeriod === "weekly" && selectedWorkWeeks.length === 0) ||
-        (selectPeriod !== "weekly" && selectedLookBack === 0);
+        startDate === null ||
+        endDate === null;
 
     const lines = useMemo(
         () =>

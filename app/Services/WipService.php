@@ -16,8 +16,6 @@ use App\Helpers\WipTrendParser;
 use App\Helpers\MergeAndAggregate;
 use App\Constants\WipConstants;
 use App\Traits\NormalizeStringTrait;
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
-use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use App\Traits\ExportTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,9 +24,6 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\TrendAggregationTrait;
 use App\Repositories\PackageGroupRepository;
 use App\Repositories\F3PackageNamesRepository;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Exception;
 
 class WipService
 {
@@ -1214,8 +1209,17 @@ class WipService
 
     // Log::info("mergedTrends: " . json_encode($mergedTrends));
 
-    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $startDatePlusOneDay = Carbon::parse($startDate)
+      ->addDay()
+      ->format('Y-m-d H:i:s');
+
+    $endDatePlusOneDay = Carbon::parse($endDate)
+      ->addDay()
+      ->format('Y-m-d H:i:s');
+
+    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
+    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
+    // $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
 
     // Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
     // Log::info("getWipOutCapacitySummaryTrend: f3out: " . json_encode($f3out));

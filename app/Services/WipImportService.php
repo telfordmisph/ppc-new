@@ -107,10 +107,52 @@ class WipImportService
   public function ftpRootImportF1F2WIP($importedBy = null): array
   {
     date_default_timezone_set('Asia/Manila');
-
     if (!file_exists($this->WIP_QUANTITY_EXCEL_PATH)) {
       return ['status' => 'error', 'message' => 'CSV file not found or inaccessible.'];
     }
+
+    // Using Spout reader
+    // $reader = ReaderEntityFactory::createCSVReader();
+    // $reader->open($this->WIP_QUANTITY_EXCEL_PATH);
+
+    $tempFile = sys_get_temp_dir() . '\\daily_backend_wip.csv';
+    copy($this->WIP_QUANTITY_EXCEL_PATH, $tempFile);
+
+    $reader = ReaderEntityFactory::createCSVReader();
+    $reader->open($tempFile);
+
+    return $this->processF1F2WIPImport($tempFile, $reader, $importedBy);
+  }
+
+  public function importF1F2WIP($importedBy = null, $file, $extension = '.csv')
+  {
+    date_default_timezone_set('Asia/Manila');
+    $path = $file->getPathname();
+    $tmpPath = $path . $extension;
+    rename($path, $tmpPath);
+
+    Log::info("tmpPath: " . $tmpPath);
+
+    $reader = ReaderEntityFactory::createCSVReader();
+    $reader->open($tmpPath);
+
+    return $this->processF1F2WIPImport($tmpPath, $reader, $importedBy);
+  }
+
+  public function processF1F2WIPImport($filePath, $reader, $importedBy)
+  {
+    $headersData = $this->fileValidator->getExcelCanonicalHeaderSpout($filePath, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS);
+
+    if ($headersData['status'] === 'error') {
+      return $headersData;
+    }
+
+    $found_headers = $headersData['found_headers'];
+    $headerRowIndex = $headersData['headerRowIndex'];
+    $map_headers = $headersData['map_headers'];
+
+    $successCustomer = 0;
+    $customerChunk = [];
 
     $lock = Cache::lock(self::WIP_QUANTITY_LOCK_KEY, 100);
 
@@ -119,77 +161,78 @@ class WipImportService
     }
 
     try {
-      $customerChunk = [];
-      // $f3Chunk = [];
-      $successCustomer = 0;
-      // $successF3 = 0;
-
-      if (($handle = fopen($this->WIP_QUANTITY_EXCEL_PATH, 'r')) === false) {
-        throw new Exception('Failed to open the CSV file.');
-      }
-
-      fgetcsv($handle, 0, ','); // skip header
-      $firstRow = fgetcsv($handle);
-      if (!$firstRow) {
-        throw new Exception("CSV contains no data rows.");
-      }
+      $reader = ReaderEntityFactory::createCSVReader();
+      $reader->open($filePath);
+      $currentRowIndex = 0;
 
       CustomerDataWip::where('import_date', Carbon::today())->delete();
 
-      rewind($handle);
-      fgetcsv($handle, 0, ','); // skip header
+      foreach ($reader->getSheetIterator() as $sheet) {
+        foreach ($sheet->getRowIterator() as $row) {
+          $currentRowIndex++;
 
-      while (($row = fgetcsv($handle, 0, ',')) !== false) {
+          if ($currentRowIndex <= $headerRowIndex) {
+            continue;
+          }
 
-        if (count($row) < self::EXPECTED_DAILY_BACKEND_WIP_COLUMNS) {
-          continue;
+          $rowCells = $row->toArray();
+
+          if ($this->isEmptyRow($rowCells)) {
+            continue;
+          }
+
+          $rowData = $this->extractRowData($map_headers, $rowCells, $found_headers);
+
+          $rowData['imported_by'] = $importedBy;
+          $rowData['Date_Loaded'] = $this->parseDate($rowData['Date_Loaded'], null);
+          $rowData['Start_Time'] = $this->parseDate($rowData['Start_Time'], null);
+          $rowData['Reqd_Time'] = $this->parseDate($rowData['Reqd_Time'], null);
+          $rowData['Lot_Entry_Time'] = $this->parseDate($rowData['Lot_Entry_Time'], null);
+          $rowData['Stage_Start_Time'] = $this->parseDate($rowData['Stage_Start_Time'], null);
+          $rowData['CCD'] = $this->parseDate($rowData['CCD'], null);
+          $rowData['BE_Starttime'] = $this->parseDate($rowData['BE_Starttime'], null);
+          $rowData['Auto_Part'] = strtoupper(trim($rowData['Auto_Part']));
+          $rowData['OSL_Days'] = $rowData['OSL_Days'] === '' ? null : (int)$rowData['OSL_Days'];
+          $rowData['BE_OSL_Days'] = $rowData['BE_OSL_Days'] === '' ? null : (int)$rowData['BE_OSL_Days'];
+          $rowData['Backend_Leadtime'] = $rowData['Backend_Leadtime'] === '' ? null : (int)$rowData['Backend_Leadtime'];
+          $rowData['Lead_Count'] = $rowData['Lead_Count'] === '' ? null : (int)$rowData['Lead_Count'];
+          $rowData['Bake_Count'] = $rowData['Bake_Count'] === '' ? null : (int)$rowData['Bake_Count'];
+          $rowData['Stage_Run_Days'] = $rowData['Stage_Run_Days'] === '' ? null : (int)$rowData['Stage_Run_Days'];
+          $rowData['Lot_Entry_Time_Days'] = $rowData['Lot_Entry_Time_Days'] === '' ? null : (int)$rowData['Lot_Entry_Time_Days'];
+          $rowData['Qty'] = $rowData['Qty'] === '' ? null : (int)$rowData['Qty'];
+
+          $customerChunk[] = $rowData;
+
+          if (count($customerChunk) >= self::CHUNK_SIZE) {
+            $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
+
+            if ($result) return $result;
+
+            $customerChunk = [];
+          }
+
+          // Log::info("Processing row {$currentRowIndex}" . print_r($rowData, true));
         }
 
-        // Log::info("row: " . print_r($row, true));
-
-        $row = $this->sanitizeRow($row, $importedBy);
-        $focusGroup = $row['Focus_Group'];
-
-        // if ($focusGroup === 'F3') {
-        //   $f3Chunk[] = $row;
-        // } else {
-        $customerChunk[] = $row;
-        // }
-
-        // if (count($f3Chunk) >= self::CHUNK_SIZE) {
-        //   $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
-
-        //   if ($result) return $result;
-
-        //   $f3Chunk = [];
-        // }
-
-        if (count($customerChunk) >= self::CHUNK_SIZE) {
-          $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
-
-          if ($result) return $result;
-
-          $customerChunk = [];
-        }
+        break;
       }
 
       if (!empty($customerChunk)) {
         $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
-
         if ($result) return $result;
       }
 
-      fclose($handle);
-
       $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer);
       Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
+
+      $reader->close();
+      unlink($filePath);
 
       return [
         'status' => 'success',
         'message' =>  $successCustomer === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
           'f1f2' => $successCustomer,
-          'f3' => 0 // todo to be removed
         ],
         'total' => $successCustomer
       ];
@@ -200,6 +243,105 @@ class WipImportService
       $lock->release();
     }
   }
+
+  // public function ftpRootImportF1F2WIP($importedBy = null): array
+  // {
+  //   date_default_timezone_set('Asia/Manila');
+
+  //   if (!file_exists($this->WIP_QUANTITY_EXCEL_PATH)) {
+  //     return ['status' => 'error', 'message' => 'CSV file not found or inaccessible.'];
+  //   }
+
+  //   $lock = Cache::lock(self::WIP_QUANTITY_LOCK_KEY, 100);
+
+  //   if (!$lock->get()) {
+  //     throw new Exception('The WIP import is currently running. To prevent duplicate processing, you can try again after a few minutes (up to 10 minutes).');
+  //   }
+
+  //   try {
+  //     $customerChunk = [];
+  //     // $f3Chunk = [];
+  //     $successCustomer = 0;
+  //     // $successF3 = 0;
+
+  //     if (($handle = fopen($this->WIP_QUANTITY_EXCEL_PATH, 'r')) === false) {
+  //       throw new Exception('Failed to open the CSV file.');
+  //     }
+
+  //     fgetcsv($handle, 0, ','); // skip header
+  //     $firstRow = fgetcsv($handle);
+  //     if (!$firstRow) {
+  //       throw new Exception("CSV contains no data rows.");
+  //     }
+
+  //     // CustomerDataWip::where('import_date', Carbon::today())->delete();
+
+  //     rewind($handle);
+  //     fgetcsv($handle, 0, ','); // skip header
+
+  //     while (($row = fgetcsv($handle, 0, ',')) !== false) {
+
+  //       if (count($row) < self::EXPECTED_DAILY_BACKEND_WIP_COLUMNS) {
+  //         continue;
+  //       }
+
+  //       // Log::info("row: " . print_r($row, true));
+
+  //       $row = $this->sanitizeRow($row, $importedBy);
+  //       $focusGroup = $row['Focus_Group'];
+
+  //       // if ($focusGroup === 'F3') {
+  //       //   $f3Chunk[] = $row;
+  //       // } else {
+  //       $customerChunk[] = $row;
+  //       // }
+
+  //       // if (count($f3Chunk) >= self::CHUNK_SIZE) {
+  //       //   $result = $this->insertChunk($f3Chunk, fn($f3Chunk) => $this->f1f2WipRepository->insertManyCustomers($f3Chunk), $successF3);
+
+  //       //   if ($result) return $result;
+
+  //       //   $f3Chunk = [];
+  //       // }
+
+  //       Log::info("customerChunk: " . print_r($row, true));
+
+  //       // if (count($customerChunk) >= self::CHUNK_SIZE) {
+  //       //   $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
+
+  //       //   if ($result) return $result;
+
+  //       //   $customerChunk = [];
+  //       // }
+  //     }
+
+  //     // if (!empty($customerChunk)) {
+  //     //   $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
+
+  //     //   if ($result) return $result;
+  //     // }
+
+  //     fclose($handle);
+
+  //     $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer);
+  //     Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
+
+  //     return [
+  //       'status' => 'success',
+  //       'message' =>  $successCustomer === 0 ? 'No new records found.' : 'Import completed successfully.',
+  //       'data' => [
+  //         'f1f2' => $successCustomer,
+  //         'f3' => 0 // todo to be removed
+  //       ],
+  //       'total' => $successCustomer
+  //     ];
+  //   } catch (Exception $e) {
+  //     Log::error('WIP import failed', ['error' => $e->getMessage()]);
+  //     return ['status' => 'error', 'message' => $e->getMessage()];
+  //   } finally {
+  //     $lock->release();
+  //   }
+  // }
 
   private function prepareExistingF3WipRecords(): array
   {
@@ -288,6 +430,8 @@ class WipImportService
 
       $colA = trim($sheet->getCell([1, $pos])->getCalculatedValue());
       $colD = trim($sheet->getCell([4, $pos])->getCalculatedValue());
+
+      // Log::info("pos: $pos, colA: $colA, colD: $colD");
 
       if (preg_match('/^F\d+/i', $colA)) {
         $currentFactory = $colA;
@@ -595,116 +739,6 @@ class WipImportService
         'ignored_unknown_package_count' => count($ignoredRows)
       ]
     ];
-  }
-
-  public function importF1F2WIP($importedBy = null, $file, $extension = '.csv')
-  {
-    date_default_timezone_set('Asia/Manila');
-
-    $path = $file->getPathname();
-    $tmpPath = $path . $extension;
-    rename($path, $tmpPath);
-
-    $reader = ReaderEntityFactory::createCSVReader();
-    $headersData = $this->fileValidator->getExcelCanonicalHeaderSpout($tmpPath, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS);
-
-    if ($headersData['status'] === 'error') {
-      return $headersData;
-    }
-
-    $found_headers = $headersData['found_headers'];
-    $headerRowIndex = $headersData['headerRowIndex'];
-    $map_headers = $headersData['map_headers'];
-
-    $successCustomer = 0;
-    $customerChunk = [];
-
-    $lock = Cache::lock(self::WIP_QUANTITY_LOCK_KEY, 100);
-
-    if (!$lock->get()) {
-      throw new Exception('The WIP import is currently running. To prevent duplicate processing, you can try again after a few minutes (up to 10 minutes).');
-    }
-
-    try {
-      $reader = ReaderEntityFactory::createCSVReader();
-      $reader->open($tmpPath);
-      $currentRowIndex = 0;
-
-      CustomerDataWip::where('import_date', Carbon::today())->delete();
-
-      foreach ($reader->getSheetIterator() as $sheet) {
-        foreach ($sheet->getRowIterator() as $row) {
-          $currentRowIndex++;
-
-          if ($currentRowIndex <= $headerRowIndex) {
-            continue;
-          }
-
-          $rowCells = $row->toArray();
-
-          if ($this->isEmptyRow($rowCells)) {
-            continue;
-          }
-
-          $rowData = $this->extractRowData($map_headers, $rowCells, $found_headers);
-
-          $rowData['imported_by'] = $importedBy;
-          $rowData['Date_Loaded'] = $this->parseDate($rowData['Date_Loaded'], null);
-          $rowData['Start_Time'] = $this->parseDate($rowData['Start_Time'], null);
-          $rowData['Reqd_Time'] = $this->parseDate($rowData['Reqd_Time'], null);
-          $rowData['Lot_Entry_Time'] = $this->parseDate($rowData['Lot_Entry_Time'], null);
-          $rowData['Stage_Start_Time'] = $this->parseDate($rowData['Stage_Start_Time'], null);
-          $rowData['CCD'] = $this->parseDate($rowData['CCD'], null);
-          $rowData['BE_Starttime'] = $this->parseDate($rowData['BE_Starttime'], null);
-          $rowData['Auto_Part'] = strtoupper(trim($rowData['Auto_Part']));
-          $rowData['OSL_Days'] = $rowData['OSL_Days'] === '' ? null : (int)$rowData['OSL_Days'];
-          $rowData['BE_OSL_Days'] = $rowData['BE_OSL_Days'] === '' ? null : (int)$rowData['BE_OSL_Days'];
-          $rowData['Backend_Leadtime'] = $rowData['Backend_Leadtime'] === '' ? null : (int)$rowData['Backend_Leadtime'];
-          $rowData['Lead_Count'] = $rowData['Lead_Count'] === '' ? null : (int)$rowData['Lead_Count'];
-          $rowData['Bake_Count'] = $rowData['Bake_Count'] === '' ? null : (int)$rowData['Bake_Count'];
-          $rowData['Stage_Run_Days'] = $rowData['Stage_Run_Days'] === '' ? null : (int)$rowData['Stage_Run_Days'];
-          $rowData['Lot_Entry_Time_Days'] = $rowData['Lot_Entry_Time_Days'] === '' ? null : (int)$rowData['Lot_Entry_Time_Days'];
-          $rowData['Qty'] = $rowData['Qty'] === '' ? null : (int)$rowData['Qty'];
-
-          $customerChunk[] = $rowData;
-
-          if (count($customerChunk) >= self::CHUNK_SIZE) {
-            $result = $this->insertChunk($customerChunk, fn($customerChunk) => $this->f1f2WipRepository->insertManyCustomers($customerChunk), $successCustomer);
-
-            if ($result) return $result;
-
-            $customerChunk = [];
-          }
-
-          // Log::info("Processing row {$currentRowIndex}" . print_r($rowData, true));
-        }
-
-        break;
-      }
-
-      if (!empty($customerChunk)) {
-        $result = $this->insertChunk($customerChunk, fn($chunk) => $this->f1f2WipRepository->insertManyCustomers($chunk), $successCustomer);
-        if ($result) return $result;
-      }
-
-      $this->importTraceRepository->upsertImport('f1f2_wip', $importedBy, $successCustomer);
-      Cache::forget(WipConstants::TODAY_WIP_CACHE_KEY);
-
-      $reader->close();
-      return [
-        'status' => 'success',
-        'message' =>  $successCustomer === 0 ? 'No new records found.' : 'Import completed successfully.',
-        'data' => [
-          'f1f2' => $successCustomer,
-        ],
-        'total' => $successCustomer
-      ];
-    } catch (Exception $e) {
-      Log::error('WIP import failed', ['error' => $e->getMessage()]);
-      return ['status' => 'error', 'message' => $e->getMessage()];
-    } finally {
-      $lock->release();
-    }
   }
 
   public function importF1F2OUTS($importedBy = null, $file, $extension = '.csv')
