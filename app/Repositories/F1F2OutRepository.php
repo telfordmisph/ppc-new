@@ -15,6 +15,7 @@ use App\Helpers\WipTrendParser;
 use App\Services\PackageFilters\PackageFilterService;
 use App\Traits\PackageAliasTrait;
 use Carbon\Carbon;
+use DateTime;
 
 class F1F2OutRepository
 {
@@ -148,19 +149,32 @@ class F1F2OutRepository
       $query->where($filter);
     }
 
+    $weekRange = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'];
+
+    foreach ($weekRange as $item) {
+      $startDate = new DateTime($item->startDate);
+      $endDate   = new DateTime($item->endDate);
+
+      $startDate->modify('+1 day');
+      $endDate->modify('+1 day');
+
+      $item->startDate = $startDate->format('Y-m-d');
+      $item->endDate   = $endDate->format('Y-m-d');
+    }
+
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
         $query,
         $period,
         $startDate,
         $endDate,
-        'wip.date_loaded',
+        'wip.import_date',
         ['SUM(wip.qty)' => 'total_outs'],
-        workweeks: $workweeks
+        workRange: $weekRange,
+        isDateColumn: true
       );
     } else {
-      $query->where('wip.date_loaded', '>=', $startDate)
-        ->where('wip.date_loaded', '<', $endDate);
+      $query->whereBetween('wip.import_date', [$startDate, $endDate]);
     }
 
     return $query;
@@ -188,6 +202,30 @@ class F1F2OutRepository
 
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
     $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
+
+    // Log::info("f1Trend: " . json_encode($f1Trend));
+    // Log::info("overallTrend: " . json_encode($overallTrend));
+
+    if ($period == 'daily') {
+      foreach ($overallTrend as &$item) {
+        $date = new DateTime($item['day']);
+        $date->modify('-1 day');
+        $item['day'] = $date->format('Y-m-d');
+      }
+      unset($item);
+
+      foreach ($f1Trend as $item) {
+        $date = new DateTime($item->day);
+        $date->modify('-1 day');
+        $item->day = $date->format('Y-m-d');
+      }
+
+      foreach ($f2Trend as &$item) {
+        $date = new DateTime($item->day);
+        $date->modify('-1 day');
+        $item->day = $date->format('Y-m-d');
+      }
+    }
 
     return WipTrendParser::parseTrendsByPeriod([
       'f1_trend' => $f1Trend,

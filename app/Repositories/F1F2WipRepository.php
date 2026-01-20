@@ -319,7 +319,7 @@ class F1F2WipRepository
       $endDate,
       column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
       aggregateColumns: $aggregateColumns,
-      workweeks: $workweeks,
+      workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
     );
     // return $this->applyTrendAggregation(
     //   $query,

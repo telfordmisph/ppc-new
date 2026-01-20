@@ -21,7 +21,8 @@ trait TrendAggregationTrait
       'COUNT(DISTINCT Lot_Id)' => 'total_lots'
     ],
     array $additionalFields = [],
-    string $workweeks = '',
+    array $workRange = [],
+    bool $isDateColumn = false,
   ): Builder {
     $query = clone $query;
     $query->select([]);
@@ -50,29 +51,30 @@ trait TrendAggregationTrait
         break;
 
       case 'weekly':
-        $weekRanges = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'];
-
-        if (empty($weekRanges)) {
-          throw new \Exception('No date associated with workweeks. Got: ' . json_encode($workweeks));
-        }
-
-        $query->where(function ($q) use ($column, $weekRanges) {
-          foreach ($weekRanges as $range) {
-            // $q->orWhereBetween($column, [$range->startDate, $range->endDate]);
-            $q->orWhere(function ($query) use ($column, $range) {
-              $query->where($column, '>=', $range->startDate)
-                ->where($column, '<', $range->endDate);
-            });
-          }
+        $query->where(function ($q) use ($column, $workRange, $isDateColumn) {
+          foreach ($workRange as $range) {
+            if ($isDateColumn) {
+              $q->orWhere(function ($query) use ($column, $range) {
+                $query->whereDate($column, '>=', $range->startDate)
+                  ->whereDate($column, '<=', $range->endDate);
+              });
+            } else {
+              $q->orWhere(function ($query) use ($column, $range) {
+                $query->where($column, '>=', $range->startDate)
+                  ->where($column, '<', $range->endDate);
+              });
+            }
+          };
         });
+
 
         $case = implode(' ', array_map(function ($range) use ($column) {
           return "WHEN $column BETWEEN '{$range->startDate}' AND '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
-        }, $weekRanges));
+        }, $workRange));
 
         $weekCase = implode(' ', array_map(function ($range) use ($column) {
           return "WHEN $column BETWEEN '{$range->startDate}' AND '{$range->endDate}' THEN '{$range->workweek}'";
-        }, $weekRanges));
+        }, $workRange));
 
         $query->selectRaw("
               $extraFields
@@ -125,12 +127,16 @@ trait TrendAggregationTrait
       $query->orderBy($col);
     }
 
-    if ($period !== 'weekly' || empty($workweeks)) {
-      // $query->whereBetween($column, [$startDate, $endDate]);
-      $query->where($column, '>=', $startDate)
-        ->where($column, '<', $endDate);
+    if ($period !== 'weekly') {
+      if ($isDateColumn) {
+        $query->whereDate($column, '>=', $startDate)
+          ->whereDate($column, '<=', $endDate);
+      } else {
+        $query->where($column, '>=', $startDate)
+          ->where($column, '<', $endDate);
+      }
     }
-    Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+    // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
     return $query;
   }

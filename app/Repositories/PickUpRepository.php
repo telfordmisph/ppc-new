@@ -159,7 +159,7 @@ class PickUpRepository
         // * If in the future this get complicated, apply WipConstants::FACTORY_AGGREGATES
         self::aggregateColumn,
         ['pickup.PACKAGE as package'],
-        workweeks: $workweeks,
+        workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
       );
     } else {
       $query == $query->where('pickup.DATE_CREATED', '>=', $startDate)

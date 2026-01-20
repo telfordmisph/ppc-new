@@ -49,7 +49,7 @@ class F3WipRepository
         $endDate,
         'f3.date_loaded',
         ['SUM(f3.qty)' => 'total_wip'],
-        workweeks: $workweeks
+        workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
       );
     } else {
       // No aggregation: just apply date filter

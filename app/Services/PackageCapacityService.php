@@ -277,8 +277,13 @@ class PackageCapacityService
     $daily = $this->packageCapacityRepository->expandDaily($rows, $earliestStartDate, $endDate);
 
     $daily = array_filter($daily, function ($d) use ($earliestStartDate) {
-      return Carbon::parse($d['day'])->gt($earliestStartDate);
+      return Carbon::parse($d['day'])->gte($earliestStartDate);
     });
+
+    // Log::info("earliestStartDate: " . $earliestStartDate);
+    // Log::info("endDate: " . $endDate);
+    // Log::info("Rows: " . json_encode($rows));
+    // Log::info("Daily: " . json_encode($daily));
 
     // TODO DFN SSOP
     // Showing 549, 601, 552, 551, 550, and 602 workweeks

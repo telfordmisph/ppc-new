@@ -14,6 +14,7 @@ use App\Helpers\SqlDebugHelper;
 use Illuminate\Support\Facades\DB;
 use App\Constants\WipConstants;
 use Illuminate\Support\Facades\Log;
+use DateTime;
 
 class F3OutRepository
 {
@@ -39,6 +40,19 @@ class F3OutRepository
   {
     $query = $this->baseF3Query(type: 'out'); // 'out' instead of default 'wip'
 
+    $weekRange = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'];
+
+    foreach ($weekRange as $item) {
+      $startDate = new DateTime($item->startDate);
+      $endDate   = new DateTime($item->endDate);
+
+      $startDate->modify('+1 day');
+      $endDate->modify('+1 day');
+
+      $item->startDate = $startDate->format('Y-m-d');
+      $item->endDate   = $endDate->format('Y-m-d');
+    }
+
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
         $query,
@@ -47,7 +61,8 @@ class F3OutRepository
         $endDate,
         'f3.date_loaded',
         ['SUM(f3.qty)' => 'total_outs'], // aggregate by outs
-        workweeks: $workweeks
+        workRange: $weekRange,
+        isDateColumn: true
       );
 
       $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
@@ -62,14 +77,20 @@ class F3OutRepository
       $results = $results->orderByDesc('total_outs')
         ->get();
 
+      if ($period == 'daily') {
+        foreach ($results as $item) {
+          $date = new DateTime($item->day);
+          $date->modify('-1 day');
+          $item->day = $date->format('Y-m-d');
+        }
+      }
+
       $trends['overall_trend'] = $results;
       $trends['f3_trend'] = $results;
 
       return WipTrendParser::parseTrendsByPeriod($trends);
     } else {
-      // No aggregation: just apply date filter
-      $query->where('f3.date_loaded', '>=', $startDate)
-        ->where('f3.date_loaded', '<', $endDate);
+      $query->whereBetween('f3.date_loaded', [$startDate, $endDate]);
 
       $query->select(self::EXTERNAL_FILE_HEADERS);
       $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');

@@ -70,10 +70,11 @@ trait ParseRequestTrait
   protected function parseWorkweek(Request $request): array
   {
     $workweek = $request->input('workweek', '') ?? '';
+    $period = $request->input('period', '');
 
     return [
-      'workweek' => $workweek,
-      'useWorkweek' => !empty($workweek),
+      'workweek' => $period === 'weekly' ? $workweek : '',
+      'useWorkweek' => $period === 'weekly',
     ];
   }
 
