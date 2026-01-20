@@ -164,8 +164,8 @@ const BodySize = () => {
 
     return (
         <>
-            <Head title="WIP Station" />
-            <h1 className="text-base font-bold mb-4">WIP Station</h1>
+            <Head title="WIP Body Size" />
+            <h1 className="text-base font-bold mb-4">WIP Body Size</h1>
             <div className="flex flex-wrap w-full items-center gap-x-2 gap-y-4 mb-2">
                 <div className="join items-center">
                     <span className="join-item btn btn-disabled font-medium">

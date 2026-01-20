@@ -311,10 +311,10 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
                 )}
 
                 <button
-                    className="btn btn-secondary btn-outline"
+                    className="btn btn-secondary"
                     onClick={handleViewBodySizeChart}
                 >
-                    view body size chart
+                    view body size dissection
                 </button>
             </div>
             <div className="text-sm opacity-80">{fullLabel}</div>
