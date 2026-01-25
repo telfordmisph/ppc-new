@@ -38,10 +38,10 @@ const BodySize = () => {
     } = useSelectedFilteredStore();
     const [fullLabel, setFullLabel] = useState("");
     const [selectedPackageNames, setSelectedPackageNames] = useState(
-        savedSelectedPackages
+        savedSelectedPackages,
     );
     const [selectedWorkWeeks, setSelectedWorkWeeks] = useState(
-        savedWorkWeeks || []
+        savedWorkWeeks || [],
     );
     const [startDate, setStartDate] = useState(savedStartDate);
     const [endDate, setEndDate] = useState(savedEndDate);
@@ -81,6 +81,7 @@ const BodySize = () => {
         fetch: bodySizeWipFetch,
         abort: bodySizeWipAbort,
     } = useFetch(route("api.wip.wipAndLotsByBodySize"), {
+        auto: false,
         params: params,
     });
 
@@ -95,8 +96,8 @@ const BodySize = () => {
                 selectedPeriod,
                 selectedLookBack,
                 selectedOffsetPeriod,
-                selectedWorkWeeks
-            )
+                selectedWorkWeeks,
+            ),
         );
     };
 
@@ -223,7 +224,7 @@ const BodySize = () => {
                 <div
                     className={clsx(
                         "flex",
-                        selectedPeriod === "daily" ? "" : "hidden"
+                        selectedPeriod === "daily" ? "" : "hidden",
                     )}
                 >
                     <DatePicker
@@ -245,7 +246,7 @@ const BodySize = () => {
                         selectedPeriod === "weekly" ||
                             selectedPeriod === "daily"
                             ? "hidden"
-                            : ""
+                            : "",
                     )}
                 >
                     <FloatingLabelInput
@@ -276,7 +277,7 @@ const BodySize = () => {
 
                 <div
                     className={clsx(
-                        selectedPeriod === "weekly" ? "" : "hidden"
+                        selectedPeriod === "weekly" ? "" : "hidden",
                     )}
                 >
                     <MultiSelectSearchableDropdown
@@ -284,7 +285,7 @@ const BodySize = () => {
                             workWeekData?.data.map((item) => ({
                                 value: String(item.cal_workweek),
                                 label: `${formatFriendlyDate(
-                                    item.startDate
+                                    item.startDate,
                                 )} - ${formatFriendlyDate(item.endDate)}`,
                             })) || []
                         }
@@ -316,7 +317,7 @@ const BodySize = () => {
             <div
                 className={clsx(
                     "mt-4",
-                    fullLabel ? "opacity-100" : "opacity-0"
+                    fullLabel ? "opacity-100" : "opacity-0",
                 )}
             >
                 {fullLabel}
@@ -324,7 +325,7 @@ const BodySize = () => {
             <div
                 className={clsx(
                     "text-error-content bg-error/10 border border-error rounded-lg p-4 mt-4",
-                    bodySizeWipErrorMessage ? "block" : "hidden"
+                    bodySizeWipErrorMessage ? "block" : "hidden",
                 )}
             >
                 {bodySizeWipErrorMessage ? bodySizeWipErrorMessage : ""}
