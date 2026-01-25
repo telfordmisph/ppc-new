@@ -24,6 +24,7 @@ $permission_sets = [
     'f3_package_edit',
   ],
   'import_data' => ['import_f1f2_wip', 'import_f1f2_out', 'import_f3'],
+  'import_data_no_f3' => ['import_f1f2_wip', 'import_f1f2_out'],
   'trend_access' => [
     'wip_out_capacity_trend',
     'pickup_trend',
@@ -48,21 +49,36 @@ $full_access = array_merge(
   $permission_sets['body_size']
 );
 
-return [
-  'Production Supervisor' => $permission_sets['f3_limited'],
-  'Senior Production Supervisor' => $permission_sets['f3_limited'],
-  'Production Section Head' => $permission_sets['f3_limited'],
-  'Section Head' => $permission_sets['f3_limited'],
+$full_access_except_f3_import = array_merge(
+  $permission_sets['import_data_no_f3'],
+  $permission_sets['trend_access'],
+  $permission_sets['package_management'],
+  $permission_sets['f3_full'],
+  $permission_sets['capacity'],
+  $permission_sets['dashboard'],
+  $permission_sets['wip_station'],
+  $permission_sets['body_size']
+);
 
+return [
+  'Production Supervisor' => $full_access,
+  'Senior Production Supervisor' => $full_access,
+  'Production Section Head' => $full_access,
+  'Section Head' => $full_access,
   'programmer 1' => $full_access,
-  'PPC Planner' => $full_access,
-  'PPC' => $full_access,
-  'PPC Planner 2' => $full_access,
-  'PPC Expediter 1' => $full_access,
-  'PPC Expediter 2' => $full_access,
-  'PPC Senior Supervisor' => $full_access,
-  'PPC Manager' => $full_access,
-  'ppc supervisor' => $full_access,
+
+  'PPC Manager' => $full_access_except_f3_import,
+  'PPC' => $full_access_except_f3_import,
+  'PPC Planner' => $full_access_except_f3_import,
+  'PPC Planner 2' => $full_access_except_f3_import,
+  'PPC Expediter 1' => $full_access_except_f3_import,
+  'PPC Expediter 2' => $full_access_except_f3_import,
+  'Planner 2' => $full_access_except_f3_import,
+  'Planner' => $full_access_except_f3_import,
+  'PPC Senior Supervisor' => $full_access_except_f3_import,
+  'ppc supervisor' => $full_access_except_f3_import,
+  'Residual Controller 1' => $full_access_except_f3_import,
+
   // 'programmer 1' => $full_access,
 
   'user' => [
