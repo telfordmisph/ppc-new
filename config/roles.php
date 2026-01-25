@@ -68,6 +68,7 @@ return [
   'programmer 1' => $full_access,
 
   'PPC Manager' => $full_access_except_f3_import,
+  'Trainee PPC Planner' => $full_access_except_f3_import,
   'PPC' => $full_access_except_f3_import,
   'PPC Planner' => $full_access_except_f3_import,
   'PPC Planner 2' => $full_access_except_f3_import,
