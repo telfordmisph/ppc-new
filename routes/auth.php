@@ -11,9 +11,7 @@ $app_name = env('APP_NAME', '');
 Route::prefix($app_name)->group(function () {
   Route::post("/setSession", [AuthenticationController::class, 'setSession'])->name('setSession');
 
-  Route::middleware(AuthMiddleware::class)->group(function () {
-    Route::get("/logout", [AuthenticationController::class, 'logout'])->name('logout');
-  });
+  Route::get("/logout", [AuthenticationController::class, 'logout'])->name('logout');
 
   Route::get("/unauthorized", function () {
     return Inertia::render('Unauthorized');
