@@ -244,4 +244,16 @@ class ParseDateTraitTest extends TestCase
         $result = $this->parseDate($excelNumber);
         $this->assertEquals($expected, $result);
     }
+
+    public function test_it_parses_misspelled_month_names()
+    {
+        $value = 'Junuary 26, 2026';
+
+        $result = $this->parseDate($value);
+
+        $this->assertSame(
+            '2026-01-26 00:00:00',
+            $result
+        );
+    }
 }

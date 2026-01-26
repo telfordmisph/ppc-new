@@ -793,15 +793,26 @@ class WipService
         ELSE 'others/unknown'
         END AS size_bucket,";
 
-    $baseQuery = DB::table((new CustomerDataWip)->getTable() . ' as wip')
+    $baseQueryF1 = DB::table((new CustomerDataWip)->getTable() . ' as wip')
       ->selectRaw("
         CASE WHEN canonical_body_size
         " . $canonicalClause . "
-        SUM(qty) AS total_wip,
-        COUNT(DISTINCT lot_id) AS total_lots
+        SUM(qty) AS f1_total_wip,
+        COUNT(DISTINCT lot_id) AS f1_total_lots
     ")
-      ->orderBy('total_wip', 'desc')
+      ->orderBy('f1_total_wip', 'desc')
       ->groupBy('size_bucket');
+
+    $baseQueryF2 = DB::table((new CustomerDataWip)->getTable() . ' as wip')
+      ->selectRaw("
+        CASE WHEN canonical_body_size
+        " . $canonicalClause . "
+        SUM(qty) AS f2_total_wip,
+        COUNT(DISTINCT lot_id) AS f2_total_lots
+    ")
+      ->orderBy('f2_total_wip', 'desc')
+      ->groupBy('size_bucket');
+
 
     $baseF3Query = DB::table((new F3)->getTable() . ' as wip')
       ->leftJoin('f3_raw_packages as raw', 'wip.package', '=', 'raw.id')
@@ -809,22 +820,22 @@ class WipService
       ->selectRaw("
         CASE WHEN raw.canonical_body_size
         " . $canonicalClause . "
-        SUM(wip.qty) AS total_wip,
-        COUNT(DISTINCT lot_number) AS total_lots
+        SUM(wip.qty) AS f3_total_wip,
+        COUNT(DISTINCT lot_number) AS f3_total_lots
     ")
-      ->orderBy('total_wip', 'desc')
+      ->orderBy('f3_total_wip', 'desc')
       ->groupBy('size_bucket');
 
     Log::info("start date: $startDate, end date: $endDate, use workweek: $useWorkweek");
 
-    $f1QueryWip = (clone $baseQuery)
+    $f1QueryWip = (clone $baseQueryF1)
       ->where(fn($q) => $this->f1f2WipRepo->f1Filters($q, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip'));
 
     $f1QueryWip = $this->f1f2WipRepo->filterByPackageName($f1QueryWip, $packageNames, ['f1']);
     $f1QueryWip = $this->applyDateOrWorkweekFilter($f1QueryWip, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f1QueryWip = $f1QueryWip->get();
 
-    $f2QueryWip = (clone $baseQuery)
+    $f2QueryWip = (clone $baseQueryF2)
       ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, WipConstants::EWAN_PROCESS, 'wip'));
 
     $f2QueryWip = $this->f1f2WipRepo->filterByPackageName($f2QueryWip, $packageNames, ['f2']);
@@ -836,14 +847,18 @@ class WipService
     $f3QueryWip = $this->applyDateOrWorkweekFilter($f3QueryWip, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3QueryWip = $f3QueryWip->get();
 
-    $f1Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
-    $f2Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
-    $f3Unknown = $f3QueryWip->firstWhere('size_bucket', 'others/unknown')?->total_wip ?? 0;
+    $f1Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->f1_total_wip ?? 0;
+    $f2Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->f2_total_wip ?? 0;
+    $f3Unknown = $f3QueryWip->firstWhere('size_bucket', 'others/unknown')?->f3_total_wip ?? 0;
+
 
     $f1QueryWip = $f1QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f2QueryWip = $f2QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f3QueryWip = $f3QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
-    $f3QueryWip = $f3QueryWip->sortByDesc('total_wip')->values();
+
+    $result = MergeAndAggregate::mergeAndAggregate([$f1QueryWip, $f2QueryWip, $f3QueryWip], ['size_bucket']);
+
+    $f3QueryWip = $f3QueryWip->sortByDesc('f3_total_wip')->values();
 
     return response()->json([
       'status' => 'success',
@@ -852,6 +867,7 @@ class WipService
         'f1' => $f1QueryWip,
         'f2' => $f2QueryWip,
         'f3' => $f3QueryWip,
+        'result' => $result,
         'f1_unknown' => $f1Unknown,
         'f2_unknown' => $f2Unknown,
         'f3_unknown' => $f3Unknown
