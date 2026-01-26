@@ -162,14 +162,31 @@ const DateCell = React.memo(function DateCell({
 });
 
 const fullF3Roles = [
+    // "PPC Planner",
+    // "PPC Planner 2",
+    // "PPC Expediter 1",
+    // "PPC Expediter 2",
+    // "PPC Senior Supervisor",
+    // "PPC Manager",
+    // "ppc supervisor",
+    // "programmer 1",
+    "Production Supervisor",
+    "Senior Production Supervisor",
+    "Production Section Head",
+    "Section Head",
+    "programmer 1",
+    "PPC Manager",
+    "Trainee PPC Planner",
+    "PPC",
     "PPC Planner",
     "PPC Planner 2",
     "PPC Expediter 1",
     "PPC Expediter 2",
+    "Planner 2",
+    "Planner",
     "PPC Senior Supervisor",
-    "PPC Manager",
     "ppc supervisor",
-    // "programmer 1",
+    "Residual Controller 1",
 ];
 
 export default function F3List() {
