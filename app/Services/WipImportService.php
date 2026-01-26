@@ -86,23 +86,14 @@ class WipImportService
     array $chunk,
     callable $operation,
     int &$successCounter
-  ): ?array {
-    if (empty($chunk)) return null;
+  ): void {
+    if (empty($chunk)) return;
 
-    try {
-      DB::transaction(fn() => $operation($chunk));
-      $successCounter += count($chunk);
-      return null;
-    } catch (Exception $e) {
-      return [
-        'status' => 'error',
-        'message' => 'Import Interrupted: ' . $e->getMessage(),
-        'data' => [
-          'partialSuccess' => $successCounter,
-        ]
-      ];
-    }
+    DB::transaction(fn() => $operation($chunk));
+
+    $successCounter += count($chunk);
   }
+
 
   protected function rowFormatterWIP(array $rowData): array
   {
@@ -222,6 +213,8 @@ class WipImportService
     }
 
     try {
+      DB::beginTransaction();
+
       $reader->open($filePath);
       $currentRowIndex = 0;
 
@@ -244,8 +237,7 @@ class WipImportService
           $chunk[] = $rowData;
 
           if (count($chunk) >= self::CHUNK_SIZE) {
-            $result = $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
-            if ($result) return $result;
+            $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
             $chunk = [];
           }
         }
@@ -253,8 +245,7 @@ class WipImportService
       }
 
       if (!empty($chunk)) {
-        $result = $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
-        if ($result) return $result;
+        $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
       }
 
       $this->importTraceRepository->upsertImport($repository->getImportKey(), $importedBy, $successCount);
@@ -263,6 +254,8 @@ class WipImportService
       $reader->close();
       unlink($filePath);
 
+      DB::commit();
+
       return [
         'status' => 'success',
         'message' => $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
@@ -270,6 +263,8 @@ class WipImportService
         'total' => $successCount
       ];
     } catch (Exception $e) {
+      DB::rollBack();
+
       Log::error('Import failed', ['error' => $e->getMessage()]);
       return ['status' => 'error', 'message' => $e->getMessage()];
     } finally {
@@ -411,40 +406,46 @@ class WipImportService
     $chunks = [];
     $successCount = 0;
 
-    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      if ($this->isEmptyRow($row)) {
-        continue;
+    try {
+      DB::beginTransaction();
+
+      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+        if ($this->isEmptyRow($row)) {
+          continue;
+        }
+
+        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+        $rowData['ADDED_BY'] = $importedBy;
+
+        $chunks[] = $rowData;
+
+        if (count($chunks) >= self::CHUNK_SIZE) {
+          $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
+          $chunks = [];
+        }
       }
 
-      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-      $rowData['ADDED_BY'] = $importedBy;
-
-      $chunks[] = $rowData;
-
-      if (count($chunks) >= self::CHUNK_SIZE) {
-        $resultError = $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
-
-        if ($resultError) return $resultError;
-        $chunks = [];
+      if (!empty($chunks)) {
+        $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
       }
+
+      $this->importTraceRepository->upsertImport('pickup', $importedBy, $successCount);
+
+      DB::commit();
+
+      return [
+        'status' => 'success',
+        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'data' => [
+          'total' => $successCount,
+        ]
+      ];
+    } catch (Exception $e) {
+      DB::rollBack();
+
+      return ['status' => 'error', 'message' => $e->getMessage()];
     }
-
-    if (!empty($chunks)) {
-      $resultError = $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
-
-      if ($resultError) return $resultError;
-    }
-
-    $this->importTraceRepository->upsertImport('pickup', $importedBy, $successCount);
-
-    return [
-      'status' => 'success',
-      'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-      'data' => [
-        'total' => $successCount,
-      ]
-    ];
   }
 
   public function importF3WIP($importedBy = null, $file)
@@ -470,72 +471,76 @@ class WipImportService
     // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
     $existingRecords = $this->prepareExistingF3WipRecords();
 
-    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      if ($this->isEmptyRow($row)) {
-        continue;
+    try {
+      DB::beginTransaction();
+
+      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+        if ($this->isEmptyRow($row)) {
+          continue;
+        }
+
+        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+        $rowData['imported_by'] = $importedBy;
+        $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
+        $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
+        $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
+        $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
+
+        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
+
+        if (!$packageID) {
+          // Log::info("Package not found: " . $rowData['package']);
+          $ignoredRows[] = $rowData;
+          continue;
+        }
+
+        $rowData['package'] = $packageID;
+
+        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
+        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
+
+        $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
+
+        // Log::info("Key: " . $key);
+
+        if (isset($existingRecords[$key])) {
+          // Log::info("Skipping existing record: " . print_r($rowData, true));
+          continue;
+        }
+
+        $chunks[] = $rowData;
+
+        if (count($chunks) >= self::CHUNK_SIZE) {
+          $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
+          $chunks = [];
+        }
       }
 
-      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-      $rowData['imported_by'] = $importedBy;
-      $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
-      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
-      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
-      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
-
-      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-
-      if (!$packageID) {
-        // Log::info("Package not found: " . $rowData['package']);
-        $ignoredRows[] = $rowData;
-        continue;
+      if (!empty($chunks)) {
+        $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
       }
+      // Log::info("Ignored rows: " . print_r($ignoredRows, true));
+      // Log::info($this->F3_WIP_PATH);
+      // Log::info('F3 Headers: ' . print_r($headers, true));
 
-      $rowData['package'] = $packageID;
+      $this->importTraceRepository->upsertImport('f3_wip', $importedBy, $successCount);
 
-      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-
-      $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
-
-      // Log::info("Key: " . $key);
-
-      if (isset($existingRecords[$key])) {
-        // Log::info("Skipping existing record: " . print_r($rowData, true));
-        continue;
-      }
-
-      $chunks[] = $rowData;
-
-      if (count($chunks) >= self::CHUNK_SIZE) {
-        $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-
-        if ($resultError) return $resultError;
-        $chunks = [];
-      }
+      DB::commit();
+      return [
+        'status' => 'success',
+        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'data' => [
+          'total' => $successCount,
+          // 'ignored' => $ignoredRows,
+          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
+          'ignored_unknown_package_count' => count($ignoredRows)
+        ]
+      ];
+    } catch (Exception $e) {
+      DB::rollBack();
+      return ['status' => 'error', 'message' => $e->getMessage()];
     }
-
-    if (!empty($chunks)) {
-      $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-
-      if ($resultError) return $resultError;
-    }
-    // Log::info("Ignored rows: " . print_r($ignoredRows, true));
-    // Log::info($this->F3_WIP_PATH);
-    // Log::info('F3 Headers: ' . print_r($headers, true));
-
-    $this->importTraceRepository->upsertImport('f3_wip', $importedBy, $successCount);
-
-    return [
-      'status' => 'success',
-      'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-      'data' => [
-        'total' => $successCount,
-        // 'ignored' => $ignoredRows,
-        'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-        'ignored_unknown_package_count' => count($ignoredRows)
-      ]
-    ];
   }
 
 
@@ -562,66 +567,69 @@ class WipImportService
     // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
     $existingRecords = $this->prepareExistingF3OutRecords();
 
-    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      if ($this->isEmptyRow($row)) {
-        continue;
+    try {
+      DB::beginTransaction();
+      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+        if ($this->isEmptyRow($row)) {
+          continue;
+        }
+
+        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
+
+        $rowData['imported_by'] = $importedBy;
+        $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
+        $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
+        $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
+        $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
+
+        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
+
+        if (!$packageID) {
+          // Log::info("Package not found: " . $rowData['package']);
+          $ignoredRows[] = $rowData;
+          continue;
+        }
+
+        $rowData['package'] = $packageID;
+
+        if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_loaded']}"])) {
+          continue;
+        }
+
+        $chunks[] = $rowData;
+
+        if (count($chunks) >= self::CHUNK_SIZE) {
+          $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
+          $chunks = [];
+        }
       }
 
-      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-
-      $rowData['imported_by'] = $importedBy;
-      $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
-      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
-      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
-      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
-
-      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-
-      if (!$packageID) {
-        // Log::info("Package not found: " . $rowData['package']);
-        $ignoredRows[] = $rowData;
-        continue;
-      }
-
-      $rowData['package'] = $packageID;
-
-      if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_loaded']}"])) {
-        continue;
-      }
-
-      $chunks[] = $rowData;
-
-      if (count($chunks) >= self::CHUNK_SIZE) {
+      if (!empty($chunks)) {
         $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
-
-        if ($resultError) return $resultError;
-        $chunks = [];
       }
+      // Log::info("Ignored rows: " . print_r($ignoredRows, true));
+      // Log::info($this->F3_WIP_PATH);
+      // Log::info('F3 Headers: ' . print_r($headers, true));
+
+      $this->importTraceRepository->upsertImport('f3_out', $importedBy, $successCount);
+
+      DB::commit();
+      return [
+        'status' => 'success',
+        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'data' => [
+          'total' => $successCount,
+          // 'ignored' => $ignoredRows,
+          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
+          'ignored_unknown_package_count' => count($ignoredRows)
+        ]
+      ];
+    } catch (Exception $e) {
+      DB::rollBack();
+      return ['status' => 'error', 'message' => $e->getMessage()];
     }
-
-    if (!empty($chunks)) {
-      $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
-
-      if ($resultError) return $resultError;
-    }
-    // Log::info("Ignored rows: " . print_r($ignoredRows, true));
-    // Log::info($this->F3_WIP_PATH);
-    // Log::info('F3 Headers: ' . print_r($headers, true));
-
-    $this->importTraceRepository->upsertImport('f3_out', $importedBy, $successCount);
-
-    return [
-      'status' => 'success',
-      'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-      'data' => [
-        'total' => $successCount,
-        // 'ignored' => $ignoredRows,
-        'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-        'ignored_unknown_package_count' => count($ignoredRows)
-      ]
-    ];
   }
 
   /**
@@ -670,68 +678,79 @@ class WipImportService
     $ignoredRows = [];
     $successCount = 0;
 
-    $existingWipRecords = $this->prepareExistingF3WipRecords();
+    try {
+      DB::beginTransaction();
 
-    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      if ($this->isEmptyRow($row)) {
-        continue;
+      $this->f3WipRepository->deleteTodayRecords();
+
+      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+        if ($this->isEmptyRow($row)) {
+          continue;
+        }
+
+        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+        $rowData['imported_by'] = $importedBy;
+        $rowData['date_received'] = $this->parseDate($rowData['date_received'] ?? null);
+        $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'] ?? null);
+        $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
+        $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
+
+        $rowData['doable'] = $this->sanitize($rowData['doable'] ?? null);
+        $rowData['qty'] = $this->sanitize($rowData['qty'] ?? null);
+        $rowData['good'] = $this->sanitize($rowData['good'] ?? null);
+        $rowData['rej'] = $this->sanitize($rowData['rej'] ?? null);
+        $rowData['res'] = $this->sanitize($rowData['res'] ?? null);
+
+        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
+        if (!$packageID) {
+          $ignoredRows[] = $rowData;
+          continue;
+        }
+        $rowData['package'] = $packageID;
+        $chunksWip[] = $rowData;
+
+        if (count($chunksWip) >= self::CHUNK_SIZE) {
+          $this->insertChunk(
+            $chunksWip,
+            fn($chunks) => $this->f3WipRepository->insertManyF3($chunks),
+            $successCount
+          );
+          $chunksWip = [];
+        }
       }
 
-      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-      $rowData['imported_by'] = $importedBy;
-      $rowData['date_received'] = $this->parseDate($rowData['date_received'] ?? null);
-      $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'] ?? null);
-      $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
-      $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
-
-      $rowData['doable'] = $this->sanitize($rowData['doable'] ?? null);
-      $rowData['qty'] = $this->sanitize($rowData['qty'] ?? null);
-      $rowData['good'] = $this->sanitize($rowData['good'] ?? null);
-      $rowData['rej'] = $this->sanitize($rowData['rej'] ?? null);
-      $rowData['res'] = $this->sanitize($rowData['res'] ?? null);
-
-      $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
-      if (!$packageID) {
-        // Log::info("Package not found: " . ($rowData['package'] ?? 'NULL'));
-        $ignoredRows[] = $rowData;
-        continue;
-      }
-      $rowData['package'] = $packageID;
-
-      $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
-
-      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-
-      if (isset($existingWipRecords[$key])) {
-        continue; // skip duplicates
+      // Insert remaining rows
+      if (!empty($chunksWip)) {
+        $this->insertChunk(
+          $chunksWip,
+          fn($chunks) => $this->f3WipRepository->insertManyF3($chunks),
+          $successCount
+        );
       }
 
-      $chunksWip[] = $rowData;
+      $this->importTraceRepository->upsertImport('f3', $importedBy, $successCount);
 
-      if (count($chunksWip) >= self::CHUNK_SIZE) {
-        $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-        if ($resultError) return $resultError;
-        $chunksWip = [];
-      }
+      DB::commit();
+
+      return [
+        'status' => 'success',
+        'message' => $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'data' => [
+          'total' => $successCount,
+          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
+          'ignored_unknown_package_count' => count($ignoredRows),
+        ]
+      ];
+    } catch (\Throwable $e) {
+      DB::rollBack();
+      // Optionally log the error
+      Log::error('Import failed: ' . $e->getMessage());
+      return [
+        'status' => 'error',
+        'message' => 'Import failed. Transaction rolled back.',
+        'error' => $e->getMessage()
+      ];
     }
-
-    // Insert remaining rows
-    if (!empty($chunksWip)) {
-      $resultError = $this->insertChunk($chunksWip, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-      if ($resultError) return $resultError;
-    }
-
-    $this->importTraceRepository->upsertImport('f3', $importedBy, $successCount);
-
-    return [
-      'status' => 'success',
-      'message' => $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-      'data' => [
-        'total' => $successCount,
-        'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-        'ignored_unknown_package_count' => count($ignoredRows)
-      ]
-    ];
   }
 }

@@ -9,6 +9,8 @@ use App\Traits\NormalizeStringTrait;
 use Illuminate\Support\Facades\Log;
 use App\Models\F3;
 use App\Helpers\SqlDebugHelper;
+use Carbon\Carbon;
+
 
 trait F3Trait
 {
@@ -60,6 +62,12 @@ trait F3Trait
       ->where('date_loaded', '>=', now()->subDays(WipConstants::DAYS_UNTIL_RECLASSIFIED_AS_NEW))
       ->get();
   }
+
+  public function deleteTodayRecords()
+  {
+    return F3::where('import_date', Carbon::today())->delete();
+  }
+
   public function filterByPackageName($query, ?array $packageNames, $column = 'f3_pkg.package_name')
   {
     $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, ["F3"], $column);
