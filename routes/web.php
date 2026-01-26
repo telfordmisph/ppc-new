@@ -39,23 +39,23 @@ Route::prefix('import')->name('import.')->group(function () {
     // });
 });
 
-Route::middleware(AuthMiddleware::class . ':dashboard')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/", [DashboardController::class, 'index'])->name('dashboard');
 });
 
-Route::middleware(AuthMiddleware::class . ':wip_trend')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/wip-trend", [DashboardController::class, 'wipDashboardIndex'])->name('wip.trend');
 });
-Route::middleware(AuthMiddleware::class . ':pickup_trend')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/pickup-dashboard", [DashboardController::class, 'pickupDashboardIndex'])->name('pickup.dashboard');
 });
-Route::middleware(AuthMiddleware::class . ':residual_trend')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/residual-dashboard", [DashboardController::class, 'residualDashboardIndex'])->name('residual.dashboard');
 });
-Route::middleware(AuthMiddleware::class . ':wip_station')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/wip-station", [App\Http\Controllers\WipController::class, 'wipStation'])->name('wipTable');
 });
-Route::middleware(AuthMiddleware::class . ':body_size')->group(function () {
+Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/body-size", [App\Http\Controllers\WipController::class, 'bodySize'])->name('bodySize');
 });
 
@@ -63,7 +63,7 @@ Route::get("/profile", [ProfileController::class, 'index'])->name('profile.index
 Route::post("/change-password", [ProfileController::class, 'changePassword'])->name('changePassword');
 
 Route::prefix('partname')->name('partname.')->group(function () {
-    Route::middleware(AuthMiddleware::class . ':partname_read')->group(function () {
+    Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get('/', [PartNameController::class, 'index'])->name('index');
     });
     Route::middleware(AuthMiddleware::class . ':partname_insert')->group(function () {
@@ -75,7 +75,7 @@ Route::prefix('partname')->name('partname.')->group(function () {
 });
 
 Route::prefix('package')->name('package.group.')->group(function () {
-    Route::middleware(AuthMiddleware::class . ':package_group_read')->group(function () {
+    Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get('/', [PackageGroupController::class, 'index'])->name('index');
     });
     Route::middleware(AuthMiddleware::class . ':package_group_edit')->group(function () {
@@ -88,7 +88,7 @@ Route::prefix('package')->name('package.group.')->group(function () {
 
 Route::prefix('f3-wip-out')->name('f3.')->group(function () {
     Route::prefix('list')->name('list.')->group(function () {
-        Route::middleware(AuthMiddleware::class . ':f3_read')->group(function () {
+        Route::middleware(AuthMiddleware::class)->group(function () {
             Route::get('/', [F3Controller::class, 'index'])->name('index');
         });
         Route::middleware(AuthMiddleware::class . ':f3_edit')->group(function () {
@@ -100,7 +100,7 @@ Route::prefix('f3-wip-out')->name('f3.')->group(function () {
 Route::prefix('f3')->name('f3.')->group(function () {
 
     Route::prefix('package')->name('package.')->group(function () {
-        Route::middleware(AuthMiddleware::class . ':f3_package_read')->group(function () {
+        Route::middleware(AuthMiddleware::class)->group(function () {
             Route::get('/', [F3PackageNamesController::class, 'index'])->name('index');
         });
         Route::middleware(AuthMiddleware::class . ':f3_package_edit')->group(function () {
@@ -112,7 +112,7 @@ Route::prefix('f3')->name('f3.')->group(function () {
     });
 
     Route::prefix('raw-package')->name('raw.package.')->group(function () {
-        Route::middleware(AuthMiddleware::class . ':f3_raw_package_read')->group(function () {
+        Route::middleware(AuthMiddleware::class)->group(function () {
             Route::get('/', [F3RawPackageController::class, 'index'])->name('index');
         });
         Route::middleware(AuthMiddleware::class . ':f3_raw_package_edit')->group(function () {
@@ -125,7 +125,7 @@ Route::prefix('f3')->name('f3.')->group(function () {
 });
 
 Route::prefix('package-capacity')->name('package.capacity.')->group(function () {
-    Route::middleware(AuthMiddleware::class . ':capacity_read')->group(function () {
+    Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get('/', [PackageCapacityController::class, 'getSummaryLatestAndPrevious'])->name('index');
     });
 

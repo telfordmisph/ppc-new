@@ -2,7 +2,8 @@
 
 namespace App\Repositories;
 
-use Illuminate\Container\Attributes\Log;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\SqlDebugHelper;
 use Illuminate\Support\Facades\DB;
 
 class PackageGroupRepository
@@ -16,6 +17,20 @@ class PackageGroupRepository
     }
 
     DB::transaction(function () use ($groupId, $factory, $groupName, $packageNames) {
+      $results = DB::table('package_group_members')
+        ->join('package_groups', 'package_groups.id', '=', 'package_group_members.group_id')
+        ->join('packages', 'packages.id', '=', 'package_group_members.package_id')
+        ->where('package_groups.factory', $factory)
+        ->whereIn('packages.package_name', $packageNames);
+
+      // Log::info(SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
+
+      $results = $results->get();
+      // Log::info('results: ' . json_encode($results));
+
+      if (count($results) > 0) {
+        throw new \InvalidArgumentException('Invalid: Package(s) already in group.');
+      }
 
       if ($groupId) {
         // Update existing group

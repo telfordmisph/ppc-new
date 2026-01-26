@@ -79,7 +79,7 @@ class AuthMiddleware
             $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
         }
 
-        if (!array_key_exists($role, $rolesConfigLower)) {
+        if ($permission && !array_key_exists($role, $rolesConfigLower)) {
             Log::info("Role not found: " . json_encode($rolesConfigLower));
             return Inertia::render('Forbidden');
         }
