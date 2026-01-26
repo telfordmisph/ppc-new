@@ -17,7 +17,7 @@ class ApiAuthMiddleware
    *
    * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
    */
-  public function handle(Request $request, Closure $next, $permission = null): Response
+  public function handle(Request $request, Closure $next): Response
   {
     $empData = session('emp_data');
     if (!$empData || !isset($empData['token'])) {
@@ -40,27 +40,11 @@ class ApiAuthMiddleware
     }
 
     $role = strtolower(trim($currentUser->emp_jobtitle));
-    $rolesConfig = config('roles');
 
     // Convert roles keys and permissions to lowercase for comparison
-    $rolesConfigLower = [];
-    foreach ($rolesConfig as $key => $permissions) {
-      $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
-    }
-
-    if (
-      !array_key_exists($role, $rolesConfigLower) ||
-      ($permission !== null && !in_array(strtolower($permission), $rolesConfigLower[$role]))
-    ) {
-      return response()->json([
-        'status' => 'error',
-        'error' => 'Unauthorized',
-        'message' => 'You are not authorized to access this resource',
-      ], 403);
-    }
-
 
     $request->attributes->set('emp_id', $currentUser->emp_id);
+    $request->attributes->set('role', $role);
 
     return $next($request);
   }
