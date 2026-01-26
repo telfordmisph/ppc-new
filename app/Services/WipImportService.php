@@ -624,6 +624,32 @@ class WipImportService
     ];
   }
 
+  /**
+   * Aggressive integer sanitizer
+   * - Removes all whitespace, including non-breaking spaces
+   * - Keeps only digits
+   * - Returns integer if digits exist, null otherwise
+   */
+  private function sanitize($value): ?int
+  {
+    if ($value === null) {
+      return null;
+    }
+
+    // Convert to string
+    $value = (string) $value;
+
+    // Remove invisible/unicode spaces (\xC2\xA0, etc.)
+    $value = str_replace(["\xC2\xA0", "\xc2\xa0", "\u00A0"], '', $value);
+
+    // Remove everything except digits
+    $digits = preg_replace('/\D/', '', $value);
+
+    // If digits exist, return as integer, else null
+    return $digits !== '' ? (int) $digits : null;
+  }
+
+
   public function importF3($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
@@ -659,6 +685,12 @@ class WipImportService
       $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
       $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
 
+      $rowData['doable'] = $this->sanitize($rowData['doable'] ?? null);
+      $rowData['qty'] = $this->sanitize($rowData['qty'] ?? null);
+      $rowData['good'] = $this->sanitize($rowData['good'] ?? null);
+      $rowData['rej'] = $this->sanitize($rowData['rej'] ?? null);
+      $rowData['res'] = $this->sanitize($rowData['res'] ?? null);
+
       $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
       if (!$packageID) {
         // Log::info("Package not found: " . ($rowData['package'] ?? 'NULL'));
@@ -668,6 +700,8 @@ class WipImportService
       $rowData['package'] = $packageID;
 
       $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
+
+      // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
 
       if (isset($existingWipRecords[$key])) {
         continue; // skip duplicates

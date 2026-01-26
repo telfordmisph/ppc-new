@@ -50,8 +50,8 @@ const WIPTrend = () => {
     const [endDate, setEndDate] = useState(null);
     const today = new Date();
 
-    const defaultStart = new Date(2025, 8, 1, 0, 0, 0, 0); // September 1, 2025 (month is 0-indexed)
-    const defaultEnd = new Date(2025, 8, 1, 23, 59, 59, 999);
+    const defaultStart = today;
+    const defaultEnd = today;
 
     const [tempStartDate, setTempStartDate] = useState(defaultStart);
     const [tempEndDate, setTempEndDate] = useState(defaultEnd);

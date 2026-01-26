@@ -5,12 +5,12 @@ import Collapse from "@/Components/Collapse";
 import { TbAlertCircle } from "react-icons/tb";
 
 const excelInstructions = [
+    "Exactly one sheet",
     "Ensure all data is in the correct columns without any misplaced entries.",
     "Use only the correct, recognized header names—unknown headers are not allowed.",
     "Include all required headers; missing headers may cause import errors.",
     "Do not include summary rows such as totals or grand totals.",
     "Keep all rows consistent in format and structure.",
-    "On Uploads: File size must not exceed 20 MB.",
 ];
 
 const ImportPageLayout = ({ pageName = "F1/F2", children }) => {

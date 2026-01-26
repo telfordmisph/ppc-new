@@ -761,16 +761,19 @@ class WipConstants
       'date',
       'date today',
       'Date Today',
+      'Date_Loaded',
     ],
-    'running_ct' => [
-      'running ct',
-      'run ct',
-      'running_count',
-      'run_count',
-      'RUNNING CT',
-      'RUN CT'
-    ],
+    // 'running_ct' => [
+    //   'running_ct',
+    //   'running ct',
+    //   'run ct',
+    //   'running_count',
+    //   'run_count',
+    //   'RUNNING CT',
+    //   'RUN CT'
+    // ],
     'date_received' => [
+      'date_received',
       'date received',
       'received date',
       'recv date',
@@ -786,6 +789,7 @@ class WipConstants
       'SRF#'
     ],
     'po_number' => [
+      'po_number',
       'p.o number',
       'po number',
       'purchase order number',
@@ -793,12 +797,14 @@ class WipConstants
       'PO NUMBER'
     ],
     'machine_number' => [
+      'machine_number',
       'machine #',
       'machine number',
       'machine_no',
       'MACHINE NUMBER'
     ],
     'part_number' => [
+      'part_number',
       'part number',
       'part_no',
       'part#',
@@ -816,6 +822,7 @@ class WipConstants
       'PACKAGE'
     ],
     'lot_number' => [
+      'lot_number',
       'lot number',
       'lot_no',
       'LOT NUMBER',
@@ -854,12 +861,14 @@ class WipConstants
       'RES'
     ],
     'date_commit' => [
+      'date_commit',
       'date commit',
       'commit date',
       'date_committed',
       'DATE COMMIT'
     ],
     'actual_date_time' => [
+      'actual_date_time',
       'actual date/time',
       'actual datetime',
       'act date time',
@@ -886,17 +895,20 @@ class WipConstants
       'can do',
       'DOABLE'
     ],
-    'focus_group' => [
-      'focus group',
-      'group',
-      'FOCUS GROUP'
-    ],
+    // 'focus_group' => [
+    //   'focus_group',
+    //   'focus group',
+    //   'group',
+    //   'FOCUS GROUP'
+    // ],
     'gap_analysis' => [
+      'gap_analysis',
       'gap analysis',
       'gap',
       'GAP ANALYSIS'
     ],
     'cycle_time' => [
+      'cycle_time',
       'cycle time',
       'ct',
       'CYCLE TIME'
