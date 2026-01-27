@@ -10,6 +10,9 @@ import FileUploader from "@/Components/FileUploader";
 import DataTable from "@/Components/Table";
 import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
+import { Link } from "@inertiajs/react";
+import { MdWarning } from "react-icons/md";
+import { FaLink } from "react-icons/fa6";
 
 const F3ImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
@@ -205,6 +208,14 @@ const F3ImportPage = () => {
                     <div className="card-body">
                         <h2 className="card-title">Upload Daily {f3Label}</h2>
                         <p>Upload latest data for F3 WIPs and OUTs.</p>
+                        {importF3Data?.data?.ignored_unknown_package.length > 0 && 
+                            <div className="bg-warning text-warning-content p-2 rounded-lg">
+                                <MdWarning className="inline w-4 h-4 mr-2" />
+                                Some rows were not imported because their package is unknown (see the ignored rows list below).
+                                Add the unknown package first on the <Link className="font-semibold underline" href={route("f3.raw.package.index")}><FaLink className="inline w-4 h-4" /> F3 Raw Packages page</Link>.
+                                After that, you can try importing the file again.
+                            </div>
+                        }
                         <ImportLabel
                             data={importTraceData?.f3}
                             loading={isImportTraceLoading}
