@@ -58,6 +58,13 @@ class F3RawPackageController extends Controller
       $validated['package_id'] = $package->id;
       unset($validated['package_name']);
 
+      $rawPackage = $validated['raw_package'];
+      $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+
+      if (F3RawPackage::where('raw_package_normalized', $rawPackageNormalized)->exists()) {
+        throw new \Exception("The raw_package '{$rawPackage}' already exists.");
+      }
+
       if ($id) {
         $f3RawPackage = F3RawPackage::findOrFail($id);
         $f3RawPackage->update($validated);
@@ -83,7 +90,7 @@ class F3RawPackageController extends Controller
     } catch (\Throwable $e) {
       DB::rollBack();
       return response()->json([
-        'message' => 'Failed to save F3 raw package',
+        'message' => $e->getMessage(),
         'error' => $e->getMessage()
       ], 500);
     }
