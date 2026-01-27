@@ -27,7 +27,6 @@ export const PICKUP_HEADERS = [
 
 export const F3_OUTS_HEADERS = [
   'date_loaded',
-  "running_ct",
   "date_received",
   "packing_list_srf#",
   "p.o_number",

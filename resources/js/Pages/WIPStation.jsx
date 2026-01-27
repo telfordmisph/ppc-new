@@ -21,7 +21,7 @@ import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDro
 import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import { WIP_LOTS } from "@/Constants/colors";
+import { WIP_FACTORY_COLORS } from "@/Constants/colors";
 import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
 import "react-datepicker/dist/react-datepicker.css";
@@ -214,7 +214,7 @@ const WIPStation = () => {
                     f2: factoryVisibleBars.f2,
                     f3: factoryVisibleBars.f3,
                 },
-                keyLines: WIP_LOTS,
+                keyLines: WIP_FACTORY_COLORS,
             }),
         [factoryVisibleBars.f1, factoryVisibleBars.f2, factoryVisibleBars.f3]
     );

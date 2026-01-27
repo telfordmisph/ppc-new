@@ -41,7 +41,7 @@ export function runAsyncToast({
                     renderSuccess ? (
                         <div
                             className={clsx(
-                                "text-sm m-2 p-4 rounded-lg shadow-lg bg-base-100",
+                                "text-sm m-2 p-4 rounded-lg shadow-lg bg-base-100 border border-success",
                                 toastTransition(t)
                             )}
                         >

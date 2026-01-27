@@ -119,6 +119,10 @@ class ExcelValidatorService
       }
     }
 
+    // Log::info("headers: " . print_r($headers, true));
+    // Log::info("map: " . print_r($map, true));
+    // Log::info("found: " . print_r($found, true));
+
     $missing = array_diff(array_keys($expectedHeaders), $found);
     $valid = empty($missing);
 

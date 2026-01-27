@@ -20,7 +20,7 @@ import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { WIP_LOTS } from "@/Constants/colors";
+import { WIP_FACTORY_COLORS } from "@/Constants/colors";
 import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
 import "react-datepicker/dist/react-datepicker.css";
@@ -147,7 +147,7 @@ const WipTrendByPackage = memo(function WipTrendByPackage({
                 showQuantities: visibleLines.totalwip,
                 showLots: visibleLines.totalLots,
                 showFactories: { f1: true, f2: true, f3: true, overall: true },
-                keyLines: WIP_LOTS,
+                keyLines: WIP_FACTORY_COLORS,
             }),
         [visibleLines]
     );

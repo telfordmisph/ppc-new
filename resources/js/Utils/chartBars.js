@@ -1,7 +1,7 @@
-import { WIP_LOTS } from "@/Constants/colors";
+import { WIP_FACTORY_COLORS } from "@/Constants/colors";
 
 export const getBarConfigs = (metric = "wip", stackId = "a") => {
-  return WIP_LOTS.map(({ key, colorVar }) => ({
+  return WIP_FACTORY_COLORS.map(({ key, colorVar }) => ({
     visibilityKey: key,
     dataKey: `${key}_total_${metric}`,
     stackId,

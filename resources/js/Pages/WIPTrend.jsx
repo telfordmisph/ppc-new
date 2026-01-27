@@ -26,23 +26,24 @@ import WipTrendByPackage from "@/Components/WipTrendByPackage";
 import { summaryWipPLBarsLots, summaryWipPLBarswip } from "@/Utils/chartBars";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { buildComputeFunction } from "@/Utils/computeTotals";
 
-function buildComputeFunction(selectedTotal, visibleBars) {
-    const activeKeys = Object.entries(visibleBars)
-        .filter(([_, isVisible]) => isVisible)
-        .map(([key]) => key);
+// function buildComputeFunction(selectedTotal, visibleBars) {
+//     const activeKeys = Object.entries(visibleBars)
+//         .filter(([_, isVisible]) => isVisible)
+//         .map(([key]) => key);
 
-    if (activeKeys.length === 0) return null;
+//     if (activeKeys.length === 0) return null;
 
-    return (item) =>
-        activeKeys.reduce((sum, key) => {
-            const field =
-                selectedTotal === "wip"
-                    ? `${key}_total_wip`
-                    : `${key}_total_lots`;
-            return sum + Number(item[field] || 0);
-        }, 0);
-}
+//     return (item) =>
+//         activeKeys.reduce((sum, key) => {
+//             const field =
+//                 selectedTotal === "wip"
+//                     ? `${key}_total_wip`
+//                     : `${key}_total_lots`;
+//             return sum + Number(item[field] || 0);
+//         }, 0);
+// }
 
 const WIPTrend = () => {
     const manualWIPImportRef = useRef(null);
@@ -470,6 +471,7 @@ const WIPTrend = () => {
                 <div className="mt-4 flex justify-center h-[500px]">
                     <StackedBarChart
                         data={sortedAllPackageFilteredData}
+                        defaultAngle={-45}
                         isLoading={isOverallSummaryWipLoading}
                         errorMessage={overallSummaryWipErrorMessage}
                         bars={

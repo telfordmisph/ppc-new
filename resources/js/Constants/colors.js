@@ -45,7 +45,7 @@ export const WIP_OUT_CAPACITY = [
     },
 ];
 
-export const WIP_LOTS = [
+export const WIP_FACTORY_COLORS = [
     { key: "f1", 
         colorVar: { 
             wip: "var(--color-f1color)", 

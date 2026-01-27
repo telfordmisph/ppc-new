@@ -851,12 +851,24 @@ class WipService
     $f2Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->f2_total_wip ?? 0;
     $f3Unknown = $f3QueryWip->firstWhere('size_bucket', 'others/unknown')?->f3_total_wip ?? 0;
 
-
     $f1QueryWip = $f1QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f2QueryWip = $f2QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
     $f3QueryWip = $f3QueryWip->reject(fn($item) => $item->size_bucket === 'others/unknown')->values();
 
     $result = MergeAndAggregate::mergeAndAggregate([$f1QueryWip, $f2QueryWip, $f3QueryWip], ['size_bucket']);
+
+    foreach ($result as &$item) {
+      $f1_total_wip = $item['f1_total_wip'] ?? 0;
+      $f2_total_wip = $item['f2_total_wip'] ?? 0;
+      $f3_total_wip = $item['f3_total_wip'] ?? 0;
+
+      $f1_total_lots = $item['f1_total_lots'] ?? 0;
+      $f2_total_lots = $item['f2_total_lots'] ?? 0;
+      $f3_total_lots = $item['f3_total_lots'] ?? 0;
+
+      $item['total_wip'] = $f1_total_wip + $f2_total_wip + $f3_total_wip;
+      $item['total_lots'] = $f1_total_lots + $f2_total_lots + $f3_total_lots;
+    }
 
     $f3QueryWip = $f3QueryWip->sortByDesc('f3_total_wip')->values();
 

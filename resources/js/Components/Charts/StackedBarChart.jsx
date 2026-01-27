@@ -77,13 +77,14 @@ const StackedBarChart = memo(function StackedBarChart({
     visibleBars,
     onBarClick = () => {},
     xAxisDataKey = "Package_Name",
+    defaultAngle = null,
     width = 500,
     height = 300,
     margin,
 }) {
     const totalBarCount = data?.length || 0;
     const fontSize = totalBarCount > 25 ? 10 : 14;
-    const angle = totalBarCount > 25 ? -45 : 0;
+    const angle = defaultAngle || totalBarCount > 25 ? -45 : 0;
 
     return (
         <BaseChart data={data} isLoading={isLoading} error={errorMessage}>

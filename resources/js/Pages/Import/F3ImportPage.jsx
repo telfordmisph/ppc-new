@@ -165,7 +165,7 @@ const F3ImportPage = () => {
                     </div>
 
                     <div className="flex flex-col justify-between">
-{result?.data?.ignored_unknown_package?.length > 0 && (
+                        {result?.data?.ignored_unknown_package?.length > 0 && (
                             <div className="bg-warning text-warning-content px-2">ignored rows with unknown packages: <span>{result?.data?.ignored_unknown_package?.length}</span></div>
                         )}
                         <div className="flex gap-2 px-2">
@@ -173,7 +173,7 @@ const F3ImportPage = () => {
                         <span className="font-bold">
                             {Number(result?.data?.total ?? 0).toLocaleString()}
                         </span>
-</div>
+                        </div>
                     </div>
                 </>
             ),

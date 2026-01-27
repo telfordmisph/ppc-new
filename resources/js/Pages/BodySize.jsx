@@ -17,7 +17,15 @@ import DatePicker from "react-datepicker";
 import formatDate from "@/Utils/formatDate";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+    TOGGLE_FACTORY_BUTTONS,
+} from "@/Constants/toggleButtons";
 import { FaExclamationTriangle } from "react-icons/fa";
+import { summaryWipPLBarsLots, summaryWipPLBarswip } from "@/Utils/chartBars";
+import { buildComputeFunction } from "@/Utils/computeTotals";
+import { useMemo } from "react";
+import sortObjectArray from "@/Utils/sortObjectArray";
+import TogglerButton from "@/Components/TogglerButton";
 
 const BodySize = () => {
     const {
@@ -50,6 +58,13 @@ const BodySize = () => {
     const [selectedOffsetPeriod, setSelectedOffsetPeriod] =
         useState(savedOffset);
 
+    const [factoryVisibleBars, setFactoryVisibleBars] = useState({
+            f1: true,
+            f2: true,
+            f3: true,
+            always: true,
+        });
+
     const {
         data: workWeekData,
         isLoading: isWorkWeekLoading,
@@ -73,6 +88,8 @@ const BodySize = () => {
         workweek:
             selectedPeriod === "weekly" ? selectedWorkWeeks.join(" ") : "",
     };
+
+    const [selectedTotal, setSelectedTotal] = useState("wip");    
 
     const {
         data: bodySizeWipData,
@@ -99,6 +116,14 @@ const BodySize = () => {
                 selectedWorkWeeks,
             ),
         );
+    };
+
+    const handleChangeTotalFilter = (e) => {
+        if (e.target.checked) {
+            setSelectedTotal("lots");
+        } else {
+            setSelectedTotal("wip");
+        }
     };
 
     const datePeriod = formatPeriodLabel(selectedPeriod);
@@ -128,6 +153,20 @@ const BodySize = () => {
         setSavedSelectedPackageName(selectedPackages);
     };
 
+    const toggleAllFactory = () => {
+        const allVisible = Object.values(factoryVisibleBars).every(Boolean);
+        setFactoryVisibleBars({
+            f1: !allVisible,
+            f2: !allVisible,
+            f3: !allVisible,
+            always: true,
+        });
+    };
+
+    const handleToggleBar = (name, key) => {
+        setFactoryVisibleBars((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
     const handleDateChange = (dates) => {
         const [start, end] = dates;
         setStartDate(start);
@@ -138,20 +177,20 @@ const BodySize = () => {
         setSavedEndDate(end);
     };
 
-    const commonChartProps = ({ fillWip, fillLot }) => {
+    const commonChartProps = ({ key, fillWip, fillLot }) => {
         return {
             xAxisDataKey: "size_bucket",
             isLoading: isBodySizeWipLoading,
             errorMessage: bodySizeWipErrorMessage,
             bars: [
                 {
-                    dataKey: "total_wip",
+                    dataKey: `${key}_total_wip`,
                     fill: fillWip,
                     visibilityKey: "size_bucket",
                     yAxisId: "left",
                 },
                 {
-                    dataKey: "total_lots",
+                    dataKey: `${key}_total_lots`,
                     fill: fillLot,
                     visibilityKey: "size_bucket",
                     yAxisId: "right",
@@ -162,6 +201,57 @@ const BodySize = () => {
             },
         };
     };
+
+    const f1ChartProps = useMemo(() => commonChartProps({
+        key: "f1",
+        fillWip: "var(--color-f1color)",
+        fillLot: "var(--color-f1color-dim)",
+    }), []);
+
+    const f2ChartProps = useMemo(() => commonChartProps({
+        key: "f2",
+        fillWip: "var(--color-f2color)",
+        fillLot: "var(--color-f2color-dim)",
+    }), []);
+
+    const f3ChartProps = useMemo(() => commonChartProps({
+        key: "f3",
+        fillWip: "var(--color-f3color)",
+        fillLot: "var(--color-f3color-dim)",
+    }), []);
+
+
+    const bodySizeWipDataOverall = useMemo(
+            () => bodySizeWipData?.data?.result || [],
+            [bodySizeWipData?.data?.result?.length]
+        );
+
+    const compute = useMemo(
+            () => buildComputeFunction(selectedTotal, factoryVisibleBars),
+            [selectedTotal, factoryVisibleBars]
+        );
+
+    const sortKeys = useMemo(
+            () => (selectedTotal === "wip" ? ["total_wip"] : ["total_lots"]),
+            [selectedTotal]
+        );
+
+    const sortedAllPackageFilteredData = useMemo(
+        () =>
+            sortObjectArray(bodySizeWipDataOverall, {
+                keys: sortKeys,
+                order: "desc",
+                compute,
+            }),
+        [bodySizeWipDataOverall, sortKeys, compute]
+    );
+
+    const f1BodySize = useMemo(() => 
+        bodySizeWipData?.data?.f1, [bodySizeWipData]);
+    const f2BodySize = useMemo(() => 
+        bodySizeWipData?.data?.f2, [bodySizeWipData]);
+    const f3BodySize = useMemo(() => 
+        bodySizeWipData?.data?.f3, [bodySizeWipData]);
 
     return (
         <>
@@ -331,17 +421,24 @@ const BodySize = () => {
                 {bodySizeWipErrorMessage ? bodySizeWipErrorMessage : ""}
             </div>
 
+            <OverallChart 
+                data={sortedAllPackageFilteredData || []}
+                selectedTotal={selectedTotal}
+                isBodySizeWipLoading={isBodySizeWipLoading}
+                bodySizeWipErrorMessage={bodySizeWipErrorMessage}
+                handleChangeTotalFilter={handleChangeTotalFilter}
+                factoryVisibleBars={factoryVisibleBars}
+                handleToggleBar={handleToggleBar}
+                toggleAllFactory={toggleAllFactory}
+            />
+            
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
                 <div className="font-semibold text-lg p-2 text-center w-full border rounded-t-lg border-f1color/50 border-b-transparent">
                     F1
                 </div>
                 <StackedBarChart
-                    data={bodySizeWipData?.data?.f1}
-                    xAxisDataKey={"size_bucket"}
-                    {...commonChartProps({
-                        fillWip: "var(--color-f1color)",
-                        fillLot: "var(--color-f1color-dim)",
-                    })}
+                    data={f1BodySize}
+                    {...f1ChartProps}
                 />
             </div>
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
@@ -349,12 +446,8 @@ const BodySize = () => {
                     F2
                 </div>
                 <StackedBarChart
-                    data={bodySizeWipData?.data?.f2}
-                    xAxisDataKey={"size_bucket"}
-                    {...commonChartProps({
-                        fillWip: "var(--color-f2color)",
-                        fillLot: "var(--color-f2color-dim)",
-                    })}
+                    data={f2BodySize}
+                    {...f2ChartProps}
                 />
             </div>
             <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
@@ -362,53 +455,56 @@ const BodySize = () => {
                     F3
                 </div>
                 <StackedBarChart
-                    data={bodySizeWipData?.data?.f3}
+                    data={f3BodySize}
                     xAxisDataKey={"size_bucket"}
-                    {...commonChartProps({
-                        fillWip: "var(--color-f3color)",
-                        fillLot: "var(--color-f3color-dim)",
-                    })}
+                    {...f3ChartProps}
                 />
             </div>
-
-            {/* <div
-                className={clsx(
-                    "bg-warning/20 mt-4 flex alert alert-warning border-warning border",
-                    {
-                        hidden: !bodySizeWipData,
-                    }
-                )}
-            >
-                <FaExclamationTriangle className="text-base-content w-6 h-6" />
-                <div className="flex flex-col text-base-content">
-                    <span>
-                        Some body size value is unknown or invalid from the
-                        database.
-                    </span>
-                    <span>Unknown/invalid data count: </span>
-                    {bodySizeWipData?.data?.f1_unknown > 0 && (
-                        <div className="flex gap-2">
-                            <span className="min-w-5">f1/f2</span>
-                            <span className="font-mono">
-                                {Number(
-                                    bodySizeWipData?.data?.f1_unknown
-                                ).toLocaleString()}
-                            </span>
-                        </div>
-                    )}
-                    {bodySizeWipData?.data?.f3_unknown > 0 && (
-                        <div className="flex gap-2">
-                            <span className="min-w-5">f2</span>
-                            <span className="font-mono">
-                                {Number(
-                                    bodySizeWipData?.data?.f3_unknown
-                                ).toLocaleString()}
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </div> */}
         </>
+    );
+};
+
+const OverallChart = ({ data = [], selectedTotal, isBodySizeWipLoading, bodySizeWipErrorMessage, handleChangeTotalFilter, factoryVisibleBars, handleToggleBar, toggleAllFactory }) => {
+    return (
+        <div className="border border-base-content/10 rounded-lg mt-4 flex flex-col justify-center h-[500px]">
+                <div className="font-semibold text-lg p-2 text-center w-full border rounded-t-lg border-f1color/50 border-b-transparent">
+                    Overall
+                </div>
+                {data?.length > 0 && <div className="px-4 flex gap-4">
+                    <div>
+                        <TogglerButton
+                            id="factory"
+                            toggleButtons={TOGGLE_FACTORY_BUTTONS}
+                            visibleBars={factoryVisibleBars}
+                            toggleBar={handleToggleBar}
+                            toggleAll={toggleAllFactory}
+                        />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <div>Total wip</div>
+                        <input
+                            type="checkbox"
+                            checked={selectedTotal === "lots"}
+                            onChange={(e) => handleChangeTotalFilter(e)}
+                            className="toggle"
+                        />
+                        <div>Total Lots</div>
+                    </div>
+                </div>}
+
+                <StackedBarChart
+                    data={data}
+                    bars={
+                        selectedTotal === "wip"
+                            ? summaryWipPLBarswip
+                            : summaryWipPLBarsLots
+                    }
+                    xAxisDataKey={"size_bucket"}
+                    isLoading={isBodySizeWipLoading}
+                    errorMessage={bodySizeWipErrorMessage}
+                    visibleBars={factoryVisibleBars}
+                />
+            </div>
     );
 };
 
