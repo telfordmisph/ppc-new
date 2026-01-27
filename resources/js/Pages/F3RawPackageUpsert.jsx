@@ -74,7 +74,7 @@ const F3RawPackageUpsert = () => {
 
             router.visit(route("f3.raw.package.index"));
         } catch (err) {
-            console.error("Upsert failed:", mutateErrorMessage);
+            console.error("Upsert failed:", err.message);
             toast.error(err.message);
         }
     };
