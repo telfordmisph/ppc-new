@@ -256,4 +256,11 @@ class ParseDateTraitTest extends TestCase
             $result
         );
     }
+
+    public function test_parse_date_invalid_value()
+    {
+        $value = '\u00a0';
+        $result = $this->parseDate($value);
+        $this->assertNull($result);
+    }
 }

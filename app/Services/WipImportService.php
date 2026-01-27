@@ -13,6 +13,7 @@ use App\Traits\ParseDateTrait;
 use App\Constants\WipConstants;
 use App\Repositories\F3OutRepository;
 use App\Repositories\F3WipRepository;
+use App\Traits\Sanitize;
 use Carbon\Carbon;
 use App\Models\CustomerDataWip;
 use App\Models\F1F2Out;
@@ -29,6 +30,7 @@ use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 class WipImportService
 {
   use ParseDateTrait;
+use Sanitize;
   protected $packageCapacityService;
   protected $f1f2WipRepository;
   protected $importTraceRepository;
@@ -57,6 +59,15 @@ class WipImportService
   private const WIP_OUTS_LOCK_KEY = 'auto_import_wip_outs_lock';
   private const EXPECTED_DAILY_BACKEND_WIP_COLUMNS = 43;
   private const CHUNK_SIZE = 500;
+
+  protected $sheetToArrayArgs = [
+    null,  // nullValue
+    true,  // calculateFormulas
+    false, // formatData
+    false, // returnCellRef
+    true,  // preserveEmptyRows
+    false, // strictNullComparison
+  ];
 
   public function __construct(
     F1F2WipRepository $f1f2WipRepository,
@@ -92,6 +103,17 @@ class WipImportService
     DB::transaction(fn() => $operation($chunk));
 
     $successCounter += count($chunk);
+  }
+
+private function getSanitizedSheetData($spreadsheet)
+  {
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheetData = $sheet->toArray(...$this->sheetToArrayArgs);
+
+    return $sheetData = array_map(
+      fn($row) => array_map([$this, 'sanitizeExcelCell'], $row),
+      $sheetData
+    );
   }
 
 
@@ -389,9 +411,7 @@ class WipImportService
   public function importPickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheetData = $sheet->toArray(null, true, false, false);
+    $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_PICKUP_EXPECTED_HEADERS);
 
@@ -451,9 +471,7 @@ class WipImportService
   public function importF3WIP($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheetData = $sheet->toArray(null, true, false, false);
+    $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);
 
@@ -547,9 +565,7 @@ class WipImportService
   public function importF3OUT($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheetData = $sheet->toArray(null, true, false, false);
+    $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_OUT_EXPECTED_HEADERS);
 
@@ -632,37 +648,10 @@ class WipImportService
     }
   }
 
-  /**
-   * Aggressive integer sanitizer
-   * - Removes all whitespace, including non-breaking spaces
-   * - Keeps only digits
-   * - Returns integer if digits exist, null otherwise
-   */
-  private function sanitize($value): ?int
-  {
-    if ($value === null) {
-      return null;
-    }
-
-    // Convert to string
-    $value = (string) $value;
-
-    // Remove invisible/unicode spaces (\xC2\xA0, etc.)
-    $value = str_replace(["\xC2\xA0", "\xc2\xa0", "\u00A0"], '', $value);
-
-    // Remove everything except digits
-    $digits = preg_replace('/\D/', '', $value);
-
-    // If digits exist, return as integer, else null
-    return $digits !== '' ? (int) $digits : null;
-  }
-
-
   public function importF3($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheetData = $sheet->toArray(null, true, false, false);
+        $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
     $expectedHeaders = WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS;
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, $expectedHeaders);
@@ -696,11 +685,11 @@ class WipImportService
         $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
         $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
 
-        $rowData['doable'] = $this->sanitize($rowData['doable'] ?? null);
-        $rowData['qty'] = $this->sanitize($rowData['qty'] ?? null);
-        $rowData['good'] = $this->sanitize($rowData['good'] ?? null);
-        $rowData['rej'] = $this->sanitize($rowData['rej'] ?? null);
-        $rowData['res'] = $this->sanitize($rowData['res'] ?? null);
+        $rowData['doable'] = $this->sanitizeInteger($rowData['doable'] ?? null);
+        $rowData['qty'] = $this->sanitizeInteger($rowData['qty'] ?? null);
+        $rowData['good'] = $this->sanitizeInteger($rowData['good'] ?? null);
+        $rowData['rej'] = $this->sanitizeInteger($rowData['rej'] ?? null);
+        $rowData['res'] = $this->sanitizeInteger($rowData['res'] ?? null);
 
         $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package'] ?? null);
         if (!$packageID) {

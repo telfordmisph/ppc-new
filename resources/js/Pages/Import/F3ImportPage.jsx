@@ -34,7 +34,6 @@ const F3ImportPage = () => {
         errorMessage: importWipQuantityErrorMessage,
         errorData: importWipQuantityErrorData,
         mutate: importWipQuantity,
-        data: importWipQuantityData,
     } = useMutation();
 
     const {
@@ -49,6 +48,7 @@ const F3ImportPage = () => {
         errorMessage: importF3ErrorMessage,
         errorData: importF3ErrorData,
         mutate: importF3,
+        data: importF3Data,
     } = useMutation();
 
     // const handleManualWIPImport = () => {
@@ -155,16 +155,22 @@ const F3ImportPage = () => {
             loadingMessage: "Importing F3 data...",
             renderSuccess: (result) => (
                 <>
-                    <div className="mb-2 font-bold text-success">
+                    <div className="mb-2 font-bold">
                         <span>F3s: </span>{" "}
-                        {result?.message || "Successfully imported!"}
+                        {result?.data?.ignored_unknown_package?.length > 0 && "Partially imported!"}
+                        {result?.data?.ignored_unknown_package?.length == 0 && (result?.message || "Successfully imported!")}
                     </div>
 
-                    <div className="flex justify-between">
+                    <div className="flex flex-col justify-between">
+{result?.data?.ignored_unknown_package?.length > 0 && (
+                            <div className="bg-warning text-warning-content px-2">ignored rows with unknown packages: <span>{result?.data?.ignored_unknown_package?.length}</span></div>
+                        )}
+                        <div className="flex gap-2 px-2">
                         <span className="font-light">new F3 entries:</span>
                         <span className="font-bold">
                             {Number(result?.data?.total ?? 0).toLocaleString()}
                         </span>
+</div>
                     </div>
                 </>
             ),
@@ -261,6 +267,43 @@ const F3ImportPage = () => {
                             Upload {f3Label}
                         </button>
                     </div>
+
+                    {importF3Data?.data?.ignored_unknown_package
+                        .length > 0 && (
+                        <Collapse
+                            title={`Unknown Package: ignored Rows (Not imported). Click to see details.`}
+                            className={"w-full border border-warning text-base-content"}
+                            contentClassName={
+                                "overflow-x-auto text-base-content"
+                            }
+                        >
+                            <div className="mb-2 ">
+                                showing{" "}
+                                {
+                                    importF3Data?.data
+                                        ?.ignored_unknown_package.length
+                                }{" "}
+                                out of{" "}
+                                {
+                                    importF3Data?.data
+                                        ?.ignored_unknown_package_count
+                                }
+                            </div>
+                            <div className="overflow-x-auto w-full max-h-96">
+                                <DataTable
+                                    columns={Object.keys(
+                                        importF3Data?.data
+                                            ?.ignored_unknown_package[0]
+                                    )}
+                                    rows={
+                                        importF3Data?.data
+                                            ?.ignored_unknown_package
+                                    }
+                                    className={"w-full"}
+                                />
+                            </div>
+                        </Collapse>
+                    )}
 
                     {importF3ErrorMessage && importF3ErrorData?.data && (
                         <Collapse
@@ -395,42 +438,7 @@ const F3ImportPage = () => {
                         </button>
                     </div>
 
-                    {importWipQuantityData?.data?.ignored_unknown_package
-                        .length > 0 && (
-                        <Collapse
-                            title={`Unknown Package: ignored Rows (Not imported). Click to see details.`}
-                            className={"w-full text-warning"}
-                            contentClassName={
-                                "overflow-x-auto text-base-content"
-                            }
-                        >
-                            <div className="mb-2 ">
-                                showing{" "}
-                                {
-                                    importWipQuantityData?.data
-                                        ?.ignored_unknown_package.length
-                                }{" "}
-                                out of{" "}
-                                {
-                                    importWipQuantityData?.data
-                                        ?.ignored_unknown_package_count
-                                }
-                            </div>
-                            <div className="overflow-x-auto w-full max-h-96">
-                                <DataTable
-                                    columns={Object.keys(
-                                        importWipQuantityData?.data
-                                            ?.ignored_unknown_package[0]
-                                    )}
-                                    rows={
-                                        importWipQuantityData?.data
-                                            ?.ignored_unknown_package
-                                    }
-                                    className={"w-full"}
-                                />
-                            </div>
-                        </Collapse>
-                    )}
+                    
 
                     {importWipQuantityErrorMessage &&
                         importWipQuantityErrorData?.data && (

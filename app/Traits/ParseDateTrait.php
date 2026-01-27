@@ -18,7 +18,19 @@ trait ParseDateTrait
 
   protected function parseDate($value, $fallback = null)
   {
-    if ($value === null || trim((string) $value) === '') {
+    if ($value === null) {
+      return $fallback;
+    }
+
+    $value = (string) $value;
+    $value = str_replace(["\xC2\xA0", "\u{00A0}"], '', $value);
+    $value = trim(preg_replace('/\s+/u', ' ', $value));
+
+    if ($value === '') {
+      return $fallback;
+    }
+
+    if (!preg_match('/\d/', $value)) {
       return $fallback;
     }
 

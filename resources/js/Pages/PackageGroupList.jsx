@@ -60,8 +60,8 @@ const F1F2PackageGroupList = () => {
             deleteModalRef.current.close();
             toast.success("Package Group deleted successfully!");
         } catch (error) {
-            toast.error(mutateErrorMessage);
-            console.error(error);
+            toast.error(error?.message);
+            // console.error(error);
         }
     };
 

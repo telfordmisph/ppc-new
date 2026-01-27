@@ -94,6 +94,10 @@ class F3RawPackageRepository
     if ($rawPackage === null) {
       return null;
     }
-    return F3RawPackage::where('raw_package', $rawPackage)->value('id');
+
+    $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+
+    return F3RawPackage::where('raw_package_normalized', $rawPackageNormalized)
+      ->value('id');
   }
 }
