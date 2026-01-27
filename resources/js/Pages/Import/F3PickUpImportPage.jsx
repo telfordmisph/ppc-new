@@ -3,14 +3,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { useMutation } from "@/Hooks/useMutation";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
-import { PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
+import { F3_PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
 import ImportLabel from "../../Components/lastImportLabel";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import { useDownloadFile } from "@/Hooks/useDownload";
+import { Link } from "@inertiajs/react";
+import { FaLink } from "react-icons/fa6";
+import { MdWarning } from "react-icons/md";
 
-const PickUpImportPage = () => {
+const F3PickUpImportPage = () => {
     const { data: importTraceData, isLoading: isImportTraceLoading } =
         useImportTraceStore();
 
@@ -27,14 +30,14 @@ const PickUpImportPage = () => {
     } = useDownloadFile();
 
     const handleDownloadPickUpTemplate = () => {
-        download(route("api.download.downloadPickUpTemplate"));
+        download(route("api.download.downloadF3PickUpTemplate"));
     };
 
     const {
-        isLoading: isImportPickUpLoading,
-        errorMessage: importPickUpErrorMessage,
-        errorData: importPickUpErrorData,
-        mutate: importPickUp,
+        isLoading: isImportF3PickUpLoading,
+        errorMessage: importF3PickUpErrorMessage,
+        errorData: importF3PickUpErrorData,
+        mutate: importF3PickUp,
     } = useMutation();
 
     const handleManualPickUpImport = () => {
@@ -46,7 +49,7 @@ const PickUpImportPage = () => {
         formData.append("file", selectedPickUpFile);
         runAsyncToast({
             action: () =>
-                importPickUp(route("import.importPickUp"), {
+                importF3PickUp(route("import.importF3PickUp"), {
                     body: formData,
                     isContentTypeInclude: false,
                     isFormData: true,
@@ -54,42 +57,71 @@ const PickUpImportPage = () => {
             loadingMessage: "Importing PickUp data...",
             renderSuccess: (result) => (
                 <>
-                    <div className="mb-2 font-bold text-success">
-                        <span>PickUps: </span>{" "}
-                        {result?.message || "Successfully imported!"}
+                    <div className="mb-2 font-bold">
+                        <span>F3 PickUps: </span>{" "}
+                        {result?.data?.ignored_unknown_package?.length > 0 && "Partially imported!"}
+                        {result?.data?.ignored_unknown_package?.length == 0 && (result?.message || "Successfully imported!")}
                     </div>
 
-                    <div className="flex justify-between">
-                        <span className="font-light">new PickUp entries:</span>
+                    <div className="flex flex-col justify-between">
+                        {result?.data?.ignored_unknown_package?.length > 0 && (
+                            <div className="bg-warning text-warning-content px-2">ignored rows with unknown packages: <span>{result?.data?.ignored_unknown_package?.length}</span></div>
+                        )}
+                        <div className="flex gap-2 px-2">
+                        <span className="font-light">new F3 pickup entries:</span>
                         <span className="font-bold">
                             {Number(result?.data?.total ?? 0).toLocaleString()}
                         </span>
+                        </div>
                     </div>
                 </>
             ),
-            errorMessage: importPickUpErrorMessage,
+            // renderSuccess: (result) => (
+            //     <>
+            //         <div className="mb-2 font-bold text-success">
+            //             <span>PickUps: </span>{" "}
+            //             {result?.message || "Successfully imported!"}
+            //         </div>
+
+            //         <div className="flex justify-between">
+            //             <span className="font-light">new PickUp entries:</span>
+            //             <span className="font-bold">
+            //                 {Number(result?.data?.total ?? 0).toLocaleString()}
+            //             </span>
+            //         </div>
+            //     </>
+            // ),
+            errorMessage: importF3PickUpErrorMessage,
         });
 
         uploaderPickUpRef.current?.reset();
     };
 
     useEffect(() => {
-        if (importPickUpErrorMessage) {
+        if (importF3PickUpErrorMessage) {
             setSelectedPickUpFile(null);
         }
-    }, [importPickUpErrorMessage]);
+    }, [importF3PickUpErrorMessage]);
 
     return (
-        <ImportPageLayout pageName="F1/F2 PickUp">
+        <ImportPageLayout pageName="F3 PickUp">
             <div className="grid grid-cols-1 w-full gap-4">
                 <div className="card flex-1 bg-base-100 border border-base-content/20">
                     <div className="card-body">
                         <h2 className="card-title">
                             Upload Daily {pickUpLabel}
                         </h2>
-                        <p>Upload latest data for F1/F2 PickUps.</p>
+                        <p>Upload latest data for F3 PickUps.</p>
+                        {importF3PickUp?.data?.ignored_unknown_package.length > 0 && 
+                            <div className="bg-warning text-warning-content p-2 rounded-lg">
+                                <MdWarning className="inline w-4 h-4 mr-2" />
+                                Some rows were not imported because their package is unknown (see the ignored rows list below).
+                                Add the unknown package first on the <Link className="font-semibold underline" href={route("f3.raw.package.index")}><FaLink className="inline w-4 h-4" /> F3 Raw Packages page</Link>.
+                                After that, you can try importing the file again.
+                            </div>
+                        }
                         <ImportLabel
-                            data={importTraceData?.pickup}
+                            data={importTraceData?.f3_pickup}
                             loading={isImportTraceLoading}
                         />
                         <div className="card-actions justify-end">
@@ -115,9 +147,9 @@ const PickUpImportPage = () => {
                                             manualPickUpImportRef.current?.close();
                                             handleManualPickUpImport();
                                         }}
-                                        disabled={isImportPickUpLoading}
+                                        disabled={isImportF3PickUpLoading}
                                     >
-                                        {isImportPickUpLoading && (
+                                        {isImportF3PickUpLoading && (
                                             <span className="loading loading-spinner"></span>
                                         )}
                                         Proceed
@@ -128,7 +160,7 @@ const PickUpImportPage = () => {
                                         onClick={() =>
                                             manualPickUpImportRef.current?.close()
                                         }
-                                        disabled={isImportPickUpLoading}
+                                        disabled={isImportF3PickUpLoading}
                                     >
                                         Cancel
                                     </button>
@@ -150,29 +182,66 @@ const PickUpImportPage = () => {
                                 manualPickUpImportRef.current?.open()
                             }
                             disabled={
-                                isImportPickUpLoading || !selectedPickUpFile
+                                isImportF3PickUpLoading || !selectedPickUpFile
                             }
                         >
                             Upload {pickUpLabel}
                         </button>
                     </div>
+                    
+                    {importF3PickUp?.data?.ignored_unknown_package
+                        .length > 0 && (
+                        <Collapse
+                            title={`Unknown Package: ignored Rows (Not imported). Click to see details.`}
+                            className={"w-full border border-warning text-base-content"}
+                            contentClassName={
+                                "overflow-x-auto text-base-content"
+                            }
+                        >
+                            <div className="mb-2 ">
+                                showing{" "}
+                                {
+                                    importF3PickUp?.data
+                                        ?.ignored_unknown_package.length
+                                }{" "}
+                                out of{" "}
+                                {
+                                    importF3PickUp?.data
+                                        ?.ignored_unknown_package_count
+                                }
+                            </div>
+                            <div className="overflow-x-auto w-full max-h-96">
+                                <DataTable
+                                    columns={Object.keys(
+                                        importF3PickUp?.data
+                                            ?.ignored_unknown_package[0]
+                                    )}
+                                    rows={
+                                        importF3PickUp?.data
+                                            ?.ignored_unknown_package
+                                    }
+                                    className={"w-full"}
+                                />
+                            </div>
+                        </Collapse>
+                    )}
 
-                    {importPickUpErrorMessage &&
-                        importPickUpErrorData?.data && (
+                    {importF3PickUpErrorMessage &&
+                        importF3PickUpErrorData?.data && (
                             <Collapse
-                                title={`${importPickUpErrorMessage}. Click to see details.`}
+                                title={`${importF3PickUpErrorMessage}. Click to see details.`}
                                 className={
                                     "border-red-500 hover:border-red-500 bg-error/10"
                                 }
                             >
-                                {importPickUpErrorData?.data?.missing_headers
+                                {importF3PickUpErrorData?.data?.missing_headers
                                     .length > 0 && (
                                     <div className="mt-2">
                                         Missing headers:{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importPickUpErrorData?.data?.missing_headers.map(
+                                    {importF3PickUpErrorData?.data?.missing_headers.map(
                                         (missing) => (
                                             <li
                                                 className="list-row h-8 leading-none"
@@ -183,14 +252,14 @@ const PickUpImportPage = () => {
                                         )
                                     )}
                                 </ul>
-                                {importPickUpErrorData?.data?.unknown_headers
+                                {importF3PickUpErrorData?.data?.unknown_headers
                                     .length > 0 && (
                                     <div className="mt-2">
                                         Unknown (ignored):{" "}
                                     </div>
                                 )}
                                 <ul className="list">
-                                    {importPickUpErrorData?.data?.unknown_headers.map(
+                                    {importF3PickUpErrorData?.data?.unknown_headers.map(
                                         (unknown) => (
                                             <li
                                                 className="list-row h-8 leading-none"
@@ -209,7 +278,7 @@ const PickUpImportPage = () => {
                             space and whitespace are the same. Case insensitive
                         </div>
                         <ul className="list">
-                            {PICKUP_HEADERS.map((header) => (
+                            {F3_PICKUP_HEADERS.map((header) => (
                                 <li
                                     className="list-row h-8 leading-none"
                                     key={header}
@@ -225,4 +294,4 @@ const PickUpImportPage = () => {
     );
 };
 
-export default PickUpImportPage;
+export default F3PickUpImportPage;

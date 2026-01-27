@@ -25,6 +25,13 @@ export const PICKUP_HEADERS = [
   "LC",
 ]
 
+export const F3_PICKUP_HEADERS = [
+  "PARTNAME",
+  "LOTID",
+  "QTY",
+  "PACKAGE",
+]
+
 export const F3_OUTS_HEADERS = [
   'date_loaded',
   "date_received",

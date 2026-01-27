@@ -135,7 +135,7 @@ const F1F2ImportPage = () => {
     };
 
     return (
-        <ImportPageLayout pageName="F1/F2">
+        <ImportPageLayout pageName="F1/F2 Wip & Outs">
             <div className="grid grid-cols-1 w-full gap-4">
                 <div className="card border bg-base-100 border-base-content/20">
                     <div className="card-body">

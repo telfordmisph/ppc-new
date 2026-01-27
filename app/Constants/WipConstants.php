@@ -349,7 +349,7 @@ class WipConstants
     'ADXL314WBCPZ-RL',
   ];
 
-  public const IMPORT_PICKUP_EXPECTED_HEADERS = [
+  public const IMPORT_F1F2_PICKUP_EXPECTED_HEADERS = [
     "PARTNAME" => [
       "PARTNAME",
       "part_name",
@@ -376,6 +376,31 @@ class WipConstants
       "LC",
       'lc',
     ],
+  ];
+
+  public const IMPORT_F3_PICKUP_EXPECTED_HEADERS = [
+    "PARTNAME" => [
+      "PARTNAME",
+      "part_name",
+      "PART NAME",
+      "partname",
+      "Part Name",
+    ],
+    "LOTID" => [
+      "LOTID",
+      "lot_id",
+      "lotId",
+      "LOT ID",
+    ],
+    "QTY" => [
+      "QTY",
+      "qty",
+      "quantity",
+    ],
+    "PACKAGE" => [
+      "PACKAGE",
+      "package",
+    ]
   ];
 
   public const IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS = [

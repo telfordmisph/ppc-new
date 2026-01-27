@@ -15,7 +15,9 @@ export const useImportTraceStore = create((set, get) => {
       f2_wip: null,
       f2_out: null,
       f3: null,
-      capacity: null
+      capacity: null,
+      pickUp: null,
+      f3_pickup: null,
     },
     isLoaded: false,
     isLoading: false,

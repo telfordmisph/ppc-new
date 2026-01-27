@@ -264,6 +264,16 @@ class WipController extends Controller
     return response()->download($filePath, $filename, $headers);
   }
 
+  public function downloadF3PickUpTemplate()
+  {
+    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    $filePath = public_path('storage/excels/f3_pickup_template.xlsx');
+    $filename = "f3_pickup_template_" . now()->format('Ymd_His_u') . ".xlsx";
+
+    ob_end_clean();
+    return response()->download($filePath, $filename, $headers);
+  }
+
   public function wipStation()
   {
     return Inertia::render('WIPStation');

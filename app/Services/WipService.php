@@ -42,6 +42,7 @@ class WipService
 
   protected $f3packageNamesRepo;
   private const F1F2_TABLE = "customer_data_wip";
+  private const F1F2_OUT_TABLE = "customer_data_wip";
   public function __construct(
     AnalogCalendarRepository $analogCalendarRepo,
     F1F2WipRepository $f1f2WipRepo,

@@ -95,6 +95,7 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::post('/importF3WIP', [AutoImportController::class, 'importF3WIP'])->name('importF3WIP');
       Route::post('/importF3', [AutoImportController::class, 'importF3'])->name('importF3');
       Route::post('/importPickUp', [AutoImportController::class, 'importPickUp'])->name('importPickUp');
+        Route::post('/importF3PickUp', [AutoImportController::class, 'importF3PickUp'])->name('importF3PickUp');
       Route::post('/importF3OUTS', [AutoImportController::class, 'importF3OUTS'])->name('importF3OUTS');
       Route::post('/capacity', [AutoImportController::class, 'importCapacity'])->name('capacity');
     });
@@ -104,6 +105,7 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::get('/factoryPickUpTrendRaw', [WipController::class, 'getPickUpTrendRawData'])->name('factoryPickUpTrendRaw');
       Route::get('/downloadCapacityTemplate', [WipController::class, 'downloadCapacityTemplate'])->name('downloadCapacityTemplate');
       Route::get('/downloadPickUpTemplate', [WipController::class, 'downloadPickUpTemplate'])->name('downloadPickUpTemplate');
+      Route::get('/downloadF3PickUpTemplate', [WipController::class, 'downloadF3PickUpTemplate'])->name('downloadF3PickUpTemplate');
     });
   });
 

@@ -19,16 +19,20 @@ const ImportPageLayout = ({ pageName = "F1/F2", children }) => {
     const handleFactoryChange = (selectedFactory) => {
         setSelectedFactory(selectedFactory);
 
-        if (selectedFactory === "F1/F2") {
+        if (selectedFactory === "F1/F2 Wip & Outs") {
             router.visit(route("import.index"));
         }
 
-        if (selectedFactory === "F3") {
+        if (selectedFactory === "F3 Wip & Outs") {
             router.visit(route("import.f3.index"));
         }
 
-        if (selectedFactory === "PickUp") {
+        if (selectedFactory === "F1/F2 PickUp") {
             router.visit(route("import.pickup.index"));
+        }
+
+        if (selectedFactory === "F3 PickUp") {
+            router.visit(route("import.f3.pickup.index"));
         }
     };
 
@@ -36,7 +40,7 @@ const ImportPageLayout = ({ pageName = "F1/F2", children }) => {
         <>
             <h1 className="font-semibold mb-4">Import {pageName} Data</h1>
             <Tabs
-                options={["F1/F2", "F3", "PickUp"]}
+                options={["F1/F2 Wip & Outs", "F3 Wip & Outs", "F1/F2 PickUp", "F3 PickUp"]}
                 selectedFactory={selectedFactory}
                 handleFactoryChange={handleFactoryChange}
                 tabClassName={"mb-2"}

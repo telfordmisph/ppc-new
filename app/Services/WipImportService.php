@@ -9,6 +9,7 @@ use App\Services\PackageCapacityService;
 use App\Repositories\F3RawPackageRepository;
 use App\Repositories\ImportTraceRepository;
 use App\Repositories\PickUpRepository;
+use App\Repositories\F3PickUpRepository;
 use App\Traits\ParseDateTrait;
 use App\Constants\WipConstants;
 use App\Repositories\F3OutRepository;
@@ -27,13 +28,14 @@ use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 class WipImportService
 {
   use ParseDateTrait;
-use Sanitize;
+  use Sanitize;
   protected $packageCapacityService;
   protected $f1f2WipRepository;
   protected $importTraceRepository;
   protected $f1f2WipOutRepository;
   protected $f3WipRepository;
   protected $pickUpRepository;
+  protected $f3pickUpRepository;
   protected $f3OutRepository;
   protected $fileValidator;
   protected $f3RawPackageRepository;
@@ -70,6 +72,7 @@ use Sanitize;
     F1F2WipRepository $f1f2WipRepository,
     F1F2OutRepository $f1f2WipOutRepository,
     PickUpRepository $pickUpRepository,
+    F3PickUpRepository $f3pickUpRepository,
     F3WipRepository $f3WipRepository,
     F3OutRepository $f3OutRepository,
     F3RawPackageRepository $f3RawPackageRepository,
@@ -78,6 +81,7 @@ use Sanitize;
     ExcelValidatorService $fileValidator
   ) {
     $this->pickUpRepository = $pickUpRepository;
+    $this->f3pickUpRepository = $f3pickUpRepository;
     $this->f1f2WipRepository = $f1f2WipRepository;
     $this->f1f2WipOutRepository = $f1f2WipOutRepository;
     $this->f3WipRepository = $f3WipRepository;
@@ -102,7 +106,7 @@ use Sanitize;
     $successCounter += count($chunk);
   }
 
-private function getSanitizedSheetData($spreadsheet)
+  private function getSanitizedSheetData($spreadsheet)
   {
     $sheet = $spreadsheet->getActiveSheet();
     $sheetData = $sheet->toArray(...$this->sheetToArrayArgs);
@@ -405,12 +409,12 @@ private function getSanitizedSheetData($spreadsheet)
     return $rowData;
   }
 
-  public function importPickUp($importedBy = null, $file)
+  public function importF1F2PickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
     $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_PICKUP_EXPECTED_HEADERS);
+    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F1F2_PICKUP_EXPECTED_HEADERS);
 
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -456,6 +460,75 @@ private function getSanitizedSheetData($spreadsheet)
         'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
           'total' => $successCount,
+        ]
+      ];
+    } catch (Exception $e) {
+      DB::rollBack();
+
+      return ['status' => 'error', 'message' => $e->getMessage()];
+    }
+  }
+
+  public function importF3PickUp($importedBy = null, $file)
+  {
+    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $sheetData = $this->getSanitizedSheetData($spreadsheet);
+
+    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_PICKUP_EXPECTED_HEADERS);
+
+    if ($headersData['status'] === 'error') {
+      return $headersData;
+    }
+
+    $found_headers = $headersData['found_headers'];
+    $headerRowIndex = $headersData['headerRowIndex'];
+    $map_headers = $headersData['map_headers'];
+
+    $chunks = [];
+    $ignoredRows = [];
+    $successCount = 0;
+
+    try {
+      DB::beginTransaction();
+
+      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+        if ($this->isEmptyRow($row)) {
+          continue;
+        }
+
+        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+        $rowData['ADDED_BY'] = $importedBy;
+
+        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['PACKAGE'] ?? null);
+        if (!$packageID) {
+          $ignoredRows[] = $rowData;
+          continue;
+        }
+        $rowData['PACKAGE'] = $packageID;
+        $chunks[] = $rowData;
+
+        if (count($chunks) >= self::CHUNK_SIZE) {
+          $this->insertChunk($chunks, fn($chunks) => $this->f3pickUpRepository->insertMany($chunks), $successCount);
+          $chunks = [];
+        }
+      }
+
+      if (!empty($chunks)) {
+        $this->insertChunk($chunks, fn($chunks) => $this->f3pickUpRepository->insertMany($chunks), $successCount);
+      }
+
+      $this->importTraceRepository->upsertImport('f3_pickup', $importedBy, $successCount);
+
+      DB::commit();
+
+      return [
+        'status' => 'success',
+        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
+        'data' => [
+          'total' => $successCount,
+          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
+          'ignored_unknown_package_count' => count($ignoredRows),
         ]
       ];
     } catch (Exception $e) {
@@ -648,7 +721,7 @@ private function getSanitizedSheetData($spreadsheet)
   public function importF3($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-        $sheetData = $this->getSanitizedSheetData($spreadsheet);
+    $sheetData = $this->getSanitizedSheetData($spreadsheet);
 
     $expectedHeaders = WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS;
     $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, $expectedHeaders);

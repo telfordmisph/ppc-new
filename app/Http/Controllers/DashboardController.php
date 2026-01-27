@@ -20,6 +20,11 @@ class DashboardController extends Controller
         return Inertia::render('WIPTrend');
     }
 
+    public function outDashboardIndex(Request $request)
+    {
+        return Inertia::render('OUTTrend');
+    }
+
     public function pickupDashboardIndex(Request $request)
     {
         return Inertia::render('PickupDashboard');
