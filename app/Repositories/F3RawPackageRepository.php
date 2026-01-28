@@ -100,4 +100,27 @@ class F3RawPackageRepository
     return F3RawPackage::where('raw_package_normalized', $rawPackageNormalized)
       ->value('id');
   }
+
+  public function getByRawPackage(?string $rawPackage): ?F3RawPackage
+  {
+    if ($rawPackage === null) {
+      return null;
+    }
+
+    $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+
+    return F3RawPackage::query()
+      ->where('f3_raw_packages.raw_package_normalized', $rawPackageNormalized)
+      ->join(
+        'f3_package_names',
+        'f3_raw_packages.package_id',
+        '=',
+        'f3_package_names.id'
+      )
+      ->select([
+        'f3_raw_packages.*',
+        'f3_package_names.package_name',
+      ])
+      ->first();
+  }
 }

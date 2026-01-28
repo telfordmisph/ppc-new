@@ -9,7 +9,6 @@ use App\Services\PackageCapacityService;
 use App\Repositories\F3RawPackageRepository;
 use App\Repositories\ImportTraceRepository;
 use App\Repositories\PickUpRepository;
-use App\Repositories\F3PickUpRepository;
 use App\Traits\ParseDateTrait;
 use App\Constants\WipConstants;
 use App\Repositories\F3OutRepository;
@@ -35,7 +34,6 @@ class WipImportService
   protected $f1f2WipOutRepository;
   protected $f3WipRepository;
   protected $pickUpRepository;
-  protected $f3pickUpRepository;
   protected $f3OutRepository;
   protected $fileValidator;
   protected $f3RawPackageRepository;
@@ -72,7 +70,6 @@ class WipImportService
     F1F2WipRepository $f1f2WipRepository,
     F1F2OutRepository $f1f2WipOutRepository,
     PickUpRepository $pickUpRepository,
-    F3PickUpRepository $f3pickUpRepository,
     F3WipRepository $f3WipRepository,
     F3OutRepository $f3OutRepository,
     F3RawPackageRepository $f3RawPackageRepository,
@@ -81,7 +78,6 @@ class WipImportService
     ExcelValidatorService $fileValidator
   ) {
     $this->pickUpRepository = $pickUpRepository;
-    $this->f3pickUpRepository = $f3pickUpRepository;
     $this->f1f2WipRepository = $f1f2WipRepository;
     $this->f1f2WipOutRepository = $f1f2WipOutRepository;
     $this->f3WipRepository = $f3WipRepository;
@@ -500,22 +496,24 @@ class WipImportService
 
         $rowData['ADDED_BY'] = $importedBy;
 
-        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['PACKAGE'] ?? null);
-        if (!$packageID) {
+        $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
+        if (!$f3RawPackage) {
           $ignoredRows[] = $rowData;
           continue;
         }
-        $rowData['PACKAGE'] = $packageID;
+
+        $rowData['PACKAGE'] = $f3RawPackage->package_name;
+        $rowData['LC'] = $f3RawPackage->lead_count;
         $chunks[] = $rowData;
 
         if (count($chunks) >= self::CHUNK_SIZE) {
-          $this->insertChunk($chunks, fn($chunks) => $this->f3pickUpRepository->insertMany($chunks), $successCount);
+          $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
           $chunks = [];
         }
       }
 
       if (!empty($chunks)) {
-        $this->insertChunk($chunks, fn($chunks) => $this->f3pickUpRepository->insertMany($chunks), $successCount);
+        $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
       }
 
       $this->importTraceRepository->upsertImport('f3_pickup', $importedBy, $successCount);
