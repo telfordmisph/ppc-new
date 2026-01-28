@@ -13,7 +13,7 @@ use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Controllers\F3Controller;
 use App\Http\Controllers\AnalogCalendarController;
 use App\Http\Middleware\ApiAuthMiddleware;
-
+use App\Http\Middleware\ApiPermissionMiddleware;
 
 Route::middleware([ApiAuthMiddleware::class])
   ->group(function () {
@@ -34,39 +34,58 @@ Route::middleware([ApiAuthMiddleware::class])
       // Route::get('/wip-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('wipLotTotalsNew');
     });
 
+    Route::prefix('out')->name('api.out.')->group(function () {
+      Route::get('/overall', [WipController::class, 'getOverallOuts'])->name('overall');
+      Route::get('/out-lot-totals', [WipController::class, 'getOutQuantityAndLotsTotal'])->name('outLotTotals');
+    });
+
     Route::prefix('wip-out')->name('api.wip.')->group(function () {
       Route::get('/trend', [WipController::class, 'getWipOutCapacitySummaryTrend'])->name('out.trend');
     });
 
     Route::prefix('partname')->name('api.partname.')->group(function () {
       Route::post('/', [PartNameController::class, 'store'])->name('store');
-      Route::patch('/{id}', [PartNameController::class, 'update'])->name('update');
-      Route::delete('/{id}', [PartNameController::class, 'destroy'])->name('delete');
+
+      Route::middleware(ApiPermissionMiddleware::class . ':partname_mutate')->group(function () {
+        Route::patch('/{id}', [PartNameController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PartNameController::class, 'destroy'])->name('delete');
+      });
     });
 
     Route::prefix('f3-raw-package')->name('api.f3.raw.package.')->group(function () {
       Route::get('/list', [F3RawPackageController::class, 'index'])->name('index');
-      Route::post('/', [F3RawPackageController::class, 'store'])->name('store');
-      Route::patch('/{id}', [F3RawPackageController::class, 'update'])->name('update');
-      Route::delete('/{id}', [F3RawPackageController::class, 'destroy'])->name('delete');
+
+      Route::middleware(ApiPermissionMiddleware::class . ':f3_raw_package_mutate')->group(function () {
+        Route::post('/', [F3RawPackageController::class, 'store'])->name('store');
+        Route::patch('/{id}', [F3RawPackageController::class, 'update'])->name('update');
+        Route::delete('/{id}', [F3RawPackageController::class, 'destroy'])->name('delete');
+      });
     });
 
     Route::prefix('f3-wip-out')->name('api.f3.')->group(function () {
-      Route::patch('/', [F3Controller::class, 'bulkUpdate'])->name('bulkUpdate');
+      Route::middleware(ApiPermissionMiddleware::class . ':f3_mutate')->group(function () {
+        Route::patch('/', [F3Controller::class, 'bulkUpdate'])->name('bulkUpdate');
+      });
     });
 
     Route::prefix('f3-package-names')->name('api.f3.package.names.')->group(function () {
       Route::get('/', [F3PackageNamesController::class, 'getAll'])->name('getAll');
-      Route::post('/', [F3PackageNamesController::class, 'store'])->name('store');
-      Route::patch('/{id}', [F3PackageNamesController::class, 'update'])->name('update');
-      Route::delete('/{id}', [F3PackageNamesController::class, 'destroy'])->name('delete');
+
+      Route::middleware(ApiPermissionMiddleware::class . ':f3_package_mutate')->group(function () {
+        Route::post('/', [F3PackageNamesController::class, 'store'])->name('store');
+        Route::patch('/{id}', [F3PackageNamesController::class, 'update'])->name('update');
+        Route::delete('/{id}', [F3PackageNamesController::class, 'destroy'])->name('delete');
+      });
     });
 
     Route::prefix('package')->name('api.package.')->group(function () {
       Route::get('/package-groups', [PackageGroupController::class, 'index'])->name('packageGroups');
-      Route::post('/', [PackageGroupController::class, 'saveGroup'])->name('store');
-      Route::patch('/{id}', [PackageGroupController::class, 'saveGroup'])->name('update');
-      Route::delete('/{id}', [PackageGroupController::class, 'destroy'])->name('delete');
+
+      Route::middleware(ApiPermissionMiddleware::class . ':package_group_mutate')->group(function () {
+        Route::post('/', [PackageGroupController::class, 'saveGroup'])->name('store');
+        Route::patch('/{id}', [PackageGroupController::class, 'saveGroup'])->name('update');
+        Route::delete('/{id}', [PackageGroupController::class, 'destroy'])->name('delete');
+      });
     });
 
     Route::prefix('import-trace')->name('api.import.trace.')->group(function () {
@@ -80,25 +99,33 @@ Route::middleware([ApiAuthMiddleware::class])
     });
 
     Route::prefix('package-capacity')->name('api.package.capacity')->group(function () {
-      Route::get('/insert', [PackageCapacityController::class, 'storeCapacity'])->name('insert');
       Route::get('/get-trend', [PackageCapacityController::class, 'getTrend'])->name('getTrend');
-      Route::patch('/{id}/edit', [PackageCapacityController::class, 'updateCapacity'])->name('update');
+
+      Route::middleware(ApiPermissionMiddleware::class . ':capacity_upload')->group(function () {
+        Route::get('/insert', [PackageCapacityController::class, 'storeCapacity'])->name('insert');
+        Route::patch('/{id}/edit', [PackageCapacityController::class, 'updateCapacity'])->name('update');
+      });
+
+      // Route::get('/insert', [PackageCapacityController::class, 'storeCapacity'])->name('insert');
+      // Route::patch('/{id}/edit', [PackageCapacityController::class, 'updateCapacity'])->name('update');
     });
 
     Route::middleware('auth:sanctum')->group(function () {});
 
-    Route::prefix('import')->name('import.')->group(function () {
-      Route::post('/ftpRootImportWIP', [AutoImportController::class, 'ftpRootImportWIP'])->name('ftpRootImportWIP');
-      Route::post('/ftpRootImportOUTS', [AutoImportController::class, 'ftpRootImportOUTS'])->name('ftpRootImportOUTS');
-      Route::post('/manualImportWIP', [AutoImportController::class, 'manualImportWIP'])->name('manualImportWIP');
-      Route::post('/manualImportOUTS', [AutoImportController::class, 'manualImportOUTS'])->name('manualImportOUTS');
-      Route::post('/importF3WIP', [AutoImportController::class, 'importF3WIP'])->name('importF3WIP');
-      Route::post('/importF3', [AutoImportController::class, 'importF3'])->name('importF3');
-      Route::post('/importPickUp', [AutoImportController::class, 'importPickUp'])->name('importPickUp');
+    Route::prefix('import')->name('import.')
+      ->middleware(ApiPermissionMiddleware::class . ':import_data_all')
+      ->group(function () {
+        Route::post('/ftpRootImportWIP', [AutoImportController::class, 'ftpRootImportWIP'])->name('ftpRootImportWIP');
+        Route::post('/ftpRootImportOUTS', [AutoImportController::class, 'ftpRootImportOUTS'])->name('ftpRootImportOUTS');
+        Route::post('/manualImportWIP', [AutoImportController::class, 'manualImportWIP'])->name('manualImportWIP');
+        Route::post('/manualImportOUTS', [AutoImportController::class, 'manualImportOUTS'])->name('manualImportOUTS');
+        Route::post('/importF3WIP', [AutoImportController::class, 'importF3WIP'])->name('importF3WIP');
+        Route::post('/importF3', [AutoImportController::class, 'importF3'])->name('importF3');
+        Route::post('/importPickUp', [AutoImportController::class, 'importPickUp'])->name('importPickUp');
         Route::post('/importF3PickUp', [AutoImportController::class, 'importF3PickUp'])->name('importF3PickUp');
-      Route::post('/importF3OUTS', [AutoImportController::class, 'importF3OUTS'])->name('importF3OUTS');
-      Route::post('/capacity', [AutoImportController::class, 'importCapacity'])->name('capacity');
-    });
+        Route::post('/importF3OUTS', [AutoImportController::class, 'importF3OUTS'])->name('importF3OUTS');
+        Route::post('/capacity', [AutoImportController::class, 'importCapacity'])->name('capacity');
+      });
 
     Route::prefix('download')->name('api.download.')->group(function () {
       Route::get('/factoryWipOutTrendRaw', [WipController::class, 'getWipOutTrendRawData'])->name('factoryWipOutTrendRaw');

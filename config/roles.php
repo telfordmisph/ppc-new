@@ -3,7 +3,44 @@
 $permission_sets = [
   'basic_f3' => ['f3_read', 'f3_edit'],
   'f3_full' => ['f3_read', 'f3_edit', 'f3_delete', 'f3_insert'],
+
+  'f3_mutate' => [
+    'f3_mutate',
+    // 'f3_edit', 
+    // 'f3_delete', 
+    // 'f3_insert'
+  ],
+
+  // faulty
   'f3_limited' => ['f3_read', 'f3_edit_remarks', 'f3_edit_status'],
+
+  'package_group_mutate' => [
+    'package_group_mutate'
+    // 'package_group_delete',
+    // 'package_group_insert',
+    // 'package_group_edit'
+  ],
+
+  'f3_package_mutate' => [
+    'f3_package_mutate'
+    // 'f3_package_delete',
+    // 'f3_package_insert',
+    // 'f3_package_edit',
+  ],
+
+  'f3_raw_package_mutate' => [
+    'f3_raw_package_mutate'
+    // 'f3_raw_package_delete',
+    // 'f3_raw_package_insert',
+    // 'f3_raw_package_edit',
+  ],
+
+  'partname_mutate' => [
+    'partname_mutate',
+    // 'partname_delete',
+    // 'partname_insert',
+    // 'partname_edit',
+  ],
 
   'package_management' => [
     'package_group_read',
@@ -23,7 +60,10 @@ $permission_sets = [
     'f3_package_insert',
     'f3_package_edit',
   ],
-  'import_data' => ['import_f1f2_wip', 'import_f1f2_out', 'import_f3'],
+
+  'import_data' => ['import_f1f2_wip', 'import_f1f2_out', 'import_f3', 'import_pickup', 'import_capacity'],
+  'import_data_all' => ['import_data_all'],
+
   'import_data_no_f3' => ['import_f1f2_wip', 'import_f1f2_out'],
   'trend_access' => [
     'wip_out_capacity_trend',
@@ -46,7 +86,12 @@ $full_access = array_merge(
   $permission_sets['capacity'],
   $permission_sets['dashboard'],
   $permission_sets['wip_station'],
-  $permission_sets['body_size']
+  $permission_sets['body_size'],
+  $permission_sets['package_group_mutate'],
+  $permission_sets['f3_raw_package_mutate'],
+  $permission_sets['partname_mutate'],
+  $permission_sets['f3_package_mutate'],
+  $permission_sets['import_data_all']
 );
 
 $full_access_except_f3_import = array_merge(
@@ -57,7 +102,12 @@ $full_access_except_f3_import = array_merge(
   $permission_sets['capacity'],
   $permission_sets['dashboard'],
   $permission_sets['wip_station'],
-  $permission_sets['body_size']
+  $permission_sets['body_size'],
+  $permission_sets['package_group_mutate'],
+  $permission_sets['f3_raw_package_mutate'],
+  $permission_sets['partname_mutate'],
+  $permission_sets['f3_package_mutate'],
+  $permission_sets['import_data_all']
 );
 
 return [
@@ -65,6 +115,7 @@ return [
   'Senior Production Supervisor' => $full_access,
   'Production Section Head' => $full_access,
   'Section Head' => $full_access,
+
   'programmer 1' => $full_access,
 
   'PPC Manager' => $full_access,

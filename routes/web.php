@@ -28,14 +28,16 @@ Route::post("/remove-admin", [AdminController::class, 'removeAdmin'])->name('rem
 Route::patch("/change-admin-role", [AdminController::class, 'changeAdminRole'])->name('changeAdminRole');
 
 Route::prefix('import')->name('import.')->group(function () {
-    Route::middleware(AuthMiddleware::class . ':import_f1f2_wip')->group(function () {
+    Route::middleware(AuthMiddleware::class . ':import_data_all')->group(function () {
+        // Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get("/f1f2", [AutoImportController::class, 'renderF1F2ImportPage'])->name('index');
     });
-    Route::middleware(AuthMiddleware::class . ':import_f3')->group(function () {
+    Route::middleware(AuthMiddleware::class . ':import_data_all')->group(function () {
+        // Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get("/f3", [AutoImportController::class, 'renderF3ImportPage'])->name('f3.index');
     });
-    // Route::middleware(AuthMiddleware::class . ':import_f3')->group(function () {
-    Route::get("/pickup", [AutoImportController::class, 'renderPickUpImportPage'])->name('pickup.index');
+    Route::middleware(AuthMiddleware::class . ':import_data_all')->group(function () {
+        Route::get("/pickup", [AutoImportController::class, 'renderPickUpImportPage'])->name('pickup.index');
     });
     Route::middleware(AuthMiddleware::class . ':import_data_all')->group(function () {
         Route::get("/f3-pickup", [AutoImportController::class, 'renderF3PickUpImportPage'])->name('f3.pickup.index');
@@ -49,6 +51,11 @@ Route::middleware(AuthMiddleware::class)->group(function () {
 Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/wip-trend", [DashboardController::class, 'wipDashboardIndex'])->name('wip.trend');
 });
+
+Route::middleware(AuthMiddleware::class)->group(function () {
+    Route::get("/out-trend", [DashboardController::class, 'outDashboardIndex'])->name('out.trend');
+});
+
 Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/pickup-dashboard", [DashboardController::class, 'pickupDashboardIndex'])->name('pickup.dashboard');
 });
