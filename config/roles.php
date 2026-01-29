@@ -121,6 +121,7 @@ return [
   'PPC Manager' => $full_access,
   'Trainee PPC Planner' => $full_access,
   'PPC' => $full_access,
+  'PPC Engineer' => $full_access,
   'PPC Planner' => $full_access,
   'PPC Planner 2' => $full_access,
   'PPC Expediter 1' => $full_access,
