@@ -311,7 +311,6 @@ class F1F2WipRepository
       return $query;
     }
 
-    // Otherwise, apply aggregation as usual
     return $this->applyTrendAggregation(
       $query,
       $period,
@@ -321,16 +320,6 @@ class F1F2WipRepository
       aggregateColumns: $aggregateColumns,
       workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
     );
-    // return $this->applyTrendAggregation(
-    //   $query,
-    //   $period,
-    //   $startDate,
-    //   $endDate,
-    //   column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
-    //   aggregateColumns: $aggregateColumns,
-    //   // additionalFields: ['wip.Package_Name as package_name'],
-    //   workweeks: $workweeks,
-    // );
   }
 
   public function refreshDistinctPackagesCache(): void

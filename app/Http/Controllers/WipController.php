@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use App\Services\WipService;
 use App\Repositories\F1F2WipRepository;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class WipController extends Controller
 {
@@ -99,6 +100,34 @@ class WipController extends Controller
     );
   }
 
+  public function getOverallOuts(Request $request)
+  {
+    $workweekParams = $this->parseWorkweek($request);
+    $dates = $this->parseDateRangeFromRequest($request);
+
+    return $this->wipService->getOverallOuts(
+      $dates['start'],
+      $dates['end'],
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek']
+    );
+  }
+
+  public function getOverallOutByPackage(Request $request)
+  {
+    $workweekParams = $this->parseWorkweek($request);
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request, 3);
+    $dates = $this->parseDateRangeFromRequest($request);
+    return $this->wipService->getAllOutTrendByPackage(
+      $workweekParams['workweek'],
+      $packageName,
+      $periodParams['period'],
+      $periodParams['startDate'],
+      $periodParams['endDate']
+    );
+  }
+
   public function getOverallWipByPackage(Request $request)
   {
     $workweekParams = $this->parseWorkweek($request);
@@ -168,6 +197,21 @@ class WipController extends Controller
       $periodParams['startDate'],
       $periodParams['endDate'],
       $workweekParams['workweek']
+    );
+  }
+
+  public function getOUTQuantityAndLotsTotal(Request $request)
+  {
+    $workweekParams = $this->parseWorkweek($request);
+    $dates = $this->parseDateRangeFromRequest($request);
+    $includePL = $request->input('includePL', true) ?? true;
+
+    return $this->wipService->getOUTQuantityAndLotsTotal(
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek'],
+      $dates['start'],
+      $dates['end'],
+      $includePL
     );
   }
 

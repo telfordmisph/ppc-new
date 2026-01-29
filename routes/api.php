@@ -37,6 +37,7 @@ Route::middleware([ApiAuthMiddleware::class])
     Route::prefix('out')->name('api.out.')->group(function () {
       Route::get('/overall', [WipController::class, 'getOverallOuts'])->name('overall');
       Route::get('/out-lot-totals', [WipController::class, 'getOutQuantityAndLotsTotal'])->name('outLotTotals');
+      Route::get('/overall-package', [WipController::class, 'getOverallOutByPackage'])->name('overallByPackage');
     });
 
     Route::prefix('wip-out')->name('api.wip.')->group(function () {

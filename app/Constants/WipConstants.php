@@ -200,7 +200,7 @@ class WipConstants
   ];
   public const PERIOD_GROUP_BY = [
     'daily' => ['day'],
-    'weekly' => ['year', 'week', 'workweek'],
+    'weekly' => ['week', 'workweek'],
     'monthly' => ['year', 'month'],
     'quarterly' => ['year', 'quarter'],
     'yearly' => ['year'],
@@ -218,12 +218,12 @@ class WipConstants
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'wip' => ['SUM(out.Qty)' => 'total_wip'],
-        'wip-lot' => [
-          'SUM(out.Qty)' => 'total_wip',
-          'COUNT(out.Lot_Id)' => 'total_lots'
+        'out' => ['SUM(out.qty)' => 'total_outs'],
+        'out-lot' => [
+          'SUM(out.qty)' => 'total_outs',
+          'COUNT(out.lot_id)' => 'total_lots'
         ],
-        'dateColumn' => 'out.Date_Loaded',
+        'dateColumn' => 'out.import_date',
       ],
     ],
     'F1' => [
@@ -236,12 +236,12 @@ class WipConstants
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'wip' => ['SUM(out.Qty)' => 'total_wip'],
-        'wip-lot' => [
-          'SUM(out.Qty)' => 'total_wip',
-          'COUNT(out.Lot_Id)' => 'total_lots'
+        'out' => ['SUM(out.qty)' => 'total_outs'],
+        'out-lot' => [
+          'SUM(out.qty)' => 'total_outs',
+          'COUNT(out.lot_id)' => 'total_lots'
         ],
-        'dateColumn' => 'out.Date_Loaded',
+        'dateColumn' => 'out.import_date',
       ],
     ],
     'F2' => [
@@ -254,12 +254,12 @@ class WipConstants
         'dateColumn' => 'wip.Date_Loaded',
       ],
       'out' => [
-        'wip' => ['SUM(out.Qty)' => 'total_wip'],
-        'wip-lot' => [
-          'SUM(out.Qty)' => 'total_wip',
-          'COUNT(out.Lot_Id)' => 'total_lots'
+        'out' => ['SUM(out.qty)' => 'total_outs'],
+        'out-lot' => [
+          'SUM(out.qty)' => 'total_outs',
+          'COUNT(out.lot_id)' => 'total_lots'
         ],
-        'dateColumn' => 'out.Date_Loaded',
+        'dateColumn' => 'out.import_date',
       ],
     ],
     'F3' => [
@@ -272,12 +272,12 @@ class WipConstants
         'dateColumn' => 'f3.date_loaded',
       ],
       'out' => [
-        'wip' => ['SUM(f3.qty)' => 'total_wip'],
-        'wip-lot' => [
-          'SUM(f3.qty)' => 'total_wip',
+        'out' => ['SUM(f3.qty)' => 'total_outs'],
+        'out-lot' => [
+          'SUM(f3.qty)' => 'total_outs',
           'COUNT(f3.lot_number)' => 'total_lots'
         ],
-        'dateColumn' => 'f3.date_loaded',
+        'dateColumn' => 'f3.import_date',
       ],
     ],
     'All' => [
@@ -290,12 +290,12 @@ class WipConstants
         'dateColumn' => 'wip.date_loaded',
       ],
       'out' => [
-        'wip' => ['SUM(out.qty)' => 'total_wip'],
-        'wip-lot' => [
-          'SUM(out.qty)' => 'total_wip',
+        'out' => ['SUM(out.qty)' => 'total_outs'],
+        'out-lot' => [
+          'SUM(out.qty)' => 'total_outs',
           'COUNT(out.lot_id)' => 'total_lots'
         ],
-        'dateColumn' => 'out.date_loaded',
+        'dateColumn' => 'out.import_date',
       ],
     ],
   ];

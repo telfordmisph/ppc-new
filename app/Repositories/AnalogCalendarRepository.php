@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use Illuminate\Container\Attributes\Log;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -28,6 +28,8 @@ class AnalogCalendarRepository
   public function getDatesByWorkWeekRange($workweeks)
   {
     if (!is_array($workweeks)) {
+      // Log::info("before trim analog workweeks: " . json_encode($workweeks));
+
       $trimmed = trim($workweeks);
 
       if ($trimmed === '') {
@@ -36,6 +38,8 @@ class AnalogCalendarRepository
         $workweeks = array_map('intval', preg_split('/[,\s]+/', $trimmed));
       }
     }
+
+    // Log::info("analog workweeks: " . json_encode($workweeks));
 
     $ranges = [];
 

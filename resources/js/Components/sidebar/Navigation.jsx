@@ -1,10 +1,10 @@
-import { FaRecycle, FaUsers } from "react-icons/fa";
+import { FaCheckCircle, FaRecycle } from "react-icons/fa";
 
 import {
-    LuLayoutDashboard,
-    LuListChecks,
-    LuList,
-    LuPackage,
+	LuLayoutDashboard,
+	LuListChecks,
+	LuList,
+	LuPackage,
 } from "react-icons/lu";
 
 import { BiImport } from "react-icons/bi";
@@ -12,122 +12,124 @@ import { TbResize } from "react-icons/tb";
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { usePage } from "@inertiajs/react";
-import {
-    FaArrowTrendUp,
-    FaCodeBranch,
-    FaLayerGroup,
-    FaTruckPickup,
-} from "react-icons/fa6";
+import { FaCodeBranch, FaLayerGroup, FaTruckPickup } from "react-icons/fa6";
 import { FaBatteryHalf } from "react-icons/fa";
 import { TbSettings } from "react-icons/tb";
 import useUserStore from "@/Store/useUserStore";
+import { TbProgressCheck } from "react-icons/tb";
 
 export default function NavLinks() {
-    const { emp_data } = usePage().props;
-    const empData = useUserStore((state) => state.empData);
+	const { emp_data } = usePage().props;
+	const empData = useUserStore((state) => state.empData);
 
-    const role = empData?.emp_jobtitle || "";
+	const role = empData?.emp_jobtitle || "";
 
-    console.log("🚀 ~ NavLinks ~ role:", role);
+	console.log("🚀 ~ NavLinks ~ role:", role);
 
-    return (
-        <nav
-            className="flex flex-col space-y-1 overflow-y-auto grow"
-            style={{ scrollbarWidth: "none" }}
-        >
-            <SidebarLink
-                href={route("dashboard")}
-                label="Dashboard"
-                icon={<LuLayoutDashboard className="w-4 h-4" />}
-                notifications={0}
-            />
+	return (
+		<nav
+			className="flex flex-col space-y-1 overflow-y-auto grow"
+			style={{ scrollbarWidth: "none" }}
+		>
+			<SidebarLink
+				href={route("dashboard")}
+				label="Dashboard"
+				icon={<LuLayoutDashboard className="w-4 h-4" />}
+				notifications={0}
+			/>
 
-            <Dropdown
-                label="WIP Monitoring"
-                icon={<LuListChecks className="w-4 h-4" />}
-                links={[
-                    {
-                        href: route("wip.trend"),
-                        label: "WIP Trend",
-                        icon: <FaArrowTrendUp className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("bodySize"),
-                        label: "Body Size",
-                        icon: <TbResize className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("wipTable"),
-                        label: "WIP Station",
-                        icon: <FaCodeBranch className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("pickup.dashboard"),
-                        label: "Pickup Trend",
-                        icon: <FaTruckPickup className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("residual.dashboard"),
-                        label: "Residual Dashboard",
-                        icon: <FaRecycle className="w-4 h-4" />,
-                        notification: false,
-                    },
-                ]}
-                notification={false}
-            />
+			<Dropdown
+				label="WIP Monitoring"
+				icon={<LuListChecks className="w-4 h-4" />}
+				links={[
+					{
+						href: route("wip.trend"),
+						label: "WIP Trend",
+						icon: <TbProgressCheck className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("out.trend"),
+						label: "Out Trend",
+						icon: <FaCheckCircle className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("bodySize"),
+						label: "Body Size",
+						icon: <TbResize className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("wipTable"),
+						label: "WIP Station",
+						icon: <FaCodeBranch className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("pickup.dashboard"),
+						label: "Pickup Trend",
+						icon: <FaTruckPickup className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("residual.dashboard"),
+						label: "Residual Dashboard",
+						icon: <FaRecycle className="w-4 h-4" />,
+						notification: false,
+					},
+				]}
+				notification={false}
+			/>
 
-            <Dropdown
-                label="Maintenance"
-                icon={<TbSettings className="w-4 h-4" />}
-                links={[
-                    {
-                        href: route("package.group.index"),
-                        label: "Package Group",
-                        icon: <FaLayerGroup className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("f3.raw.package.index"),
-                        label: "F3 Packages",
-                        icon: <LuPackage className="w-4 h-4" />,
-                        notification: false,
-                    },
-                    {
-                        href: route("package.capacity.index"),
-                        label: "Capacity",
-                        icon: <FaBatteryHalf className="w-4 h-4" />,
-                        notification: false,
-                    },
-                ]}
-                notification={false}
-            />
+			<Dropdown
+				label="Maintenance"
+				icon={<TbSettings className="w-4 h-4" />}
+				links={[
+					{
+						href: route("package.group.index"),
+						label: "Package Group",
+						icon: <FaLayerGroup className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("f3.raw.package.index"),
+						label: "F3 Packages",
+						icon: <LuPackage className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("package.capacity.index"),
+						label: "Capacity",
+						icon: <FaBatteryHalf className="w-4 h-4" />,
+						notification: false,
+					},
+				]}
+				notification={false}
+			/>
 
-            <SidebarLink
-                href={route("import.index")}
-                label="Import Data"
-                icon={<BiImport className="w-4 h-4" />}
-                notifications={0}
-            />
+			<SidebarLink
+				href={route("import.index")}
+				label="Import Data"
+				icon={<BiImport className="w-4 h-4" />}
+				notifications={0}
+			/>
 
-            <SidebarLink
-                href={route("f3.list.index")}
-                label="F3 Wip & Out List"
-                icon={<LuList className="w-4 h-4" />}
-                notifications={false}
-            />
+			<SidebarLink
+				href={route("f3.list.index")}
+				label="F3 Wip & Out List"
+				icon={<LuList className="w-4 h-4" />}
+				notifications={false}
+			/>
 
-            <SidebarLink
-                href={route("partname.index")}
-                label="Partname List"
-                icon={<LuList className="w-4 h-4" />}
-                notifications={false}
-            />
+			<SidebarLink
+				href={route("partname.index")}
+				label="Partname List"
+				icon={<LuList className="w-4 h-4" />}
+				notifications={false}
+			/>
 
-            {/* 
+			{/* 
             {["superadmin", "admin", "programmer 1"].includes(
                 role?.toLowerCase()
             ) && (
@@ -137,8 +139,8 @@ export default function NavLinks() {
                     icon={<FaUsers className="w-4 h-4" />}
                 />
             )} */}
-        </nav>
-    );
+		</nav>
+	);
 }
 // import Dropdown from "@/Components/sidebar/Dropdown";
 // import SidebarLink from "@/Components/sidebar/SidebarLink";

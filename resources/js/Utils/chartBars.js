@@ -1,14 +1,15 @@
-import { WIP_FACTORY_COLORS } from "@/Constants/colors";
+import { FACTORY_COLORS } from "@/Constants/colors";
 
 export const getBarConfigs = (metric = "wip", stackId = "a") => {
-  return WIP_FACTORY_COLORS.map(({ key, colorVar }) => ({
-    visibilityKey: key,
-    dataKey: `${key}_total_${metric}`,
-    stackId,
-    fill: colorVar[metric],
-  }));
+	return FACTORY_COLORS.map(({ key, colorVar }) => ({
+		visibilityKey: key,
+		dataKey: `${key}_total_${metric}`,
+		stackId,
+		fill: colorVar[metric],
+	}));
 };
 
 // Optional helpers for clarity
 export const summaryWipPLBarswip = getBarConfigs("wip");
-export const summaryWipPLBarsLots = getBarConfigs("lots");
+export const summaryOutPLBars = getBarConfigs("out");
+export const summaryLotsPLBars = getBarConfigs("lots");

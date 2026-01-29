@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Traits\ApplyDateOrWorkWeekFilter;
 use App\Traits\PackageAliasTrait;
 use App\Traits\TrendAggregationTrait;
 use App\Repositories\AnalogCalendarRepository;
@@ -13,14 +14,17 @@ use App\Helpers\WipTrendParser;
 use App\Helpers\SqlDebugHelper;
 use Illuminate\Support\Facades\DB;
 use App\Constants\WipConstants;
+use App\Traits\ShiftObjectDates;
 use Illuminate\Support\Facades\Log;
 use DateTime;
 
 class F3OutRepository
 {
   use TrendAggregationTrait;
+  use ApplyDateOrWorkWeekFilter;
   use PackageAliasTrait;
   use F3Trait;
+  use ShiftObjectDates;
   protected $table = "f3";
   protected $tableAlias = "f3";
   protected $packageGroupRepo;
@@ -36,22 +40,38 @@ class F3OutRepository
     $this->packageFilterService = $packageFilterService;
   }
 
+  public function baseF3OutQuery($joinPpc = false)
+  {
+    return $this->baseF3Query(joinPpc: $joinPpc, type: 'out');
+  }
+
+  private function overallByDate(?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate)
+  {
+    $query = $this->baseF3OutQuery(joinPpc: $joinPpc);
+    $query = $this->applyDateOrWorkweekWipFilter($query, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
+    return $query;
+  }
+
+  public function overallQty(?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate): int
+  {
+    $query = $this->overallByDate($joinPpc,  $useWorkweek, $workweek, $startDate, $endDate);
+    return $query->sum('f3.qty');
+  }
+
+  public function overallQtyAndLotIdByPackage(?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate)
+  {
+    $query = $this->overallByDate($joinPpc, $useWorkweek, $workweek, $startDate, $endDate);
+    return $query->selectRaw('f3_pkg.package_name as package, SUM(f3.qty) as f3_total_out, SUM(f3.qty) as total_out, COUNT(DISTINCT f3.lot_number) as f3_total_lots, COUNT(DISTINCT f3.lot_number) as total_lots')
+      ->groupBy('f3_pkg.package_name')
+      ->get();
+  }
+
   public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
-    $query = $this->baseF3Query(type: 'out'); // 'out' instead of default 'wip'
+    $query = $this->baseF3OutQuery();
 
-    $weekRange = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'];
-
-    foreach ($weekRange as $item) {
-      $startDate = new DateTime($item->startDate);
-      $endDate   = new DateTime($item->endDate);
-
-      $startDate->modify('+1 day');
-      $endDate->modify('+1 day');
-
-      $item->startDate = $startDate->format('Y-m-d');
-      $item->endDate   = $endDate->format('Y-m-d');
-    }
+    $data = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks);
+    $weekRange = $this->shiftRangeByOneDayForward($data['range']);
 
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
@@ -62,7 +82,6 @@ class F3OutRepository
         'f3.date_loaded',
         ['SUM(f3.qty)' => 'total_outs'], // aggregate by outs
         workRange: $weekRange,
-        isDateColumn: true
       );
 
       $query = $this->filterByPackageName($query, $packageNames, 'f3_pkg.package_name');
@@ -77,13 +96,7 @@ class F3OutRepository
       $results = $results->orderByDesc('total_outs')
         ->get();
 
-      if ($period == 'daily') {
-        foreach ($results as $item) {
-          $date = new DateTime($item->day);
-          $date->modify('-1 day');
-          $item->day = $date->format('Y-m-d');
-        }
-      }
+      $this->shiftOneDayBack($results, $period);
 
       $trends['overall_trend'] = $results;
       $trends['f3_trend'] = $results;

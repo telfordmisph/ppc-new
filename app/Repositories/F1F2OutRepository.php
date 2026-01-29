@@ -3,17 +3,19 @@
 namespace App\Repositories;
 
 use App\Constants\WipConstants;
-use App\Traits\NormalizeStringTrait;
-use App\Traits\TrendAggregationTrait;
 use App\Repositories\AnalogCalendarRepository;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\SqlDebugHelper;
-use App\Helpers\MergeAndAggregate;
-use App\Models\F1F2Out;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\WipTrendParser;
+use App\Helpers\MergeAndAggregate;
+use App\Helpers\SqlDebugHelper;
+use App\Models\F1F2Out;
 use App\Services\PackageFilters\PackageFilterService;
+use App\Helpers\WipTrendParser;
+use App\Traits\NormalizeStringTrait;
+use App\Traits\TrendAggregationTrait;
+use App\Traits\ApplyDateOrWorkWeekFilter;
 use App\Traits\PackageAliasTrait;
+use App\Traits\ShiftObjectDates;
 use Carbon\Carbon;
 use DateTime;
 
@@ -22,6 +24,10 @@ class F1F2OutRepository
   use NormalizeStringTrait;
   use TrendAggregationTrait;
   use PackageAliasTrait;
+  use ApplyDateOrWorkWeekFilter;
+  use ShiftObjectDates;
+
+
   protected $analogCalendarRepo;
   protected $packageFilterService;
   protected $packageGroupRepo;
@@ -48,7 +54,7 @@ class F1F2OutRepository
 
   public function filterByPackageName($query, ?array $packageNames, $factories)
   {
-    $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'wip.package', "OUT");
+    $query = $this->packageFilterService->applyPackageFilter($query, $packageNames, $factories, 'out.package', "OUT");
     return $query;
   }
 
@@ -71,23 +77,54 @@ class F1F2OutRepository
 
   public function joinPL($query, $partName = [], $joinPpc = '')
   {
-    $query->join(self::PPC_TABLE . ' as plref', 'wip.package', '=', 'plref.Package');
+    $query->join(self::PPC_TABLE . ' as plref', 'out.package', '=', 'plref.Package');
 
     if ($joinPpc == 'PL1') {
       $query->where(function ($q) use ($partName) {
         $q->Where('plref.production_line', 'PL1')
-          ->orwhereIn('wip.part_name', $partName);
+          ->orwhereIn('out.part_name', $partName);
       });
     }
 
     if ($joinPpc == 'PL6') {
       $query->where(function ($q) use ($partName) {
         $q->where('plref.production_line', 'PL6')
-          ->whereNotIn('wip.part_name', $partName);
+          ->whereNotIn('out.part_name', $partName);
       });
     }
 
     return $query;
+  }
+
+  private function overallByDate(string $fType, ?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate)
+  {
+    $query = strtolower($fType) === 'f1' ? $this->getF1QueryByPackage([]) : $this->getF2QueryByPackage([]);
+
+    if ($joinPpc) {
+      $query = $this->joinPL($query, joinPpc: $joinPpc);
+    }
+
+    $data = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweek);
+    $weekRange = $this->shiftRangeByOneDayForward($data['range']);
+
+    $query = $this->applyDateOrWorkweekOutFilter($query, 'out.import_date', $useWorkweek, $weekRange, $startDate, $endDate);
+    return $query;
+  }
+
+  public function overallQty(string $fType, ?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate): int
+  {
+    $query = $this->overallByDate($fType, $joinPpc, $useWorkweek, $workweek, $startDate, $endDate);
+    return $query->sum('qty');
+  }
+
+  public function overallQtyAndLotIdByPackage(string $fType, ?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate)
+  {
+    $query = $this->overallByDate($fType, $joinPpc, $useWorkweek, $workweek, $startDate, $endDate);
+    return $query->selectRaw(
+      "out.package, SUM(out.qty) as {$fType}_total_out, SUM(out.qty) as total_out, COUNT(DISTINCT out.lot_id) as {$fType}_total_lots, COUNT(DISTINCT out.lot_id) as total_lots"
+    )
+      ->groupBy('out.package')
+      ->get();
   }
 
   public static function getImportKey()
@@ -97,27 +134,23 @@ class F1F2OutRepository
 
   public function getF1QueryByPackage($packageName)
   {
-    $f1QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
-    $f1QueryOuts = $this->applyF1Filter($f1QueryOuts, 'wip');
-    $f1QueryOuts = $this->filterByPackageName($f1QueryOuts, $packageName, ['f1']);
-    $f1QueryOuts = $this->joinPL($f1QueryOuts);
+    $f1QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as out');
+    $f1QueryOuts = $this->applyF1Filter($f1QueryOuts, 'out');
 
     return $f1QueryOuts;
   }
 
   public function getF2QueryByPackage($packageName)
   {
-    $f2QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
-    $f2QueryOuts = $this->applyF2Filter($f2QueryOuts, 'wip');
-    $f2QueryOuts = $this->filterByPackageName($f2QueryOuts, $packageName, ['f2']);
-    $f2QueryOuts = $this->joinPL($f2QueryOuts);
+    $f2QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as out');
+    $f2QueryOuts = $this->applyF2Filter($f2QueryOuts, 'out');
 
     return $f2QueryOuts;
   }
 
   public function getF3QueryByPackage($packageName)
   {
-    $f3QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
+    $f3QueryOuts = DB::table(self::F1F2_OUTS_TABLE . ' as out');
 
     $f3QueryOuts->whereRaw('1 = 0');
 
@@ -130,11 +163,11 @@ class F1F2OutRepository
   {
     if (in_array("F1", $factories)) {
 
-      return fn($q) => $q->whereNotIn('wip.focus_group', WipConstants::F1_OUT_FOCUS_GROUP_EXCLUSION);
+      return fn($q) => $q->whereNotIn('out.focus_group', WipConstants::F1_OUT_FOCUS_GROUP_EXCLUSION);
     }
 
     if (in_array("F2", $factories)) {
-      return fn($q) => $q->whereIn('wip.focus_group', WipConstants::F2_OUT_FOCUS_GROUP_INCLUSION);
+      return fn($q) => $q->whereIn('out.focus_group', WipConstants::F2_OUT_FOCUS_GROUP_INCLUSION);
     }
 
     return null;
@@ -142,25 +175,15 @@ class F1F2OutRepository
 
   public function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
-    $query = DB::table(self::F1F2_OUTS_TABLE . ' as wip');
+    $query = DB::table(self::F1F2_OUTS_TABLE . ' as out');
     $query = $this->filterByPackageName($query, $packageName, $factories);
 
     if ($filter = $this->filterFactory($factories)) {
       $query->where($filter);
     }
 
-    $weekRange = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'];
-
-    foreach ($weekRange as $item) {
-      $startDate = new DateTime($item->startDate);
-      $endDate   = new DateTime($item->endDate);
-
-      $startDate->modify('+1 day');
-      $endDate->modify('+1 day');
-
-      $item->startDate = $startDate->format('Y-m-d');
-      $item->endDate   = $endDate->format('Y-m-d');
-    }
+    $data = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks);
+    $weekRange = $this->shiftRangeByOneDayForward($data['range']);
 
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
@@ -168,13 +191,15 @@ class F1F2OutRepository
         $period,
         $startDate,
         $endDate,
-        'wip.import_date',
-        ['SUM(wip.qty)' => 'total_outs'],
+        'out.import_date',
+        // ['SUM(out.qty)' => 'total_outs'],
+
+        // continue not yet tested
+        WipConstants::FACTORY_AGGREGATES['F1F2']['out']['out-lot'],
         workRange: $weekRange,
-        isDateColumn: true
       );
     } else {
-      $query->whereBetween('wip.import_date', [$startDate, $endDate]);
+      $query->whereBetween('out.import_date', [$startDate, $endDate]);
     }
 
     return $query;
@@ -203,29 +228,9 @@ class F1F2OutRepository
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
     $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
 
-    // Log::info("f1Trend: " . json_encode($f1Trend));
-    // Log::info("overallTrend: " . json_encode($overallTrend));
-
-    if ($period == 'daily') {
-      foreach ($overallTrend as &$item) {
-        $date = new DateTime($item['day']);
-        $date->modify('-1 day');
-        $item['day'] = $date->format('Y-m-d');
-      }
-      unset($item);
-
-      foreach ($f1Trend as $item) {
-        $date = new DateTime($item->day);
-        $date->modify('-1 day');
-        $item->day = $date->format('Y-m-d');
-      }
-
-      foreach ($f2Trend as &$item) {
-        $date = new DateTime($item->day);
-        $date->modify('-1 day');
-        $item->day = $date->format('Y-m-d');
-      }
-    }
+    $this->shiftOneDayBack($f1Trend, $period);
+    $this->shiftOneDayBack($f2Trend, $period);
+    $this->shiftOneDayBack($overallTrend, $period);
 
     return WipTrendParser::parseTrendsByPeriod([
       'f1_trend' => $f1Trend,

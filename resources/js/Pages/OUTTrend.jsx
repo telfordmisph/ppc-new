@@ -1,5 +1,10 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-
+import React, {
+	useState,
+	useEffect,
+	useMemo,
+	useCallback,
+	useRef,
+} from "react";
 import { Head } from "@inertiajs/react";
 import clsx from "clsx";
 import DatePicker from "react-datepicker";
@@ -10,6 +15,7 @@ import formatDate from "@/Utils/formatDate";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import TogglerButton from "@/Components/TogglerButton";
 import sortObjectArray from "@/Utils/sortObjectArray";
+import { useMutation } from "@/Hooks/useMutation";
 import {
 	TOGGLE_FACTORY_BUTTONS,
 	TOGGLE_PL_BUTTONS,
@@ -17,14 +23,15 @@ import {
 import { sumByKey } from "@/Utils/sumByKey";
 import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
 import TrendByPackage from "@/Components/TrendByPackage";
-import { summaryLotsPLBars, summaryWipPLBarswip } from "@/Utils/chartBars";
+import { summaryLotsPLBars, summaryOutPLBars } from "@/Utils/chartBars";
 import { useWorkweekStore } from "@/Store/workweekListStore";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import { buildComputeFunction } from "@/Utils/computeTotals";
 import OverallQuantityTable from "./OverallQuantityTable";
 import CancellableActionButton from "@/Components/CancellableActionButton";
 
-const WIPTrend = () => {
+const OUTTrend = () => {
+	const manualWIPImportRef = useRef(null);
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
 	const today = new Date();
@@ -46,7 +53,7 @@ const WIPTrend = () => {
 	const [selectedWorkWeek, setSelectedWorkWeek] = useState([]);
 	const [tempSelectedWorkWeek, setTempSelectedWorkWeek] = useState([]);
 
-	const [selectedTotal, setSelectedTotal] = useState("wip");
+	const [selectedTotal, setSelectedTotal] = useState("out");
 	const [isTrendByPackageVisible, setIsTrendByPackageVisible] = useState(false);
 	const [selectedPackageName, setSelectedPackageName] = useState(null);
 
@@ -91,41 +98,41 @@ const WIPTrend = () => {
 	};
 
 	const endpoints = {
-		overall: "api.wip.overall",
+		overall: "api.out.overall",
 		overallByPackage: "api.wip.overallByPackage",
-		summary: "api.wip.wipLotTotals",
+		summary: "api.out.outLotTotals",
 	};
 
 	const {
-		data: overallWipData,
-		isLoading: isOverallWipLoading,
-		errorMessage: overallWipErrorMessage,
-		fetch: overallWipFetch,
-		abort: overallWipAbort,
+		data: overallOutData,
+		isLoading: isOverallOutLoading,
+		errorMessage: overallOutErrorMessage,
+		fetch: overallOutFetch,
+		abort: overallOutAbort,
 	} = useFetch(route(endpoints.overall), {
 		params: commonParams,
 		auto: false,
 	});
 
 	const {
-		data: overallSummaryWipData,
-		isLoading: isOverallSummaryWipLoading,
-		errorMessage: overallSummaryWipErrorMessage,
-		fetch: overallSummaryWipFetch,
-		abort: overallSummaryWipAbort,
+		data: overallSummaryOutData,
+		isLoading: isOverallSummaryOutLoading,
+		errorMessage: overallSummaryOutErrorMessage,
+		fetch: overallSummaryOutFetch,
+		abort: overallSummaryOutAbort,
 	} = useFetch(route(endpoints.summary), {
 		params: { ...commonParams, includePL: false },
 		auto: false,
 	});
 
 	const abortAllFetch = () => {
-		overallWipAbort();
-		overallSummaryWipAbort();
+		overallOutAbort();
+		overallSummaryOutAbort();
 	};
 
 	const { message } = formatDataStatusMessage({
-		isLoading: isOverallWipLoading,
-		label: "WIP",
+		isLoading: isOverallOutLoading,
+		label: "OUT",
 		dateRange,
 		startDate,
 		endDate,
@@ -161,12 +168,12 @@ const WIPTrend = () => {
 			)}`;
 			setStartDate(tempStartDate);
 			setEndDate(tempEndDate);
-			overallWipFetch({
+			overallOutFetch({
 				dateRange: newDateRange,
 				workweek: "",
 				period: isWorkweek ? "weekly" : null,
 			});
-			overallSummaryWipFetch({
+			overallSummaryOutFetch({
 				dateRange: newDateRange,
 				period: isWorkweek ? "weekly" : null,
 				workweek: "",
@@ -175,12 +182,12 @@ const WIPTrend = () => {
 		} else {
 			const newWorkweek = tempSelectedWorkWeek.join(" ");
 			setSelectedWorkWeek(tempSelectedWorkWeek);
-			overallWipFetch({
+			overallOutFetch({
 				dateRange: "",
 				workweek: newWorkweek,
 				period: isWorkweek ? "weekly" : null,
 			});
-			overallSummaryWipFetch({
+			overallSummaryOutFetch({
 				dateRange: "",
 				period: isWorkweek ? "weekly" : null,
 				workweek: newWorkweek,
@@ -193,7 +200,7 @@ const WIPTrend = () => {
 		if (e.target.checked) {
 			setSelectedTotal("lots");
 		} else {
-			setSelectedTotal("wip");
+			setSelectedTotal("out");
 		}
 	};
 
@@ -218,77 +225,50 @@ const WIPTrend = () => {
 	};
 
 	const compute = useMemo(
-		() => buildComputeFunction(selectedTotal, factoryVisibleBars),
+		() => buildComputeFunction(selectedTotal, factoryVisibleBars, "out"),
 		[selectedTotal, factoryVisibleBars],
 	);
 
-	// const allPackages = useMemo(
-	//     () => summaryWipData?.data || [],
-	//     [summaryWipData?.data?.length]
-	// );
+	const allPackages = useMemo(() => {
+		const data = overallSummaryOutData?.data;
+		if (!data) return [];
 
-	const allPackages = useMemo(
-		() => overallSummaryWipData?.data || [],
-		[overallSummaryWipData?.data],
-	);
+		if (plVisibleBars.pl1 && plVisibleBars.pl6) return data.overall ?? [];
+		if (plVisibleBars.pl1) return data.overall_pl1 ?? [];
+		if (plVisibleBars.pl6) return data.overall_pl6 ?? [];
 
-	const activePLs = useMemo(
-		() => Object.keys(plVisibleBars).filter((pl) => plVisibleBars[pl]),
-		[plVisibleBars],
-	);
+		return [];
+	}, [overallSummaryOutData?.data, plVisibleBars.pl1, plVisibleBars.pl6]);
 
-	const isAllPLsSelected = useMemo(
-		() => activePLs.length === Object.keys(plVisibleBars).length,
-		[activePLs, plVisibleBars],
-	);
-
-	const plSummed = useMemo(() => {
-		if (!allPackages) return [];
-		return sumByKey(allPackages, "Package_Name", ["PL"]);
-	}, [allPackages]);
-
-	const filteredData = useMemo(() => {
-		if (isAllPLsSelected) return plSummed;
-		return allPackages.filter((item) =>
-			activePLs.some(
-				(pl) => pl.toLowerCase() === String(item.PL).toLowerCase(),
-			),
-		);
-	}, [isAllPLsSelected, activePLs, plSummed, allPackages]);
+	console.log("🚀 ~ OUTTrend ~ allPackages:", allPackages);
 
 	const sortKeys = useMemo(
-		() => (selectedTotal === "wip" ? ["total_wip"] : ["total_lots"]),
+		() => (selectedTotal === "out" ? ["total_out"] : ["total_lots"]),
 		[selectedTotal],
 	);
 
-	// data={sortObjectArray(summaryWipData?.data || [], {
-	//                     keys: ["total_lots"],
-	//                     order: "desc",
-	//                     compute:
-	//                         selectedTotal === "wip" ? compute : null,
-	//                 })}
 	const sortedAllPackageFilteredData = useMemo(
 		() =>
-			sortObjectArray(filteredData, {
+			sortObjectArray(allPackages, {
 				keys: sortKeys,
 				order: "desc",
 				// compute: selectedTotal === "wip" ? compute : null,
 				compute,
 			}),
-		[filteredData, sortKeys, compute],
+		[allPackages, sortKeys, compute],
 	);
 
-	const handleShowTrendByPackage = useCallback(({ data, _ }) => {
+	const handleShowTrendByPackage = useCallback(({ data, dataKey }) => {
 		setIsTrendByPackageVisible(true);
-		setSelectedPackageName(data?.Package_Name || null);
+		setSelectedPackageName(data?.package || null);
 	}, []);
 
 	return (
 		<>
-			<Head title="WIP Trend" />
+			<Head title="OUT Trend" />
 			<div className="flex justify-between">
-				<h1 className="w-3/12 text-xl font-bold mb-4">WIP Trend</h1>
-				<h1 className="text-sm">{!isOverallWipLoading && message}</h1>
+				<h1 className="w-3/12 text-xl font-bold mb-4">OUT Trend</h1>
+				<h1 className="text-sm">{!isOverallOutLoading && message}</h1>
 			</div>
 
 			<div className="flex w-full h-full">
@@ -364,7 +344,7 @@ const WIPTrend = () => {
 							<CancellableActionButton
 								abort={abortAllFetch}
 								refetch={handleRefetch}
-								loading={isOverallWipLoading || isOverallSummaryWipLoading}
+								loading={isOverallOutLoading || isOverallSummaryOutLoading}
 								disabled={
 									!isWorkweek
 										? !tempStartDate || !tempEndDate
@@ -378,11 +358,11 @@ const WIPTrend = () => {
 				<div className="border border-base-content/10 w-9/12 h-full p-4 rounded-lg shadow-lg bg-base-300">
 					<div className="overflow-x-auto">
 						<OverallQuantityTable
-							data={overallWipData}
-							isLoading={isOverallWipLoading}
+							data={overallOutData}
+							isLoading={isOverallOutLoading}
+							error={overallOutErrorMessage}
 							loadingMessage={message}
-							error={overallWipErrorMessage}
-							type="wip"
+							type="out"
 						/>
 					</div>
 				</div>
@@ -390,7 +370,7 @@ const WIPTrend = () => {
 
 			<div className="w-full p-4 mt-4 border border-base-content/10 rounded-lg bg-base-300">
 				<h1 className="text-base divider divider-start">
-					Total wip Graph per Package
+					Total Out Graph per Package
 				</h1>
 
 				<div className="flex flex-wrap w-full space-x-4">
@@ -407,7 +387,7 @@ const WIPTrend = () => {
 					<div className="divider divider-horizontal"></div>
 
 					<div className="flex items-center space-x-2">
-						<div>Total wip</div>
+						<div>Total OUTs</div>
 						<input
 							type="checkbox"
 							checked={selectedTotal === "lots"}
@@ -434,10 +414,11 @@ const WIPTrend = () => {
 					<StackedBarChart
 						data={sortedAllPackageFilteredData}
 						defaultAngle={-45}
-						isLoading={isOverallSummaryWipLoading}
-						errorMessage={overallSummaryWipErrorMessage}
+						isLoading={isOverallSummaryOutLoading}
+						errorMessage={overallSummaryOutErrorMessage}
+						xAxisDataKey="package"
 						bars={
-							selectedTotal === "wip" ? summaryWipPLBarswip : summaryLotsPLBars
+							selectedTotal === "out" ? summaryOutPLBars : summaryLotsPLBars
 						}
 						visibleBars={factoryVisibleBars}
 						onBarClick={handleShowTrendByPackage}
@@ -447,6 +428,8 @@ const WIPTrend = () => {
 					<TrendByPackage
 						isVisible={isTrendByPackageVisible}
 						packageName={selectedPackageName}
+						routeApi={"api.out.overallByPackage"}
+						trendType={"out"}
 					/>
 				</div>
 			</div>
@@ -454,4 +437,4 @@ const WIPTrend = () => {
 	);
 };
 
-export default WIPTrend;
+export default OUTTrend;

@@ -6,7 +6,6 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 use App\Constants\WipConstants;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\SqlDebugHelper;
 
 trait TrendAggregationTrait
 {
@@ -22,7 +21,6 @@ trait TrendAggregationTrait
     ],
     array $additionalFields = [],
     array $workRange = [],
-    bool $isDateColumn = false,
   ): Builder {
     $query = clone $query;
     $query->select([]);
@@ -51,29 +49,21 @@ trait TrendAggregationTrait
         break;
 
       case 'weekly':
-        $query->where(function ($q) use ($column, $workRange, $isDateColumn) {
+        $query->where(function ($q) use ($column, $workRange) {
           foreach ($workRange as $range) {
-            if ($isDateColumn) {
-              $q->orWhere(function ($query) use ($column, $range) {
-                $query->whereDate($column, '>=', $range->startDate)
-                  ->whereDate($column, '<=', $range->endDate);
-              });
-            } else {
-              $q->orWhere(function ($query) use ($column, $range) {
-                $query->where($column, '>=', $range->startDate)
-                  ->where($column, '<', $range->endDate);
-              });
-            }
+            $q->orWhere(function ($query) use ($column, $range) {
+              $query->where($column, '>=', $range->startDate)
+                ->where($column, '<', $range->endDate);
+            });
           };
         });
 
-
         $case = implode(' ', array_map(function ($range) use ($column) {
-          return "WHEN $column BETWEEN '{$range->startDate}' AND '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
+          return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
         }, $workRange));
 
         $weekCase = implode(' ', array_map(function ($range) use ($column) {
-          return "WHEN $column BETWEEN '{$range->startDate}' AND '{$range->endDate}' THEN '{$range->workweek}'";
+          return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN '{$range->workweek}'";
         }, $workRange));
 
         $query->selectRaw("
@@ -82,7 +72,6 @@ trait TrendAggregationTrait
                   $case
                   ELSE NULL
               END as workweek,
-              YEAR($column) as year,
               CASE 
                   $weekCase
                   ELSE NULL
@@ -128,13 +117,8 @@ trait TrendAggregationTrait
     }
 
     if ($period !== 'weekly') {
-      if ($isDateColumn) {
-        $query->whereDate($column, '>=', $startDate)
-          ->whereDate($column, '<=', $endDate);
-      } else {
-        $query->where($column, '>=', $startDate)
-          ->where($column, '<', $endDate);
-      }
+      $query->where($column, '>=', $startDate)
+        ->where($column, '<', $endDate);
     }
     // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 

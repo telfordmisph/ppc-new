@@ -24,6 +24,7 @@ class MergeAndAggregateTest extends TestCase
     $this->assertCount(2, $result);
     $this->assertEquals(150, $result[0]['total_wip']);
     $this->assertEquals('2025-11-06', $result[0]['day']);
+    $this->assertEquals(200, $result[1]['total_wip']);
 
     // remarks overwritten by last occurrence
     $this->assertEquals('C', $result[0]['remarks']);
