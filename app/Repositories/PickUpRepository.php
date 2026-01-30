@@ -12,6 +12,7 @@ use App\Helpers\SqlDebugHelper;
 use App\Helpers\MergeAndAggregate;
 use Carbon\Carbon;
 use App\Models\PickUp;
+use App\Models\F3Pickup;
 
 class PickUpRepository
 {
@@ -41,24 +42,28 @@ class PickUpRepository
       ->sum('QTY');
   }
 
+  private function applyFactoryFilter($query, string $factory)
+  {
+    $factory = strtoupper($factory);
+
+    if ($factory === 'F3') {
+      $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
+    } elseif (in_array($factory, ['F1', 'F2'])) {
+      $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
+        ->where('part.Factory', $factory);
+    }
+
+    return $query;
+  }
+
   public function getFactoryTotalQuantityRanged($factory, $startDate, $endDate)
   {
-    return DB::table(self::TABLE_NAME . ' as pickup')
-      ->joinSub(
-        DB::table(self::PART_NAME_TABLE)
-          ->selectRaw('Partname, Factory')
-          ->distinct(),
-        'part',
-        function ($join) {
-          $join->on('pickup.PARTNAME', '=', 'part.Partname');
-        }
-      )
-      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
+    $query = DB::table(self::TABLE_NAME . ' as pickup')
       ->where('pickup.DATE_CREATED', ">=", $startDate)
-      ->where('pickup.DATE_CREATED', "<", $endDate)
+      ->where('pickup.DATE_CREATED', "<", $endDate);
 
-      ->where('part.Factory', $factory)
-      ->sum('pickup.QTY');
+    $query = $this->applyFactoryFilter($query, $factory);
+    return $query->sum('pickup.QTY');
   }
 
   public function getFactoryPlTotalQuantity($factory, $pl, $startDate, $endDate)
@@ -67,15 +72,20 @@ class PickUpRepository
       ->selectRaw('Partname, Factory, PL')
       ->distinct();
 
-    return DB::table(self::TABLE_NAME . ' as pickup')
+    $query = DB::table(self::TABLE_NAME . ' as pickup')
       ->joinSub($partSubquery, 'part', function ($join) {
         $join->on('pickup.PARTNAME', '=', 'part.Partname');
       })
-      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate])
       ->where('pickup.DATE_CREATED', ">=", $startDate)
-      ->where('pickup.DATE_CREATED', "<", $endDate)
+      ->where('pickup.DATE_CREATED', "<", $endDate);
 
-      ->where('part.Factory', $factory)
+    if (strtoupper($factory) == 'F3') {
+      $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
+    } else {
+      $query->where('part.Factory', $factory);
+    }
+
+    return $query
       ->where('part.PL', $pl)
       ->sum('pickup.QTY');
   }
@@ -116,9 +126,12 @@ class PickUpRepository
     switch ($chartStatus) {
       case 'F1':
       case 'F2':
-      case 'F3':
         $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
           ->where('part.Factory', $chartStatus);
+        break;
+
+      case 'F3':
+        $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
         break;
 
       case 'PL1':
@@ -145,8 +158,7 @@ class PickUpRepository
   public function getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
     $query = DB::table(self::TABLE_NAME . ' as pickup');
-    $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
-      ->where('part.Factory', strtoupper($factory));
+    $query = $this->applyFactoryFilter($query, $factory);
     $query = $this->filterByPackageName($query, $packageName, $factory);
 
     if ($aggregate) {
@@ -162,7 +174,7 @@ class PickUpRepository
         workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
       );
     } else {
-      $query == $query->where('pickup.DATE_CREATED', '>=', $startDate)
+      $query = $query->where('pickup.DATE_CREATED', '>=', $startDate)
         ->where('pickup.DATE_CREATED', '<', $endDate);
 
       $query = $query->select(
@@ -241,5 +253,17 @@ class PickUpRepository
   public function insertMany(array $data)
   {
     PickUp::insert($data);
+  }
+
+  public function insertF3Many(array $data)
+  {
+    // PickUp::insert($data);
+    foreach ($data as $row) {
+      $pickup = PickUp::create($row);
+
+      F3Pickup::create([
+        'ppc_pickup_id' => $pickup->id_pickup,
+      ]);
+    }
   }
 }

@@ -507,13 +507,13 @@ class WipImportService
         $chunks[] = $rowData;
 
         if (count($chunks) >= self::CHUNK_SIZE) {
-          $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
+          $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertF3Many($chunks), $successCount);
           $chunks = [];
         }
       }
 
       if (!empty($chunks)) {
-        $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertMany($chunks), $successCount);
+        $this->insertChunk($chunks, fn($chunks) => $this->pickUpRepository->insertF3Many($chunks), $successCount);
       }
 
       $this->importTraceRepository->upsertImport('f3_pickup', $importedBy, $successCount);

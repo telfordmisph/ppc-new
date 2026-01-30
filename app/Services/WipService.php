@@ -1048,7 +1048,7 @@ class WipService
     $pl6_total_wip = (int) $result->f1pl6_total_wip + (int) $result->f2pl6_total_wip + (int) $result->f3pl6_total_wip;
 
     return response()->json([
-      'total_wip'    => (int) $result->total_wip,
+      'total_wip'    => (int) $result->f1_total_wip + (int) $result->f2_total_wip + (int) $result->f3_total_wip,
       'f1_total_wip' => (int) $result->f1_total_wip,
       'f2_total_wip' => (int) $result->f2_total_wip,
       'f3_total_wip' => (int) $result->f3_total_wip,
