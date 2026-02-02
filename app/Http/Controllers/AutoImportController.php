@@ -29,7 +29,7 @@ class AutoImportController extends Controller
 
     public function renderPickUpImportPage()
     {
-        return Inertia::render('Import/PickUpImportPage');
+        return Inertia::render('Import/F1F2PickUpImportPage');
     }
 
     public function renderF3PickUpImportPage()

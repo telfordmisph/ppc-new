@@ -18,15 +18,34 @@ class F3RawPackageController extends Controller
     'added_by',
   ];
 
-  private function validateF3RawPackage(Request $request, $id = null)
+  private function rules()
   {
-    return $request->validate([
+    return [
       'raw_package' => 'required|string|max:100',
       'lead_count' => 'integer',
-      'package_name' => 'required|string|exists:f3_package_names,package_name', // validate existence
+      'package_name' => 'required|string|exists:f3_package_names,package_name',
       'dimension' => 'string|max:50',
       'added_by' => 'string|max:7',
-    ]);
+    ];
+  }
+
+  private function validateF3RawPackages(Request $request)
+  {
+    $data = $request->all();
+
+    if (isset($data[0]) && is_array($data[0])) {
+      return $request->validate(
+        [
+          '*.raw_package' => 'required|string|max:100',
+          '*.lead_count' => 'integer',
+          '*.package_name' => 'required|string|exists:f3_package_names,package_name',
+          '*.dimension' => 'string|max:50',
+          '*.added_by' => 'string|max:7',
+        ]
+      );
+    }
+
+    return $request->validate($this->rules());
   }
 
   public function store(Request $request)
@@ -48,39 +67,59 @@ class F3RawPackageController extends Controller
    */
   private function upsertF3RawPackage(Request $request, ?int $id = null)
   {
-    $validated = $this->validateF3RawPackage($request, $id);
+    $validated = $this->validateF3RawPackages($request);
+
+    $records = isset($validated[0]) ? $validated : [$validated];
 
     DB::beginTransaction();
 
     try {
-      $package = F3PackageName::where('package_name', $validated['package_name'])->firstOrFail();
+      $results = [];
 
-      $validated['package_id'] = $package->id;
-      unset($validated['package_name']);
+      foreach ($records as $index => $data) {
 
-      $rawPackage = $validated['raw_package'];
-      $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+        $package = F3PackageName::where('package_name', $data['package_name'])
+          ->firstOrFail();
 
-      if (F3RawPackage::where('raw_package_normalized', $rawPackageNormalized)->exists()) {
-        throw new \Exception("The raw_package '{$rawPackage}' already exists.");
+        $data['package_id'] = $package->id;
+        unset($data['package_name']);
+
+        $rawPackage = $data['raw_package'];
+        $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+        $data['raw_package_normalized'] = $rawPackageNormalized;
+
+        $duplicateQuery = F3RawPackage::where('raw_package_normalized', $rawPackageNormalized);
+
+        if ($id) {
+          $duplicateQuery->where('id', '!=', $id);
+        }
+
+        if ($duplicateQuery->exists()) {
+          $rowIndex = $index + 1;
+          $row = count($records) === 1 ? '' : " (row {$rowIndex})";
+
+          throw new \Exception(
+            "The raw_package '{$rawPackage}' already exists{$row}."
+          );
+        }
+
+        if ($id && count($records) === 1) {
+          $f3RawPackage = F3RawPackage::findOrFail($id);
+          $f3RawPackage->update($data);
+        } else {
+          $f3RawPackage = F3RawPackage::create($data);
+        }
+
+        $results[] = $f3RawPackage->load('f3_package_name');
       }
-
-      if ($id) {
-        $f3RawPackage = F3RawPackage::findOrFail($id);
-        $f3RawPackage->update($validated);
-        $message = 'F3 raw package updated successfully';
-      } else {
-        $f3RawPackage = F3RawPackage::create($validated);
-        $message = 'F3 raw package added successfully';
-      }
-
-      $f3RawPackage->load('f3_package_name');
 
       DB::commit();
 
       return response()->json([
-        'message' => $message,
-        'data' => $f3RawPackage,
+        'message' => count($results) > 1
+          ? 'F3 raw packages processed successfully'
+          : 'F3 raw package processed successfully',
+        'data' => count($results) > 1 ? $results : $results[0],
       ]);
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
       DB::rollBack();
@@ -105,6 +144,24 @@ class F3RawPackageController extends Controller
 
     return Inertia::render('F3RawPackageUpsert', [
       'selectedRawPackage' => $f3RawPackage,
+    ]);
+  }
+
+  public function insertMany(Request $request)
+  {
+    $rawPackages = $request->input('raw_packages', []);
+
+    $rawPackages = array_map(function ($p) {
+      return [
+        'raw_package' => $p['PACKAGE'] ?? '',
+        'lead_count' => $p['lead_count'] ?? '',
+        'package_name' => $p['package_name'] ?? '',
+        'dimension' => $p['dimension'] ?? '',
+      ];
+    }, $rawPackages);
+
+    return Inertia::render('F3RawPackageMultiUpsert', [
+      'raw_packages' => $rawPackages,
     ]);
   }
 
