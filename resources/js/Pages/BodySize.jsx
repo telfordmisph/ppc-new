@@ -24,7 +24,7 @@ import { buildComputeFunction } from "@/Utils/computeTotals";
 import sortObjectArray from "@/Utils/sortObjectArray";
 import TogglerButton from "@/Components/TogglerButton";
 import CancellableActionButton from "@/Components/CancellableActionButton";
-
+import { Scatter } from "recharts";
 const BodySize = () => {
 	const {
 		packageNames: savedSelectedPackages,
@@ -501,7 +501,9 @@ const OverallChart = ({
 				isLoading={isBodySizeWipLoading}
 				errorMessage={bodySizeWipErrorMessage}
 				visibleBars={factoryVisibleBars}
-			/>
+			>
+				{/* <Scatter dataKey="f1_total_lots" fill="red" /> */}
+			</StackedBarChart>
 		</div>
 	);
 };

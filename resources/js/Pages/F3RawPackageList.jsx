@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
 import { TbAlertCircle } from "react-icons/tb";
+import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import Modal from "@/Components/Modal";
 import Pagination from "@/Components/Pagination";
+import SearchInput from "@/Components/SearchInput";
 import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
@@ -107,56 +109,14 @@ const F3RawPackageList = () => {
 			</div>
 
 			<div className="flex justify-between py-4">
-				<div className="dropdown dropdown-bottom">
-					<div tabIndex={0} className="m-1 btn">
-						{`Show ${maxItem} items`}
-					</div>
-					<ul
-						tabIndex={0}
-						className="p-2 shadow-lg dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
-					>
-						{[10, 25, 50, 100].map((item) => (
-							<li key={item}>
-								<a
-									onClick={() => {
-										changeMaxItemPerPage(item);
-									}}
-									className="flex items-center justify-between"
-								>
-									{item}
-									{maxItem === item && (
-										<span className="font-bold text-green-500">✔</span>
-									)}
-								</a>
-							</li>
-						))}
-					</ul>
-				</div>
-
-				<label className="input">
-					<svg
-						className="h-[1em] opacity-50"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-					>
-						<g
-							strokeLinejoin="round"
-							strokeLinecap="round"
-							strokeWidth="2.5"
-							fill="none"
-							stroke="currentColor"
-						>
-							<circle cx="11" cy="11" r="8"></circle>
-							<path d="m21 21-4.3-4.3"></path>
-						</g>
-					</svg>
-					<input
-						type="search"
-						placeholder="Search"
-						value={searchInput}
-						onChange={(e) => setSearchInput(e.target.value)}
-					/>
-				</label>
+				<MaxItemDropdown
+					maxItem={maxItem}
+					changeMaxItemPerPage={changeMaxItemPerPage}
+				/>
+				<SearchInput
+					initialSearchInput={searchInput}
+					onSearchChange={setSearchInput}
+				/>
 			</div>
 
 			<table className="table w-full table-auto table-xs">
@@ -196,8 +156,8 @@ const F3RawPackageList = () => {
 								>
 									<FaEdit />
 								</a>
-								<a
-									href="#"
+								<button
+									type="button"
 									className="btn btn-ghost btn-sm text-error"
 									onClick={() => {
 										setSelectedRawPackage(rawPackage);
@@ -205,7 +165,7 @@ const F3RawPackageList = () => {
 									}}
 								>
 									<FaTrash />
-								</a>
+								</button>
 
 								<Modal
 									ref={deleteModalRef}

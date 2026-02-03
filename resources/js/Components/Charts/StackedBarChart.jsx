@@ -6,7 +6,55 @@ import HoveredBar from "./HoverBar";
 
 const HoverableBar = memo(({ bar, visible, onBarClick, yAxisId }) => {
 	if (!visible) return null;
+	if (!visible) return null;
 
+	return (
+		<Bar
+			key={bar.dataKey}
+			radius={4}
+			unit={10}
+			dataKey={bar.dataKey}
+			stackId={bar.stackId || null}
+			yAxisId={yAxisId}
+			fill={Array.isArray(bar.fill) ? `url(#grad-${bar.dataKey})` : bar.fill}
+			// TODO this causes unnecessary re-renders, but have beautiful hover effects
+			shape={(props) => (
+				<HoveredBar
+					barProps={props}
+					onClick={({ data, dataKey }) => onBarClick?.({ data, dataKey })}
+				/>
+			)}
+			// shape={(props) => (
+			//     <g
+			//         onClick={() =>
+			//             onBarClick?.({
+			//                 data: props.payload,
+			//                 dateKey: bar.dataKey,
+			//             })
+			//         }
+			//         className="group cursor-pointer"
+			//     >
+			//         <Rectangle
+			//             width={props.width}
+			//             height={999}
+			//             x={props.x}
+			//             fill="transparent"
+			//             y={0}
+			//         />
+			//         <Rectangle
+			//             stroke={props.stroke}
+			//             width={props.width}
+			//             height={props.height}
+			//             x={props.x}
+			//             y={props.y}
+			//             radius={props.radius}
+			//             fill={props.fill}
+			//             strokeWidth={props.strokeWidth}
+			//         />
+			//     </g>
+			// )}
+		/>
+	);
 	return (
 		<Bar
 			key={bar.dataKey}
@@ -68,7 +116,11 @@ const StackedBarChart = memo(function StackedBarChart({
 	width = 500,
 	height = 300,
 	margin,
+	children,
 }) {
+	const totalBarCount = data?.length || 0;
+	const fontSize = totalBarCount > 25 ? 10 : 14;
+	const angle = defaultAngle || totalBarCount > 25 ? -45 : 0;
 	const totalBarCount = data?.length || 0;
 	const fontSize = totalBarCount > 25 ? 10 : 14;
 	const angle = defaultAngle || totalBarCount > 25 ? -45 : 0;
@@ -124,6 +176,7 @@ const StackedBarChart = memo(function StackedBarChart({
 							yAxisId={bar.yAxisId || "left"}
 						/>
 					))}
+					{children}
 				</BarChart>
 			)}
 		</BaseChart>

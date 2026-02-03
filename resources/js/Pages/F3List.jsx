@@ -1,23 +1,22 @@
 import { router, usePage } from "@inertiajs/react";
-import {
-	flexRender,
-	getCoreRowModel,
-	useReactTable,
-} from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FaCaretDown } from "react-icons/fa";
-import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
-import { useFetch } from "@/Hooks/useFetch";
-import { useMutation } from "@/Hooks/useMutation";
-import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
-import DatePicker from "react-datepicker";
 import toast from "react-hot-toast";
 import { MdSchedule } from "react-icons/md";
-import Pagination from "@/Components/Pagination";
+import BulkErrors from "@/Components/BulkErrors";
+import ChangeReviewModal from "@/Components/ChangeReviewModal";
+import MaxItemDropdown from "@/Components/MaxItemDropdown";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import SearchInput from "@/Components/SearchInput";
+import DateCell from "@/Components/tanStackTable/DateColumn";
+import DropdownCell from "@/Components/tanStackTable/DropdownCell";
+import ReadOnlyColumns from "@/Components/tanStackTable/ReadOnlyColumn";
+import TanstackTable from "@/Components/tanStackTable/TanstackTable";
+import { useEditableTable } from "@/Hooks/useEditableTable";
+import { useFetch } from "@/Hooks/useFetch";
 
 const statusOptions = [
-	"Shipped",
+	"SHIPPED",
 	"IQA",
 	"For Process",
 	"In-process",
@@ -27,138 +26,6 @@ const statusOptions = [
 	"OQA",
 	"QA Buy-off",
 ];
-
-const EditableCell = React.memo(function EditableCell({
-	value,
-	rowIndex,
-	columnId,
-	onChange,
-	options,
-}) {
-	const [localValue, setLocalValue] = useState(value);
-
-	useEffect(() => {
-		setLocalValue(value);
-	}, [value]);
-
-	return (
-		<input
-			className="w-full border-none py-2 focus:ring-0 bg-transparent"
-			value={localValue ?? ""}
-			onChange={(e) => setLocalValue(e.target.value)}
-			{...options}
-			onBlur={() => {
-				if (localValue !== value) {
-					onChange(rowIndex, columnId, localValue);
-				}
-			}}
-		/>
-	);
-});
-
-const StatusCell = React.memo(function StatusCell({
-	value,
-	rowIndex,
-	columnId,
-	onChange,
-}) {
-	return (
-		<div className="dropdown w-full">
-			<div
-				tabIndex={0}
-				role="button"
-				className="btn w-full bg-base-100 flex justify-between border-0"
-			>
-				{value}
-				<FaCaretDown />
-			</div>
-
-			<ul className="dropdown-content menu bg-base-100 rounded-box z-10 w-40 p-1 shadow-sm">
-				{statusOptions.map((option) => (
-					<li key={option}>
-						<button
-							type="button"
-							className="px-4 py-1 w-full text-left"
-							onClick={() => onChange(rowIndex, columnId, option)}
-						>
-							{option}
-						</button>
-					</li>
-				))}
-			</ul>
-		</div>
-	);
-});
-
-const formatDateTime = (date) => {
-	const pad = (n) => String(n).padStart(2, "0");
-
-	return (
-		`${date.getFullYear()}-` +
-		`${pad(date.getMonth() + 1)}-` +
-		`${pad(date.getDate())} ` +
-		`${pad(date.getHours())}:` +
-		`${pad(date.getMinutes())}:` +
-		`${pad(date.getSeconds())}`
-	);
-};
-
-const DateCell = React.memo(function DateCell({
-	value,
-	rowIndex,
-	columnId,
-	onChange,
-	options = {
-		showTimeSelect: true,
-		timeFormat: "HH:mm",
-		timeIntervals: 15,
-		dateFormat: "yyyy-MM-dd HH:mm",
-	},
-}) {
-	const date = React.useMemo(() => (value ? new Date(value) : null), [value]);
-
-	const handleChange = React.useCallback(
-		(d) => {
-			let formatted = d ? formatDateTime(d) : null;
-			console.log("🚀 ~ DateCell ~ formatted:", formatted);
-
-			if (options?.showTimeSelect === false) {
-				formatted = format(formatted, "yyyy-MM-dd");
-			}
-
-			onChange(rowIndex, columnId, formatted);
-		},
-		[rowIndex, columnId, onChange],
-	);
-
-	// const handleChange = React.useCallback(
-	//     (d) => {
-	//         if (!d) {
-	//             onChange(rowIndex, columnId, null);
-	//             return;
-	//         }
-
-	//         if (options?.showTimeSelect === false) {
-	//             // force date-only
-	//             const yyyyMmDd = format(d, "yyyy-MM-dd");
-	//             onChange(rowIndex, columnId, yyyyMmDd);
-	//             return;
-	//         }
-
-	//         onChange(rowIndex, columnId, formatDateTime(d));
-	//     },
-	//     [rowIndex, columnId, onChange, options]
-	// );
-
-	return (
-		<DatePicker
-			className="w-full rounded-lg input"
-			selected={date}
-			onChange={handleChange}
-			{...options}
-		/>
-	);
-});
 
 const fullF3Roles = [
 	// "PPC Planner",
@@ -178,6 +45,7 @@ const fullF3Roles = [
 	"Trainee PPC Planner",
 	"PPC",
 	"PPC Planner",
+	"PPC Engineer",
 	"PPC Planner 2",
 	"PPC Expediter 1",
 	"PPC Expediter 2",
@@ -211,11 +79,11 @@ export default function F3List() {
 	const end = serverF3WipAndOut.to;
 	const filteredTotal = serverF3WipAndOut.total;
 	const overallTotal = totalEntries ?? filteredTotal;
-	const [data, setData] = React.useState(serverF3WipAndOut.data || []);
+	// const [data, setData] = React.useState(serverF3WipAndOut.data || []);
 	const [f3SearchInput, setF3SearchInput] = useState(serverSearch || "");
 	const [f3DateInput, setF3DateInput] = useState(serverDateLoaded || null);
 	const [maxItem, setMaxItem] = useState(serverPerPage || 25);
-	const [editedRows, setEditedRows] = React.useState({});
+	// const [editedRows, setEditedRows] = React.useState({});
 	const [currentPage, setCurrentPage] = useState(
 		serverF3WipAndOut.current_page || 1,
 	);
@@ -294,9 +162,8 @@ export default function F3List() {
 			map[row.id] = row;
 		});
 		setOriginalData(map);
-
 		setEditedRows({});
-	}, [serverF3WipAndOut.data]);
+	}, [serverF3WipAndOut]);
 
 	// console.log(" rowSelectionrowSelection rowSelection:", rowSelection);
 	const openF3RawPackageSelectionModal = (rowIndex, originalF3RawPackage) => {
@@ -318,37 +185,37 @@ export default function F3List() {
 	});
 	console.log("🚀 ~ F3List ~ f3RawPackages:", f3RawPackages);
 
-	const readOnlyColumns = React.useCallback(
-		({ accessorKey, header, options = {} }) => ({
-			accessorKey,
-			header,
-			...options,
-			cell: ({ getValue }) => (
-				<span className="opacity-60 cursor-not-allowed">
-					{getValue() ?? "-"}
-				</span>
-			),
-		}),
-		[],
-	);
+	// const readOnlyColumns = React.useCallback(
+	// 	({ accessorKey, header, options = {} }) => ({
+	// 		accessorKey,
+	// 		header,
+	// 		...options,
+	// 		cell: ({ getValue }) => (
+	// 			<span className="opacity-60 cursor-not-allowed">
+	// 				{getValue() ?? "-"}
+	// 			</span>
+	// 		),
+	// 	}),
+	// 	[],
+	// );
 
-	const editableColumn = React.useCallback(
-		({ accessorKey, header, inputOptions = {}, options = {} }) => ({
-			accessorKey,
-			header,
-			...options,
-			cell: React.memo(({ getValue, row, column }) => (
-				<EditableCell
-					value={getValue()}
-					rowIndex={row.index}
-					columnId={column.id}
-					onChange={handleCellChange}
-					options={inputOptions}
-				/>
-			)),
-		}),
-		[],
-	);
+	// const editableColumn = React.useCallback(
+	// 	({ accessorKey, header, inputOptions = {}, options = {} }) => ({
+	// 		accessorKey,
+	// 		header,
+	// 		...options,
+	// 		cell: React.memo(({ getValue, row, column }) => (
+	// 			<EditableCell
+	// 				value={getValue()}
+	// 				rowIndex={row.index}
+	// 				columnId={column.id}
+	// 				onChange={handleCellChange}
+	// 				options={inputOptions}
+	// 			/>
+	// 		)),
+	// 	}),
+	// 	[],
+	// );
 
 	const handleCellChange = useCallback((rowIndex, columnId, value) => {
 		setData((prevData) => {
@@ -377,45 +244,45 @@ export default function F3List() {
 		});
 	}, []);
 
-	const dateTimeColumn = React.useCallback(
-		(accessorKey, header, options = {}) => ({
-			accessorKey: accessorKey,
-			header: header,
-			...options,
-			cell: ({ getValue, row, column }) => (
-				<DateCell
-					value={getValue()}
-					rowIndex={row.index}
-					columnId={column.id}
-					onChange={handleCellChange}
-				/>
-			),
-		}),
-		[handleCellChange],
-	);
+	// const dateTimeColumn = React.useCallback(
+	// 	(accessorKey, header, options = {}) => ({
+	// 		accessorKey: accessorKey,
+	// 		header: header,
+	// 		...options,
+	// 		cell: ({ getValue, row, column }) => (
+	// 			<DateCell
+	// 				value={getValue()}
+	// 				rowIndex={row.index}
+	// 				columnId={column.id}
+	// 				onChange={handleCellChange}
+	// 			/>
+	// 		),
+	// 	}),
+	// 	[handleCellChange],
+	// );
 
-	const dateColumn = React.useCallback(
-		(accessorKey, header, options = {}) => ({
-			accessorKey: accessorKey,
-			header: header,
-			...options,
-			cell: ({ getValue, row, column }) => (
-				<DateCell
-					value={getValue()}
-					rowIndex={row.index}
-					columnId={column.id}
-					onChange={handleCellChange}
-					options={{
-						dateFormat: "yyyy-MM-dd",
-						showTimeSelect: false,
-						timeFormat: null,
-						timeIntervals: null,
-					}}
-				/>
-			),
-		}),
-		[handleCellChange],
-	);
+	// const dateColumn = React.useCallback(
+	// 	(accessorKey, header, options = {}) => ({
+	// 		accessorKey: accessorKey,
+	// 		header: header,
+	// 		...options,
+	// 		cell: ({ getValue, row, column }) => (
+	// 			<DateCell
+	// 				value={getValue()}
+	// 				rowIndex={row.index}
+	// 				columnId={column.id}
+	// 				onChange={handleCellChange}
+	// 				options={{
+	// 					dateFormat: "yyyy-MM-dd",
+	// 					showTimeSelect: false,
+	// 					timeFormat: null,
+	// 					timeIntervals: null,
+	// 				}}
+	// 			/>
+	// 		),
+	// 	}),
+	// 	[handleCellChange],
+	// );
 
 	const statusColumn = React.useMemo(
 		() => ({
@@ -423,33 +290,27 @@ export default function F3List() {
 			header: "Status",
 			size: 200,
 			cell: React.memo(({ getValue, row, column }) => {
+				const value = getValue();
+				const isShipped = value === "SHIPPED";
+
 				return (
-					<StatusCell
-						value={getValue()}
-						rowIndex={row.index}
-						columnId={column.id}
-						onChange={handleCellChange}
-					/>
+					<div className="w-full">
+						<DropdownCell
+							statusOptions={statusOptions}
+							value={value}
+							rowIndex={row.index}
+							columnId={column.id}
+							onChange={handleCellChange}
+							buttonClassname={
+								isShipped ? "text-neutral bg-green-300 rounded-none" : ""
+							}
+						/>
+					</div>
 				);
 			}),
 		}),
 		[],
 	);
-
-	const handleResetChanges = () => {
-		if (Object.keys(editedRows).length === 0) {
-			alert("No changes to reset.");
-			return;
-		}
-
-		if (!confirm("Are you sure you want to discard all changes?")) return;
-
-		setEditedRows({});
-
-		// Reset table data to original values
-		const originalRows = Object.values(originalData);
-		setData(originalRows);
-	};
 
 	const packageColumn = React.useMemo(
 		() => ({
@@ -476,238 +337,292 @@ export default function F3List() {
 
 	const columns = React.useMemo(() => {
 		const allColumns = [
-			readOnlyColumns({
+			ReadOnlyColumns({
 				accessorKey: "id",
 				header: "ID",
 				options: { size: 60, enableHiding: false },
 			}),
-			editableColumn({
-				accessorKey: "running_ct",
-				header: "Running CT",
-				inputOptions: { type: "number", step: 0.01 },
-				options: { size: 80 },
-			}),
-
-			dateTimeColumn("date_received", "Date Received", { size: 220 }),
-			editableColumn({
-				accessorKey: "packing_list_srf",
-				header: "Packing List SRF",
-			}),
-			editableColumn({ accessorKey: "po_number", header: "PO Number" }),
-			editableColumn({
-				accessorKey: "machine_number",
-				header: "Machine Number",
-			}),
-			editableColumn({
-				accessorKey: "part_number",
-				header: "Part Number",
-			}),
-			editableColumn({
-				accessorKey: "package_code",
-				header: "Package Code",
-			}),
-			packageColumn,
-			editableColumn({ accessorKey: "lot_number", header: "Lot Number" }),
-			editableColumn({
-				accessorKey: "process_req",
-				header: "Process Requirement",
-			}),
-			editableColumn({
+			// {
+			// 	accessorKey: "running_ct",
+			// 	header: "Running CT",
+			// 	inputOptions: { type: "number", step: 0.01 },
+			// 	size: 100,
+			// },
+			{
+				accessorKey: "date_received",
+				header: "Date Received",
+				size: 260,
+				cell: ({ getValue, row, column }) => (
+					<DateCell
+						dateType={"datetime"}
+						value={getValue()}
+						rowIndex={row.index}
+						columnId={column.id}
+						onChange={handleCellChange}
+					/>
+				),
+			},
+			{
 				accessorKey: "qty",
 				header: "Quantity",
-				inputOptions: { type: "number" },
-			}),
-			editableColumn({
+				type: "number",
+			},
+			{
 				accessorKey: "good",
 				header: "Good",
-				inputOptions: { type: "number" },
-			}),
-			editableColumn({
+				type: "number",
+			},
+			{
 				accessorKey: "rej",
 				header: "Rejected",
-				inputOptions: { type: "number" },
-			}),
-			editableColumn({
+				type: "number",
+			},
+			{
 				accessorKey: "res",
 				header: "Residual",
-				inputOptions: { type: "number" },
-			}),
-			dateColumn("date_commit", "Date Commit"),
-			dateColumn("actual_date_time", "Actual Date/Time"),
+				type: "number",
+			},
+			{
+				accessorKey: "packing_list_srf",
+				header: "Packing List SRF",
+			},
+			{ accessorKey: "po_number", header: "PO Number" },
+			{
+				accessorKey: "machine_number",
+				header: "Machine Number",
+			},
+			{
+				accessorKey: "part_number",
+				header: "Part Number",
+			},
+			{
+				accessorKey: "package_code",
+				header: "Package Code",
+			},
 			statusColumn,
-			editableColumn({ accessorKey: "do_number", header: "DO Number" }),
-			editableColumn({
+			{ accessorKey: "do_number", header: "DO Number" },
+			{
 				accessorKey: "remarks",
 				header: "Remarks",
-				options: { size: 400 },
-			}),
-			editableColumn({
+				size: 600,
+			},
+			{
 				accessorKey: "doable",
 				header: "Doable",
-				inputOptions: { type: "number" },
-				options: { size: 90 },
-			}),
-			editableColumn({
+				type: "number",
+				size: 90,
+			},
+			{
 				accessorKey: "focus_group",
 				header: "Focus Group",
-				options: { size: 100 },
-			}),
-			editableColumn({
+				size: 100,
+			},
+			packageColumn,
+			{ accessorKey: "lot_number", header: "Lot Number" },
+			{
+				accessorKey: "process_req",
+				header: "Process Req.",
+				size: 100,
+			},
+			{
+				accessorKey: "date_commit",
+				header: "Date Commit",
+				cell: ({ getValue, row, column }) => (
+					<DateCell
+						dateType={"date"}
+						value={getValue()}
+						rowIndex={row.index}
+						columnId={column.id}
+						onChange={handleCellChange}
+						options={{
+							dateFormat: "yyyy-MM-dd",
+							showTimeSelect: false,
+							timeFormat: null,
+							timeIntervals: null,
+						}}
+					/>
+				),
+				size: 160,
+			},
+			{
+				accessorKey: "actual_date_time",
+				header: "Actual Date/Time",
+				cell: ({ getValue, row, column }) => (
+					<DateCell
+						dateType={"datetime"}
+						value={getValue()}
+						rowIndex={row.index}
+						columnId={column.id}
+						onChange={handleCellChange}
+						options={{
+							dateFormat: "yyyy-MM-dd",
+							showTimeSelect: false,
+							timeFormat: null,
+							timeIntervals: null,
+						}}
+					/>
+				),
+				size: 260,
+			},
+			{
 				accessorKey: "gap_analysis",
 				header: "Gap Analysis",
-				options: { size: 100 },
-			}),
-			editableColumn({
+				size: 150,
+			},
+			{
 				accessorKey: "cycle_time",
 				header: "Cycle Time",
-				options: { size: 100 },
-			}),
-			readOnlyColumns({
+				size: 100,
+			},
+			ReadOnlyColumns({
 				accessorKey: "imported_by",
 				header: "Imported By",
-				options: { size: 80 },
+				size: 80,
 			}),
-			readOnlyColumns({
+			ReadOnlyColumns({
 				accessorKey: "date_loaded",
 				header: "Date Loaded",
 			}),
-			readOnlyColumns({
+			ReadOnlyColumns({
 				accessorKey: "modified_by",
 				header: "Modified By",
-				options: { size: 80 },
+				size: 80,
 			}),
-			readOnlyColumns({
+			ReadOnlyColumns({
 				accessorKey: "modified_at",
 				header: "Modified At",
-				options: { size: 120 },
+				size: 120,
 			}),
 		];
 
 		if (!hasFullF3Access) {
 			return [
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "id",
 					header: "ID",
 					options: { size: 60, enableHiding: false },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "running_ct",
 					header: "Running CT",
 					inputOptions: { type: "number", step: 0.01 },
 					options: { size: 80 },
 				}),
 
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "date_received",
 					header: "Date Received",
 					options: {
-						size: 220,
+						size: 520,
 					},
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "packing_list_srf",
 					header: "Packing List SRF",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "po_number",
 					header: "PO Number",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "machine_number",
 					header: "Machine Number",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "part_number",
 					header: "Part Number",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "package_code",
 					header: "Package Code",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "package",
 					header: "Package",
 					options: {
 						accessorFn: (row) => row.package?.raw_package ?? "-",
 					},
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "lot_number",
 					header: "Lot Number",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "process_req",
-					header: "Process Requirement",
+					header: "Process Req.",
+					options: {
+						size: 100,
+					},
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "qty",
 					header: "Quantity",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "good",
 					header: "Good",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "rej",
 					header: "Rejected",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "res",
 					header: "Residual",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "date_commit",
 					header: "Date Commit",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "actual_date_time",
 					header: "Actual Date/Time",
 				}),
 				statusColumn,
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "do_number",
 					header: "DO Number",
 				}),
-				editableColumn({
+				{
 					accessorKey: "remarks",
 					header: "Remarks",
-					options: { size: 400 },
-				}),
-				readOnlyColumns({
+					size: 600,
+				},
+				ReadOnlyColumns({
 					accessorKey: "doable",
 					header: "Doable",
 					options: { size: 90 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "focus_group",
 					header: "Focus Group",
 					options: { size: 100 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "gap_analysis",
 					header: "Gap Analysis",
-					options: { size: 100 },
+					options: { size: 150 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "cycle_time",
 					header: "Cycle Time",
 					options: { size: 100 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "imported_by",
 					header: "Imported By",
 					options: { size: 80 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "date_loaded",
 					header: "Date Loaded",
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "modified_by",
 					header: "Modified By",
 					options: { size: 80 },
 				}),
-				readOnlyColumns({
+				ReadOnlyColumns({
 					accessorKey: "modified_at",
 					header: "Modified At",
 					options: { size: 120 },
@@ -729,22 +644,42 @@ export default function F3List() {
 		initialColumnVisibility,
 	);
 
-	const table = useReactTable({
-		data,
+	const { table, data, setData, editedRows, setEditedRows } = useEditableTable(
+		serverF3WipAndOut.data || [],
 		columns,
-		state: {
-			columnVisibility,
-			rowSelection,
-		},
-		enableRowVirtualization: true,
-		meta: { onCellChange: handleCellChange },
-		enableRowSelection: true,
-		enableMultiRowSelection: false,
-		onRowSelectionChange: setRowSelection,
-		defaultColumn: { minSize: 10, maxSize: 1200 },
-		columnResizeMode: "onChange",
-		getCoreRowModel: getCoreRowModel(),
-	});
+	);
+
+	const handleResetChanges = () => {
+		if (Object.keys(editedRows).length === 0) {
+			alert("No changes to reset.");
+			return;
+		}
+
+		if (!confirm("Are you sure you want to discard all changes?")) return;
+
+		setEditedRows({});
+		setChangesToReview([]);
+		const originalRows = Object.values(originalData);
+		console.log("🚀 ~ handleResetChanges ~ originalRows:", originalRows);
+		setData(originalRows);
+	};
+
+	// const table = useReactTable({
+	// 	data,
+	// 	columns,
+	// 	state: {
+	// 		columnVisibility,
+	// 		rowSelection,
+	// 	},
+	// 	enableRowVirtualization: true,
+	// 	meta: { onCellChange: handleCellChange },
+	// 	enableRowSelection: true,
+	// 	enableMultiRowSelection: false,
+	// 	onRowSelectionChange: setRowSelection,
+	// 	defaultColumn: { minSize: 10, maxSize: 1200 },
+	// 	columnResizeMode: "onChange",
+	// 	getCoreRowModel: getCoreRowModel(),
+	// });
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -796,10 +731,6 @@ export default function F3List() {
 		});
 		setMaxItem(maxItem);
 	};
-
-	useEffect(() => {
-		setData(serverF3WipAndOut.data || []);
-	}, [serverF3WipAndOut.data]);
 
 	const refresh = () => {
 		router.reload({
@@ -917,16 +848,16 @@ export default function F3List() {
 	//     [table.getRowModel().rows, editedRows, columnVisibility]
 	// );
 
-	const renderedRows = React.useMemo(
-		() =>
-			table.getRowModel().rows.map((row) => {
-				const rowEditedState = editedRows[row.original.id] || {};
-				return (
-					<TableRow key={row.id} row={row} rowEditedState={rowEditedState} />
-				);
-			}),
-		[table.getRowModel().rows, editedRows, columnVisibility],
-	);
+	// const renderedRows = React.useMemo(
+	// 	() =>
+	// 		table.getRowModel().rows.map((row) => {
+	// 			const rowEditedState = editedRows[row.original.id] || {};
+	// 			return (
+	// 				<TableRow key={row.id} row={row} rowEditedState={rowEditedState} />
+	// 			);
+	// 		}),
+	// 	[table.getRowModel().rows, editedRows, columnVisibility],
+	// );
 
 	const handleF3RawPackageModalSelect = (selectedF3RawPackage) => {
 		if (selectedRowIndex === null) return;
@@ -1002,40 +933,17 @@ export default function F3List() {
 				goToPage={goToPageF3RawPackage}
 			/>
 
-			<div className="">
-				<div
-					className="shadow-lg shadow-black/20 rounded-lg inline-block relative"
-					style={{ ...columnSizeVars, width: table.getTotalSize() }}
-				>
+			<div className="w-full">
+				<div className="shadow-lg w-full shadow-black/20 rounded-lg inline-block relative">
 					{/* Header */}
 					<div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
 						<div className="flex justify-between items-center gap-2 px-2 pt-4">
 							<div className="flex gap-2 sticky left-0 items-center">
 								<div className="w-70">
-									<label className="input ">
-										<svg
-											className="h-[1em] opacity-50"
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 24 24"
-										>
-											<g
-												strokeLinejoin="round"
-												strokeLinecap="round"
-												strokeWidth="2.5"
-												fill="none"
-												stroke="currentColor"
-											>
-												<circle cx="11" cy="11" r="8"></circle>
-												<path d="m21 21-4.3-4.3"></path>
-											</g>
-										</svg>
-										<input
-											type="search"
-											placeholder="search by raw package"
-											value={f3SearchInput}
-											onChange={(e) => setF3SearchInput(e.target.value)}
-										/>
-									</label>
+									<SearchInput
+										initialSearchInput={f3SearchInput}
+										onSearchChange={setF3SearchInput}
+									/>
 								</div>
 
 								<label className="input">
@@ -1050,33 +958,16 @@ export default function F3List() {
 							</div>
 						</div>
 
+						<div className="px-2 w-full">
+							{<BulkErrors errors={mutateF3ErrorData?.data || []} />}
+						</div>
+
 						<div className="flex px-2 justify-between items-center gap-2">
 							<div className="flex gap-2 sticky left-0 items-center">
-								<div className="dropdown dropdown-bottom">
-									<div tabIndex={0} className="btn">
-										{`Show ${maxItem} items`}
-									</div>
-									<ul
-										tabIndex={0}
-										className="p-2 dropdown-content menu bg-base-100 rounded-lg z-1 w-52"
-									>
-										{[10, 25, 50, 100].map((item) => (
-											<li key={item}>
-												<a
-													onClick={() => {
-														changeMaxItemPerPage(item);
-													}}
-													className="flex items-center justify-between"
-												>
-													{item}
-													{maxItem === item && (
-														<span className="font-bold text-green-500">✔</span>
-													)}
-												</a>
-											</li>
-										))}
-									</ul>
-								</div>
+								<MaxItemDropdown
+									maxItem={maxItem}
+									changeMaxItemPerPage={changeMaxItemPerPage}
+								/>
 
 								<MultiSelectSearchableDropdown
 									formFieldName="columns"
@@ -1105,6 +996,7 @@ export default function F3List() {
 										Save Changes
 									</button>
 									<button
+										type="button"
 										className="btn btn-secondary"
 										onClick={handleResetChanges}
 									>
@@ -1133,50 +1025,10 @@ export default function F3List() {
 								/>
 							</div>
 						</div>
-
-						{table.getHeaderGroups().map((headerGroup) => (
-							<div
-								key={headerGroup.id}
-								className="flex shadow-lg -z-10 border border-base-300"
-							>
-								{headerGroup.headers.map((header) => (
-									<div
-										key={header.id}
-										className="-z-10 relative flex items-center border-r border-base-300 px-2 py-1 font-medium group"
-										style={{
-											width: `calc(var(--header-${header.id}-size) * 1px)`,
-										}}
-									>
-										{header.isPlaceholder
-											? null
-											: flexRender(
-													header.column.columnDef.header,
-													header.getContext(),
-												)}
-
-										{/* Resizer */}
-										{header.column.getCanResize() && (
-											<div
-												onDoubleClick={() => header.column.resetSize()}
-												onMouseDown={header.getResizeHandler()}
-												onTouchStart={header.getResizeHandler()}
-												className={`absolute right-0 top-0 h-full w-1 cursor-col-resize bg-base-100 
-                          group-hover:bg-blue-400
-                          ${
-														header.column.getIsResizing() ? "bg-secondary" : ""
-													}`}
-											/>
-										)}
-									</div>
-								))}
-							</div>
-						))}
 					</div>
-
 					{/* Body */}
-					<div className="rounded-lg overflow-x-auto overflow-y-auto">
-						{renderedRows}
-					</div>
+
+					<TanstackTable table={table} />
 
 					<Pagination
 						links={serverF3WipAndOut.links}
@@ -1190,136 +1042,5 @@ export default function F3List() {
 				</div>
 			</div>
 		</div>
-	);
-}
-
-function KeyValueRenderer({ data, showKeys = null, indent = 0 }) {
-	if (data === null || data === undefined) return <div>-</div>;
-
-	const indentationClass = `ml-${indent * 4}`; // Tailwind margin for indent
-
-	if (Array.isArray(data)) {
-		return (
-			<div>
-				{data.map((item, index) => (
-					<KeyValueRenderer
-						key={index}
-						data={item}
-						showKeys={showKeys}
-						indent={indent}
-					/>
-				))}
-			</div>
-		);
-	}
-
-	if (typeof data === "object") {
-		return (
-			<div>
-				{Object.entries(data)
-					.filter(([key]) => !showKeys || showKeys.includes(key))
-					.map(([key, value]) => (
-						<div key={key} className={`${indentationClass} mb-1`}>
-							{typeof value === "object" && value !== null ? (
-								<div>
-									<div className="text-left opacity-75">{key}:</div>
-									<KeyValueRenderer
-										data={value}
-										showKeys={showKeys}
-										indent={indent + 1}
-									/>
-								</div>
-							) : (
-								<div className="flex justify-between">
-									<span className="opacity-75">{key}</span>
-									<span>{value ?? "-"}</span>
-								</div>
-							)}
-						</div>
-					))}
-			</div>
-		);
-	}
-
-	return <div>{data}</div>;
-}
-
-function ChangeReviewModal({ modalID, changes, onClose, onSave, isLoading }) {
-	const groupedChanges = changes.reduce((acc, change) => {
-		if (!acc[change.rowId]) acc[change.rowId] = [];
-		acc[change.rowId].push(change);
-		return acc;
-	}, {});
-
-	return (
-		<dialog
-			id={modalID}
-			// open
-			className="modal"
-		>
-			<div className="modal-box w-11/12 max-w-5xl">
-				<h2 className="font-semibold mb-4">Review Changes</h2>
-
-				<div className="space-y-2 max-h-[70vh] overflow-y-auto">
-					<li className="flex p-3 justify-between  items-center rounded ">
-						<span className="font-medium w-4/12">Keyfield</span>
-						<div className="flex gap-2 w-8/12">
-							<span className="text-red-400 text-right w-1/2">Before</span>
-							<span className="text-green-500 text-right w-1/2">After</span>
-						</div>
-					</li>
-					{Object.entries(groupedChanges).map(([rowId, rowChanges]) => (
-						<div key={rowId} className="border-b border-b-base-300 p-3">
-							<div className="font-medium mb-2">Row ID: {rowId}</div>
-							<ul className="space-y-1">
-								{rowChanges.map((c, idx) => (
-									<li
-										key={idx}
-										className="flex justify-between items-center rounded border-b border-b-base-300"
-									>
-										<span className="font-medium w-4/12">{c.field}</span>
-										<div className="flex justify-between gap-2 w-8/12">
-											<span className="text-red-400 text-right w-1/2">
-												{KeyValueRenderer({
-													data: c.before,
-												})}
-											</span>
-											<span className="text-green-500 text-right w-1/2">
-												{KeyValueRenderer({
-													data: c.after,
-												})}
-											</span>
-										</div>
-									</li>
-								))}
-							</ul>
-						</div>
-					))}
-				</div>
-
-				<div className="mt-4 flex justify-end space-x-2">
-					<button
-						type="button"
-						className="btn px-4 py-2 btn-secondary btn-outline"
-						onClick={onClose}
-					>
-						Cancel
-					</button>
-					<button
-						type="button"
-						className="btn px-4 py-2 btn-primary"
-						onClick={onSave}
-						disabled={isLoading}
-					>
-						{isLoading && <span className="loading loading-spinner"></span>}
-						<span className="pl-1">Save Changes</span>
-					</button>
-				</div>
-			</div>
-
-			<form method="dialog" className="modal-backdrop">
-				<button>close</button>
-			</form>
-		</dialog>
 	);
 }
