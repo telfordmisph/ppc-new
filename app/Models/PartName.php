@@ -9,6 +9,7 @@ class PartName extends Model
 {
     use HasFactory;
 
+
     protected $table = 'ppc_partnamedb';
 
     protected $primaryKey = 'ppc_partnamedb_id';

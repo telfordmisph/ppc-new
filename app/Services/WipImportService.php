@@ -7,6 +7,7 @@ use App\Repositories\F1F2OutRepository;
 use App\Services\ExcelValidatorService;
 use App\Services\PackageCapacityService;
 use App\Repositories\F3RawPackageRepository;
+use App\Repositories\PartnameRepository;
 use App\Repositories\ImportTraceRepository;
 use App\Repositories\PickUpRepository;
 use App\Traits\ParseDateTrait;
@@ -31,6 +32,7 @@ class WipImportService
   protected $packageCapacityService;
   protected $f1f2WipRepository;
   protected $importTraceRepository;
+  protected $partnameRepository;
   protected $f1f2WipOutRepository;
   protected $f3WipRepository;
   protected $pickUpRepository;
@@ -69,6 +71,7 @@ class WipImportService
   public function __construct(
     F1F2WipRepository $f1f2WipRepository,
     F1F2OutRepository $f1f2WipOutRepository,
+    PartnameRepository $partnameRepository,
     PickUpRepository $pickUpRepository,
     F3WipRepository $f3WipRepository,
     F3OutRepository $f3OutRepository,
@@ -77,6 +80,7 @@ class WipImportService
     PackageCapacityService $packageCapacityService,
     ExcelValidatorService $fileValidator
   ) {
+    $this->partnameRepository = $partnameRepository;
     $this->pickUpRepository = $pickUpRepository;
     $this->f1f2WipRepository = $f1f2WipRepository;
     $this->f1f2WipOutRepository = $f1f2WipOutRepository;
@@ -421,6 +425,7 @@ class WipImportService
     $map_headers = $headersData['map_headers'];
 
     $chunks = [];
+    $ignoredRows = [];
     $successCount = 0;
 
     try {
@@ -434,6 +439,12 @@ class WipImportService
         $rowData = $this->extractRowData($map_headers, $row, $found_headers);
 
         $rowData['ADDED_BY'] = $importedBy;
+
+        $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
+        if (!$partnameID) {
+          $ignoredRows[] = $rowData;
+          continue;
+        }
 
         $chunks[] = $rowData;
 
@@ -456,6 +467,8 @@ class WipImportService
         'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
           'total' => $successCount,
+          'ignored_unknown_partname' => $ignoredRows,
+          'ignored_unknown_partname_count' => count($ignoredRows),
         ]
       ];
     } catch (Exception $e) {
@@ -482,7 +495,41 @@ class WipImportService
 
     $chunks = [];
     $ignoredRows = [];
+    $ignoredPartnameRows = [];
     $successCount = 0;
+    $hasUnknownRows = false;
+
+    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+      if ($this->isEmptyRow($row)) continue;
+
+      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+
+      $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
+      $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
+
+      if (!$partnameID) {
+        $rowData["Factory"] = "F3";
+        $ignoredPartnameRows[] = $rowData;
+      }
+
+      if (!$f3RawPackage) {
+        $ignoredRows[] = $rowData;
+        $hasUnknownRows = true;
+      }
+    }
+
+    if ($hasUnknownRows) {
+      return [
+        'status' => 'error',
+        'message' => 'File contains unknown packages. No rows were imported. Try again after resolving the issues.',
+        'data' => [
+          'ignored_unknown_package' => $ignoredRows,
+          'ignored_unknown_package_count' => count($ignoredRows),
+          'ignored_unknown_partname' => $ignoredPartnameRows,
+          'ignored_unknown_partname_count' => count($ignoredPartnameRows),
+        ]
+      ];
+    }
 
     try {
       DB::beginTransaction();
@@ -494,14 +541,8 @@ class WipImportService
 
         $rowData = $this->extractRowData($map_headers, $row, $found_headers);
 
-        $rowData['ADDED_BY'] = $importedBy;
-
         $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
-        if (!$f3RawPackage) {
-          $ignoredRows[] = $rowData;
-          continue;
-        }
-
+        $rowData['ADDED_BY'] = $importedBy;
         $rowData['PACKAGE'] = $f3RawPackage->package_name;
         $rowData['LC'] = $f3RawPackage->lead_count;
         $chunks[] = $rowData;
@@ -524,9 +565,9 @@ class WipImportService
         'status' => 'success',
         'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
+          'ignored_unknown_partname' => $ignoredPartnameRows,
+          'ignored_unknown_partname_count' => count($ignoredPartnameRows),
           'total' => $successCount,
-          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-          'ignored_unknown_package_count' => count($ignoredRows),
         ]
       ];
     } catch (Exception $e) {
@@ -764,6 +805,7 @@ class WipImportService
           $ignoredRows[] = $rowData;
           continue;
         }
+
         $rowData['package'] = $packageID;
         $chunksWip[] = $rowData;
 

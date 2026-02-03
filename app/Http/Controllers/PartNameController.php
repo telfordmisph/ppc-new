@@ -23,9 +23,9 @@ class PartNameController extends Controller
         'added_by',
     ];
 
-    private function validatePart(Request $request, $id = null)
+    private function rules(): array
     {
-        return $request->validate([
+        return [
             'Partname' => 'required|string|max:45',
             'Focus_grp' => 'required|string|max:45',
             'Factory' => 'required|string|max:10',
@@ -34,27 +34,58 @@ class PartNameController extends Controller
             'Leadcount' => 'required|string|max:45',
             'Bodysize' => 'required|string|max:45',
             'Packagecategory' => 'required|string|max:45',
-        ]);
+        ];
     }
 
+    private function validateParts(Request $request): array
+    {
+        $data = $request->all();
+
+        if (isset($data[0]) && is_array($data[0])) {
+            return $request->validate([
+                '*.Partname' => 'required|string|max:45',
+                '*.Focus_grp' => 'required|string|max:45',
+                '*.Factory' => 'required|string|max:10',
+                '*.PL' => 'required|in:PL1,PL6',
+                '*.Packagename' => 'required|string|max:45',
+                '*.Leadcount' => 'required|string|max:45',
+                '*.Bodysize' => 'required|string|max:45',
+                '*.Packagecategory' => 'required|string|max:45',
+            ]);
+        }
+
+        return $request->validate($this->rules());
+    }
 
     public function store(Request $request)
     {
-        $validated = $this->validatePart($request);
+        $user = session('emp_data');
+        $addedBy = $user['emp_id'] ?? null;
 
-        $part = PartName::create($validated);
+        $validated = $this->validateParts($request);
+
+        $records = isset($validated[0]) ? $validated : [$validated];
+
+        $records = array_map(function ($part) use ($addedBy) {
+            return array_merge($part, [
+                'added_by' => $addedBy,
+            ]);
+        }, $records);
+
+        PartName::insert($records);
 
         return response()->json([
-            'message' => 'Part added successfully',
-            'data' => $part,
+            'message' => 'Part(s) added successfully',
+            'data' => $records,
         ]);
     }
+
 
     public function update(Request $request, $id)
     {
         $part = PartName::findOrFail($id);
 
-        $validated = $this->validatePart($request, $id);
+        $validated = $this->validateParts($request);
         $part->update($validated);
 
         return response()->json([
@@ -72,6 +103,29 @@ class PartNameController extends Controller
             'part' => $part,
         ]);
     }
+
+    public function insertMany(Request $request)
+    {
+        $parts = $request->input('parts', []);
+
+        $parts = array_map(function ($p) {
+            return [
+                'Partname' => $p['PARTNAME'] ?? '',
+                'Focus_grp' => $p['Focus_grp'] ?? '',
+                'Factory' => $p['Factory'] ?? '',
+                'PL' => $p['PL'] ?? 'PL1',
+                'Packagename' => $p['Packagename'] ?? '',
+                'Leadcount' => $p['Leadcount'] ?? '',
+                'Bodysize' => $p['Bodysize'] ?? '',
+                'Packagecategory' => $p['Packagecategory'] ?? '',
+            ];
+        }, $parts);
+
+        return Inertia::render('PartNameMultiUpsert', [
+            'parts' => $parts,
+        ]);
+    }
+
 
     public function destroy($id)
     {

@@ -79,6 +79,9 @@ Route::prefix('partname')->name('partname.')->group(function () {
     Route::middleware(AuthMiddleware::class . ':partname_insert')->group(function () {
         Route::get('/create', [PartNameController::class, 'upsert'])->name('create');
     });
+    Route::middleware(AuthMiddleware::class . ':partname_insert')->group(function () {
+        Route::get('/create-many', [PartNameController::class, 'insertMany'])->name('createMany');
+    });
     Route::middleware(AuthMiddleware::class . ':partname_edit')->group(function () {
         Route::get('/{id}/edit', [PartNameController::class, 'upsert'])->name('edit');
     });
@@ -130,6 +133,9 @@ Route::prefix('f3')->name('f3.')->group(function () {
         });
         Route::middleware(AuthMiddleware::class . ':f3_raw_package_insert')->group(function () {
             Route::get('/create', [F3RawPackageController::class, 'upsert'])->name('create');
+        });
+        Route::middleware(AuthMiddleware::class . ':f3_raw_package_insert')->group(function () {
+            Route::get('/create-many', [F3RawPackageController::class, 'insertMany'])->name('createMany');
         });
     });
 });
