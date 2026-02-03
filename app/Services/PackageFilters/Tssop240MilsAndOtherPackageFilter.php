@@ -21,8 +21,8 @@ class Tssop240MilsAndOtherPackageFilter implements PackageFilterStrategy
         })
           ->orWhere(function ($q) {
             // Other packages
-            $q->whereIn('f3_pkg.package_name', $this->package)
-              ->where('f3_pkg.package_name', '!=', 'TSSOP');
+            $q->whereIn('f3_pkg.package_name', $this->package);
+            // ->where('f3_pkg.package_name', '!=', 'TSSOP');
           });
       });
   }

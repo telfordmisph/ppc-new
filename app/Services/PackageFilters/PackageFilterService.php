@@ -65,11 +65,8 @@ class PackageFilterService
       return new Tssop240MilsSpecificPackageFilter();
     }
 
-    // Log::info("zzzzzzzzzzzzzzzzzzz and others package names: " . json_encode($packageNames));
     if (($factories === ["F3"]) && $this->hasSpecificAndAtLeastOneOther($packageNames, $this->tssop240Mils)
     ) {
-      // specific TSSOP (240 mils) and others
-      // Log::info("Specific TSSOP (240 mils) and others package names: " . json_encode($packageNames));
       return new Tssop240MilsAndOtherPackageFilter($packageNames);
     }
 

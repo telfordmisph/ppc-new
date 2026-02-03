@@ -439,19 +439,19 @@ class WipService
 
     $f1_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startDate, $endDate);
 
     $overall = MergeAndAggregate::mergeAndAggregate([$f1_total_out, $f2_total_out, $f3_total_out], ['package']);
 
     $f1_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startDate, $endDate);
 
     $overall_pl1 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl1, $f2_total_out_pl1, $f3_total_out_pl1], ['package']);
 
     $f1_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startDate, $endDate);
     $overall_pl6 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl6, $f2_total_out_pl6, $f3_total_out_pl6], ['package']);
 
     return response()->json([
