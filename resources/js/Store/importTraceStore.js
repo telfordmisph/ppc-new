@@ -1,135 +1,152 @@
 import { create } from "zustand";
 
 export const useImportTraceStore = create((set, get) => {
-  let abortController = null;
+	let abortController = null;
 
-  const buildUrlWithParams = (baseUrl, params = { }) => {
-    const query = new URLSearchParams(params).toString();
-    return query ? `${baseUrl}?${query}` : baseUrl;
-  };
+	const buildUrlWithParams = (baseUrl, params = {}) => {
+		const query = new URLSearchParams(params).toString();
+		return query ? `${baseUrl}?${query}` : baseUrl;
+	};
 
-  return {
-    data: {
-      f1f2_wip: null,
-      f1f2_out: null,
-      f2_wip: null,
-      f2_out: null,
-      f3: null,
-      capacity: null,
-      pickUp: null,
-      f3_pickup: null,
-    },
-    isLoaded: false,
-    isLoading: false,
-    errorMessage: null,
+	return {
+		data: {
+			f1f2_wip: null,
+			f1f2_out: null,
+			f2_wip: null,
+			f2_out: null,
+			f3: null,
+			capacity: null,
+			pickUp: null,
+			f3_pickup: null,
+		},
+		isLoaded: false,
+		isLoading: false,
+		errorMessage: null,
 
-    async fetchAllImports(params = {}) {
-      if (get().isLoaded) {
-        return;
-      }
-      if (abortController) abortController.abort();
-      const controller = new AbortController();
-      abortController = controller;
-      set({ isLoading: true, errorMessage: null });
-      
-      try {
-        const url = buildUrlWithParams(route("api.import.trace.getAllLatestImports"), params);
-        const token = localStorage.getItem("authify-token");
-        const response = await fetch(url, { method: "GET", signal: abortController.signal, headers: {...(token ? { Authorization: `Bearer ${token}` } : {}),} });
-        const result = await response.json();
+		async fetchAllImports(params = {}) {
+			if (get().isLoaded) {
+				return;
+			}
+			if (abortController) abortController.abort();
+			const controller = new AbortController();
+			abortController = controller;
+			set({ isLoading: true, errorMessage: null });
 
-        if (!response.ok || (result && result.status === "error")) {
-          throw new Error(result?.message || `HTTP error: ${response.status}`);
-        }
+			try {
+				const url = buildUrlWithParams(
+					route("api.import.trace.getAllLatestImports"),
+					params,
+				);
+				const token = localStorage.getItem("authify-token");
+				const response = await fetch(url, {
+					method: "GET",
+					signal: abortController.signal,
+					headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+				});
+				const result = await response.json();
 
-        if (controller === abortController) {
-          set({ data: { ...get().data, ...result } });
-        }
-      } catch (err) {
-        if (err.name !== "AbortError") set({ errorMessage: err.message });
-      } finally {
-        if (controller === abortController) set({ isLoading: false });
-      }
-    },
+				if (!response.ok || (result && result.status === "error")) {
+					throw new Error(result?.message || `HTTP error: ${response.status}`);
+				}
 
-    async fetchImportByType(type, params = {}) {
-      if (abortController) abortController.abort();
-      const controller = new AbortController();
-      abortController = controller;
-      set({ isLoading: true, errorMessage: null });
+				if (controller === abortController) {
+					set({ data: { ...get().data, ...result } });
+				}
+			} catch (err) {
+				if (err.name !== "AbortError") set({ errorMessage: err.message });
+			} finally {
+				if (controller === abortController) set({ isLoading: false });
+			}
+		},
 
-      try {
-        const url = buildUrlWithParams(route("api.import.trace.getImport", type), params);
-        const token = localStorage.getItem("authify-token");
-        const response = await fetch(url, { 
-          method: "GET", 
-          signal: abortController.signal, 
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        const result = await response.json();
+		async fetchImportByType(type, params = {}) {
+			if (abortController) abortController.abort();
+			const controller = new AbortController();
+			abortController = controller;
+			set({ isLoading: true, errorMessage: null });
 
-        if (!response.ok || (result && result.status === "error")) {
-          throw new Error(result?.message || `HTTP error: ${response.status}`);
-        }
+			try {
+				const url = buildUrlWithParams(
+					route("api.import.trace.getImport", type),
+					params,
+				);
+				const token = localStorage.getItem("authify-token");
+				const response = await fetch(url, {
+					method: "GET",
+					signal: abortController.signal,
+					headers: {
+						...(token ? { Authorization: `Bearer ${token}` } : {}),
+					},
+				});
+				const result = await response.json();
 
-        if (controller === abortController) {
-          set((state) => ({
-            data: { ...state.data, [type]: result },
-          }));
-          set({ isLoaded: true });
-        }
-      } catch (err) {
-        if (err.name !== "AbortError") set({ errorMessage: err.message });
-      } finally {
-        if (controller === abortController) set({ isLoading: false });
-      }
-    },
+				if (!response.ok || (result && result.status === "error")) {
+					throw new Error(result?.message || `HTTP error: ${response.status}`);
+				}
 
-    async upsertImport(type, payload = {}) {
-      if (abortController) abortController.abort();
-      const controller = new AbortController();
-      abortController = controller;
-      set({ isLoading: true, errorMessage: null });
+				if (controller === abortController) {
+					set((state) => ({
+						data: { ...state.data, [type]: result },
+					}));
+					set({ isLoaded: true });
+				}
+			} catch (err) {
+				if (err.name !== "AbortError") set({ errorMessage: err.message });
+			} finally {
+				if (controller === abortController) set({ isLoading: false });
+			}
+		},
 
-      try {
-        const token = localStorage.getItem("authify-token");
-        const url = route("api.import.trace.upsertImport", type);
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
+		async upsertImport(type, payload = {}) {
+			if (abortController) abortController.abort();
+			const controller = new AbortController();
+			abortController = controller;
+			set({ isLoading: true, errorMessage: null });
 
-        const result = await response.json();
+			try {
+				const token = localStorage.getItem("authify-token");
+				const url = route("api.import.trace.upsertImport", type);
+				const response = await fetch(url, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						...(token ? { Authorization: `Bearer ${token}` } : {}),
+					},
+					body: JSON.stringify(payload),
+					signal: controller.signal,
+				});
 
-        if (!response.ok || (result && result.status === "error")) {
-          throw new Error(result?.message || `HTTP error: ${response.status}`);
-        }
+				const result = await response.json();
 
-        if (controller === abortController) {
-          set((state) => ({
-            data: {
-              ...state.data,
-              [type]: { ...state.data[type], ...payload, latest_import: new Date().toISOString() },
-            },
-          }));
-        }
-      } catch (err) {
-        if (err.name !== "AbortError") set({ errorMessage: err.message });
-      } finally {
-        if (controller === abortController) set({ isLoading: false });
-      }
-    },
+				if (!response.ok || (result && result.status === "error")) {
+					throw new Error(result?.message || `HTTP error: ${response.status}`);
+				}
 
-    abortFetch() {
-      if (abortController) {
-        abortController.abort();
-        abortController = null;
-        set({ isLoading: false });
-      }
-    },
-  };
+				if (controller === abortController) {
+					set((state) => ({
+						data: {
+							...state.data,
+							[type]: {
+								...state.data[type],
+								...payload,
+								latest_import: new Date().toISOString(),
+							},
+						},
+					}));
+				}
+			} catch (err) {
+				if (err.name !== "AbortError") set({ errorMessage: err.message });
+			} finally {
+				if (controller === abortController) set({ isLoading: false });
+			}
+		},
+
+		abortFetch() {
+			if (abortController) {
+				abortController.abort();
+				abortController = null;
+				set({ isLoading: false });
+			}
+		},
+	};
 });

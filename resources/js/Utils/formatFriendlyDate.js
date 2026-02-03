@@ -6,42 +6,42 @@
  * @returns {string} Human-readable date
  */
 function formatFriendlyDate(date, includeTime = false) {
-    if (!date) return ""; // handle null or undefined
+	if (!date) return ""; // handle null or undefined
 
-    let d;
+	let d;
 
-    if (typeof date === "string") {
-        // If format is YYYY-MM-DD, replace "-" with "/" for safe parsing in all browsers
-        if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            d = new Date(date.replace(/-/g, "/"));
-        } else {
-            d = new Date(date);
-        }
-    } else if (date instanceof Date) {
-        d = date;
-    } else {
-        return ""; // unsupported type
-    }
+	if (typeof date === "string") {
+		// If format is YYYY-MM-DD, replace "-" with "/" for safe parsing in all browsers
+		if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+			d = new Date(date.replace(/-/g, "/"));
+		} else {
+			d = new Date(date);
+		}
+	} else if (date instanceof Date) {
+		d = date;
+	} else {
+		return ""; // unsupported type
+	}
 
-    if (isNaN(d)) return ""; // handle invalid dates
+	if (isNaN(d)) return ""; // handle invalid dates
 
-    if (includeTime) {
-        return d.toLocaleString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-        })
-    }
+	if (includeTime) {
+		return d.toLocaleString(undefined, {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+			hour12: true,
+		});
+	}
 
-    return d.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
+	return d.toLocaleDateString(undefined, {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+	});
 }
 
 export default formatFriendlyDate;

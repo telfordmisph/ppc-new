@@ -7,25 +7,25 @@
  * @returns {Array} - New array with summed objects per group key.
  */
 export function sumByKey(data = [], groupKey, excludeKeys = []) {
-  if (!Array.isArray(data) || !groupKey) return [];
+	if (!Array.isArray(data) || !groupKey) return [];
 
-  const grouped = data.reduce((acc, obj) => {
-    const key = obj[groupKey];
-    if (!key) return acc;
+	const grouped = data.reduce((acc, obj) => {
+		const key = obj[groupKey];
+		if (!key) return acc;
 
-    if (!acc[key]) {
-      acc[key] = { [groupKey]: key };
-    }
+		if (!acc[key]) {
+			acc[key] = { [groupKey]: key };
+		}
 
-    for (const [prop, value] of Object.entries(obj)) {
-      if (prop === groupKey || excludeKeys.includes(prop)) continue;
+		for (const [prop, value] of Object.entries(obj)) {
+			if (prop === groupKey || excludeKeys.includes(prop)) continue;
 
-      const num = Number(value) || 0;
-      acc[key][prop] = (acc[key][prop] || 0) + num;
-    }
+			const num = Number(value) || 0;
+			acc[key][prop] = (acc[key][prop] || 0) + num;
+		}
 
-    return acc;
-  }, {});
+		return acc;
+	}, {});
 
-  return Object.values(grouped);
+	return Object.values(grouped);
 }

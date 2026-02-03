@@ -23,73 +23,54 @@
  * @returns {string} A formatted string representing the shortened number.
  */
 const formatAbbreviateNumber = (num) => {
-  const absNum = Math.abs(num);
+	const absNum = Math.abs(num);
 
-  if (absNum < 1_000) return num.toLocaleString();
+	if (absNum < 1_000) return num.toLocaleString();
 
-  const units = [
-    { value: 1_000_000_000_000_000, symbol: "Q" }, // Quadrillion
-    { value: 1_000_000_000_000, symbol: "T" },     // Trillion
-    { value: 1_000_000_000, symbol: "B" },         // Billion
-    { value: 1_000_000, symbol: "M" },             // Million
-    { value: 1_000, symbol: "K" },                 // Thousand
-  ];
+	const units = [
+		{ value: 1_000_000_000_000_000, symbol: "Q" }, // Quadrillion
+		{ value: 1_000_000_000_000, symbol: "T" }, // Trillion
+		{ value: 1_000_000_000, symbol: "B" }, // Billion
+		{ value: 1_000_000, symbol: "M" }, // Million
+		{ value: 1_000, symbol: "K" }, // Thousand
+	];
 
-  for (let i = 0; i < units.length; i++) {
-    const unit = units[i];
+	for (let i = 0; i < units.length; i++) {
+		const unit = units[i];
 
-    // Cap extremely large numbers at 999Q+
-    if (absNum >= 999_000_000_000_000_000) {
-      return (num < 0 ? "-" : "") + "999Q+";
-    }
+		// Cap extremely large numbers at 999Q+
+		if (absNum >= 999_000_000_000_000_000) {
+			return (num < 0 ? "-" : "") + "999Q+";
+		}
 
-    if (absNum >= unit.value) {
-      const v = num / unit.value;
-      const rounded = Math.round(v * 10) / 10;
+		if (absNum >= unit.value) {
+			const v = num / unit.value;
+			const rounded = Math.round(v * 10) / 10;
 
-      // Promote to next unit if rounding exceeds 999.9 of current
-      if (rounded >= 1000 && i > 0) {
-        const higherUnit = units[i - 1];
-        const hv = num / higherUnit.value;
-        const hrounded = Math.round(hv * 10) / 10;
-        const cleanH = hrounded % 1 === 0 ? Math.round(hrounded) : hrounded;
-        return cleanH + higherUnit.symbol;
-      }
+			// Promote to next unit if rounding exceeds 999.9 of current
+			if (rounded >= 1000 && i > 0) {
+				const higherUnit = units[i - 1];
+				const hv = num / higherUnit.value;
+				const hrounded = Math.round(hv * 10) / 10;
+				const cleanH = hrounded % 1 === 0 ? Math.round(hrounded) : hrounded;
+				return cleanH + higherUnit.symbol;
+			}
 
-      const clean = rounded % 1 === 0 ? Math.round(rounded) : rounded;
-      return clean + unit.symbol;
-    }
-  }
+			const clean = rounded % 1 === 0 ? Math.round(rounded) : rounded;
+			return clean + unit.symbol;
+		}
+	}
 
-  return num.toLocaleString();
+	return num.toLocaleString();
 };
 
 export default formatAbbreviateNumber;
 
-
 const testCases = [
-  0,
-  12,
-  999,
-  1000,
-  1523,
-  15_230,
-  999_999,
-  1_000_000,
-  1_234_567,
-  9_876_543,
-  123_456_789,
-  999_999_999,
-  1_000_000_000,
-  -1_000_000_000,
-  2_345_678_901,
-  45_678_901_234,
-  999_999_999_999,
-  1_000_000_000_000,
-  5_678_901_234_567,
-  12_345_678_901_234,
-  999_999_999_999_999,
-  1_000_000_000_000_000
+	0, 12, 999, 1000, 1523, 15_230, 999_999, 1_000_000, 1_234_567, 9_876_543,
+	123_456_789, 999_999_999, 1_000_000_000, -1_000_000_000, 2_345_678_901,
+	45_678_901_234, 999_999_999_999, 1_000_000_000_000, 5_678_901_234_567,
+	12_345_678_901_234, 999_999_999_999_999, 1_000_000_000_000_000,
 ];
 
 // testCases.forEach((num, index) => {

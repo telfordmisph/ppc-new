@@ -19,35 +19,31 @@
  */
 
 function sortObjectArray(
-  data = [],
-  sorter = { keys: ['total wip'], order: 'asc', compute: null }
+	data = [],
+	sorter = { keys: ["total wip"], order: "asc", compute: null },
 ) {
-  if (!Array.isArray(data)) return [];
+	if (!Array.isArray(data)) return [];
 
-  const {
-    keys = ['total wip'],
-    order = 'asc',
-    compute = null,
-  } = sorter;
+	const { keys = ["total wip"], order = "asc", compute = null } = sorter;
 
-  return [...data].sort((a, b) => {
-    let valA, valB;
+	return [...data].sort((a, b) => {
+		let valA, valB;
 
-    // 1. Use compute if provided
-    if (typeof compute === 'function') {
-      valA = compute(a);
-      valB = compute(b);
-    } else {
-      // 2. Otherwise, compute value from one or more keys
-      valA = keys.reduce((sum, key) => sum + Number(a[key] ?? 0), 0);
-      valB = keys.reduce((sum, key) => sum + Number(b[key] ?? 0), 0);
-    }
+		// 1. Use compute if provided
+		if (typeof compute === "function") {
+			valA = compute(a);
+			valB = compute(b);
+		} else {
+			// 2. Otherwise, compute value from one or more keys
+			valA = keys.reduce((sum, key) => sum + Number(a[key] ?? 0), 0);
+			valB = keys.reduce((sum, key) => sum + Number(b[key] ?? 0), 0);
+		}
 
-    // 3. Perform comparison
-    if (valA < valB) return order === 'asc' ? -1 : 1;
-    if (valA > valB) return order === 'asc' ? 1 : -1;
-    return 0;
-  });
+		// 3. Perform comparison
+		if (valA < valB) return order === "asc" ? -1 : 1;
+		if (valA > valB) return order === "asc" ? 1 : -1;
+		return 0;
+	});
 }
 
 export default sortObjectArray;
