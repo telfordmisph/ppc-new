@@ -28,11 +28,10 @@ trait ShiftObjectDates
     }
 
     if ($trend instanceof Collection) {
-      $trend->each(function ($item) {
+      return $trend->transform(function ($item) {
         $this->shiftItemDay($item, -1);
+        return $item;
       });
-
-      return $trend;
     }
 
     foreach ($trend as &$item) {

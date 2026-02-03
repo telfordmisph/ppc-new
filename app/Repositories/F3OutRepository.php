@@ -96,7 +96,7 @@ class F3OutRepository
       $results = $results->orderByDesc('total_outs')
         ->get();
 
-      $this->shiftOneDayBack($results, $period);
+      // $this->shiftOneDayBack($results, $period);
 
       $trends['overall_trend'] = $results;
       $trends['f3_trend'] = $results;
