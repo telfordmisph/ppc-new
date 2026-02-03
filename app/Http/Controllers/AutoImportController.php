@@ -124,27 +124,6 @@ class AutoImportController extends Controller
         ]);
     }
 
-    public function importF3WIP(Request $request)
-    {
-        $user = $request->user();
-        $empId = $request->get('emp_id');
-
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx|max:10240',
-        ]);
-
-        $file = $request->file('file');
-
-        $result = $this->wipImportService->importF3WIP($empId, $file);
-
-        return response()->json([
-            'status' => $result['status'] ?? 'success',
-            'message' => $result['message'] ?? 'Import completed',
-            'data' => $result['data'] ?? [],
-        ]);
-    }
-
     public function importPickUp(Request $request)
     {
         $user = $request->user();
@@ -177,27 +156,6 @@ class AutoImportController extends Controller
         $file = $request->file('file');
 
         $result = $this->wipImportService->importF3PickUp($empId, $file);
-
-        return response()->json([
-            'status' => $result['status'] ?? 'success',
-            'message' => $result['message'] ?? 'Import completed',
-            'data' => $result['data'] ?? [],
-        ]);
-    }
-
-    public function importF3OUTS(Request $request)
-    {
-        $user = $request->user();
-        $empId = $request->get('emp_id');
-
-
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx|max:10240',
-        ]);
-
-        $file = $request->file('file');
-
-        $result = $this->wipImportService->importF3OUT($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

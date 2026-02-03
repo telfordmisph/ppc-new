@@ -1,20 +1,17 @@
-import Modal from "@/Components/Modal";
-import React, { useEffect, useRef, useState } from "react";
-import { useMutation } from "@/Hooks/useMutation";
-import { runAsyncToast } from "@/Utils/runAsyncToast";
-import ImportPageLayout from "../../Layouts/ImportPageLayout";
-import { F3_PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
-import ImportLabel from "../../Components/lastImportLabel";
-import { useImportTraceStore } from "@/Store/importTraceStore";
-import { useDownloadFile } from "@/Hooks/useDownload";
-import { Link } from "@inertiajs/react";
-import { FaLink } from "react-icons/fa6";
+import Modal from "@/Components/Modal";
 import DataTable from "@/Components/Table";
-import { MdWarning } from "react-icons/md";
-import { Inertia } from "@inertiajs/inertia";
-import { FaExternalLinkAlt } from "react-icons/fa";
+import { F3_PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
+import { useDownloadFile } from "@/Hooks/useDownload";
+import { useMutation } from "@/Hooks/useMutation";
+import { useImportTraceStore } from "@/Store/importTraceStore";
+import { runAsyncToast } from "@/Utils/runAsyncToast";
+import ImportLabel from "../../Components/lastImportLabel";
+import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
 const F3PickUpImportPage = () => {
 	const {
@@ -96,16 +93,41 @@ const F3PickUpImportPage = () => {
 		}
 	}, [importF3PickUpErrorMessage]);
 
-	const uniquePackagesMap = new Map();
+	// const uniquePackagesMap = new Map();
 
-	for (const item of importF3PickUpErrorData?.data?.ignored_unknown_package ??
-		[]) {
-		if (!uniquePackagesMap.has(item.raw_package)) {
-			uniquePackagesMap.set(item.raw_package, item);
+	// for (const item of importF3PickUpErrorData?.data?.ignored_unknown_package ??
+	// 	[]) {
+	// 	if (!uniquePackagesMap.has(item.raw_package)) {
+	// 		uniquePackagesMap.set(item.raw_package, item);
+	// 	}
+	// }
+
+	// const uniquePackages = [...uniquePackagesMap.values()];
+
+	const uniquePackages = useMemo(() => {
+		const map = new Map();
+		for (const item of importF3PickUpErrorData?.data?.ignored_unknown_package ??
+			[]) {
+			if (!map.has(item.raw_package)) {
+				map.set(item.raw_package, item);
+			}
 		}
-	}
+		return [...map.values()];
+	}, [importF3PickUpErrorData?.data?.ignored_unknown_package]);
 
-	const uniquePackages = [...uniquePackagesMap.values()];
+	const uniquePartnames = useMemo(() => {
+		const map = new Map();
+		for (const item of importF3PickUpData?.data?.ignored_unknown_partname ??
+			[]) {
+			if (!map.has(item.PARTNAME)) {
+				map.set(item.PARTNAME, {
+					...item,
+					PARTNAME: item.PARTNAME,
+				});
+			}
+		}
+		return [...map.values()];
+	}, [importF3PickUpData?.data?.ignored_unknown_partname]);
 
 	return (
 		<ImportPageLayout pageName="F3 PickUp">
@@ -128,8 +150,7 @@ const F3PickUpImportPage = () => {
 								</span>
 								<a
 									href={route("partname.createMany", {
-										parts:
-											importF3PickUpData?.data?.ignored_unknown_partname ?? [],
+										parts: uniquePartnames ?? [],
 									})}
 									target="_blank"
 									rel="noopener noreferrer"
@@ -188,6 +209,7 @@ const F3PickUpImportPage = () => {
 
 								<div className="flex justify-end gap-2">
 									<button
+										type="button"
 										className="btn btn-soft btn-warning"
 										onClick={async () => {
 											manualPickUpImportRef.current?.close();
@@ -202,6 +224,7 @@ const F3PickUpImportPage = () => {
 									</button>
 
 									<button
+										type="button"
 										className="btn"
 										onClick={() => manualPickUpImportRef.current?.close()}
 										disabled={isImportF3PickUpLoading}

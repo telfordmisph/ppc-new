@@ -1,20 +1,24 @@
-import Modal from "@/Components/Modal";
-import React, { useEffect, useRef, useState } from "react";
-import { useMutation } from "@/Hooks/useMutation";
-import { runAsyncToast } from "@/Utils/runAsyncToast";
-import ImportPageLayout from "../../Layouts/ImportPageLayout";
-import { PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
-import ImportLabel from "../../Components/lastImportLabel";
-import { useImportTraceStore } from "@/Store/importTraceStore";
+import Modal from "@/Components/Modal";
+import DataTable from "@/Components/Table";
+import { PICKUP_HEADERS } from "@/Constants/ExcelHeaders";
 import { useDownloadFile } from "@/Hooks/useDownload";
-import { MdWarning } from "react-icons/md";
-import { FaExternalLinkAlt } from "react-icons/fa";
+import { useMutation } from "@/Hooks/useMutation";
+import { useImportTraceStore } from "@/Store/importTraceStore";
+import { runAsyncToast } from "@/Utils/runAsyncToast";
+import ImportLabel from "../../Components/lastImportLabel";
+import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
 const F1F2PickUpImportPage = () => {
-	const { data: importTraceData, isLoading: isImportTraceLoading } =
-		useImportTraceStore();
+	const {
+		data: importTraceData,
+		isLoading: isImportTraceLoading,
+		fetchAllImports,
+	} = useImportTraceStore();
 
 	const uploaderPickUpRef = useRef(null);
 	const manualPickUpImportRef = useRef(null);
@@ -48,12 +52,17 @@ const F1F2PickUpImportPage = () => {
 		const formData = new FormData();
 		formData.append("file", selectedPickUpFile);
 		runAsyncToast({
-			action: () =>
-				importPickUp(route("import.importPickUp"), {
+			action: async () => {
+				const result = await importPickUp(route("import.importPickUp"), {
 					body: formData,
 					isContentTypeInclude: false,
 					isFormData: true,
-				}),
+				});
+
+				await fetchAllImports();
+
+				return result;
+			},
 			loadingMessage: "Importing PickUp data...",
 			renderSuccess: (result) => (
 				<>
@@ -81,6 +90,19 @@ const F1F2PickUpImportPage = () => {
 		}
 	}, [importPickUpErrorMessage]);
 
+	const uniquePartnames = useMemo(() => {
+		const map = new Map();
+		for (const item of importPickUpData?.data?.ignored_unknown_partname ?? []) {
+			if (!map.has(item.PARTNAME)) {
+				map.set(item.PARTNAME, {
+					...item,
+					PARTNAME: item.PARTNAME,
+				});
+			}
+		}
+		return [...map.values()];
+	}, [importPickUpData?.data?.ignored_unknown_partname]);
+
 	return (
 		<ImportPageLayout pageName="F1/F2 PickUp">
 			<div className="grid grid-cols-1 w-full gap-4">
@@ -98,8 +120,7 @@ const F1F2PickUpImportPage = () => {
 								</span>
 								<a
 									href={route("partname.createMany", {
-										parts:
-											importPickUpData?.data?.ignored_unknown_partname ?? [],
+										parts: uniquePartnames ?? [],
 									})}
 									target="_blank"
 									rel="noopener noreferrer"
@@ -134,6 +155,7 @@ const F1F2PickUpImportPage = () => {
 
 								<div className="flex justify-end gap-2">
 									<button
+										type="button"
 										className="btn btn-soft btn-warning"
 										onClick={async () => {
 											manualPickUpImportRef.current?.close();
@@ -148,6 +170,7 @@ const F1F2PickUpImportPage = () => {
 									</button>
 
 									<button
+										type="button"
 										className="btn"
 										onClick={() => manualPickUpImportRef.current?.close()}
 										disabled={isImportPickUpLoading}
@@ -167,6 +190,7 @@ const F1F2PickUpImportPage = () => {
 							isDownloadLoading={isDownloadLoading}
 						/>
 						<button
+							type="button"
 							className="btn btn-primary w-54"
 							onClick={() => manualPickUpImportRef.current?.open()}
 							disabled={isImportPickUpLoading || !selectedPickUpFile}
@@ -174,6 +198,28 @@ const F1F2PickUpImportPage = () => {
 							Upload {pickUpLabel}
 						</button>
 					</div>
+
+					{importPickUpData?.data?.ignored_unknown_partname_count > 0 && (
+						<Collapse
+							title={`Unknown Partname: Click to see details.`}
+							className={"w-full border border-warning text-base-content"}
+							contentClassName={"overflow-x-auto text-base-content"}
+						>
+							<div className="mb-2 ">
+								showing {importPickUpData?.data?.ignored_unknown_partname_count}{" "}
+								out of {importPickUpData?.data?.ignored_unknown_partname_count}
+							</div>
+							<div className="overflow-x-auto w-full max-h-96">
+								<DataTable
+									columns={Object.keys(
+										importPickUpData?.data?.ignored_unknown_partname[0],
+									)}
+									rows={importPickUpData?.data?.ignored_unknown_partname}
+									className={"w-full"}
+								/>
+							</div>
+						</Collapse>
+					)}
 
 					{importPickUpErrorMessage && importPickUpErrorData?.data && (
 						<Collapse

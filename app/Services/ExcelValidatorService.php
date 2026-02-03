@@ -7,9 +7,13 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use Illuminate\Support\Facades\Log;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Reader\ReaderInterface;
+use PhpOffice\PhpSpreadsheet\Worksheet\CellIterator;
+use App\Traits\Sanitize;
 
 class ExcelValidatorService
 {
+  use Sanitize;
+
   public function isFileExists($filePath): bool
   {
     return file_exists($filePath);
@@ -227,5 +231,25 @@ class ExcelValidatorService
     $result['headerRowIndex'] = $headerRowIndex;
 
     return $result;
+  }
+
+  public function isEmptyExcelRow(CellIterator $cellIterator): array
+  {
+    $cellIterator->setIterateOnlyExistingCells(false);
+
+    $rowData = [];
+    $hasData = false;
+
+    foreach ($cellIterator as $cell) {
+      $value = $cell->getCalculatedValue();
+      $sanitized = $this->sanitizeExcelCell($value);
+      $rowData[] = $sanitized;
+
+      if ($sanitized !== null && $sanitized !== '') {
+        $hasData = true;
+      }
+    }
+
+    return $hasData === false ? [] : $rowData;
   }
 }

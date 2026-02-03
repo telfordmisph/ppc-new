@@ -1,29 +1,25 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Head, usePage } from "@inertiajs/react";
-import { useFetch } from "@/Hooks/useFetch";
-import SearchableDropdown from "@/Components/SearchableDropdown";
+import { Head } from "@inertiajs/react";
+import clsx from "clsx";
+import { useMemo, useState } from "react";
+import DatePicker from "react-datepicker";
 import TrendLineChart from "@/Components/Charts/TrendLineChart";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 import TogglerButton from "@/Components/TogglerButton";
+import { FACTORY_COLORS } from "@/Constants/colors";
+import { periodOptions } from "@/Constants/periodOptions";
+import { TOGGLE_F1F2_BUTTONS } from "@/Constants/toggleButtons";
+import { useFetch } from "@/Hooks/useFetch";
+import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import { visibleLines } from "@/Utils/chartLines";
+import formatDate from "@/Utils/formatDate";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import {
 	formatPeriodLabel,
 	formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
-import { periodOptions } from "@/Constants/periodOptions";
-import {
-	TOGGLE_F1F2_BUTTONS,
-	TOGGLE_FACTORY_BUTTONS,
-} from "@/Constants/toggleButtons";
-import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { visibleLines } from "@/Utils/chartLines";
-import clsx from "clsx";
-import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
-import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
-import { useWorkweekStore } from "@/Store/workweekListStore";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import { FACTORY_COLORS } from "@/Constants/colors";
-import DatePicker from "react-datepicker";
-import formatDate from "@/Utils/formatDate";
 import "react-datepicker/dist/react-datepicker.css";
 import CancellableActionButton from "@/Components/CancellableActionButton";
 
@@ -82,7 +78,7 @@ const WIPStation = () => {
 		errorMessage: packagesErrorMessage,
 	} = useF1F2PackagesStore();
 
-	let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+	const dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 	// const {
 	//     data: packagesData,
 	//     isLoading: packagesryLoading,

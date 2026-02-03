@@ -2,6 +2,7 @@
 
 use PHPUnit\Framework\TestCase;
 use App\Traits\Sanitize;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class SanitizeTest extends TestCase
 {
@@ -83,5 +84,80 @@ class SanitizeTest extends TestCase
         $this->assertSame(123, $this->sanitizeExcelCell(123));
         $this->assertSame(12.5, $this->sanitizeExcelCell(12.5));
         $this->assertSame(false, $this->sanitizeExcelCell(false));
+    }
+
+    private function makeSpreadsheet(array $rows): Spreadsheet
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        foreach ($rows as $rowIndex => $row) {
+            foreach ($row as $colIndex => $value) {
+                $column = chr(ord('A') + $colIndex);
+                $cellAddress = $column . ($rowIndex + 1);
+
+                $sheet->setCellValue($cellAddress, $value);
+            }
+        }
+
+        return $spreadsheet;
+    }
+
+    public function test_it_reindexes_rows_after_filtering()
+    {
+        $spreadsheet = $this->makeSpreadsheet([
+            ['A'],
+            [''],
+            ['B'],
+        ]);
+
+        $result = $this->getSanitizedSheetData($spreadsheet);
+
+        $this->assertSame(
+            [
+                ['A'],
+                ['B'],
+            ],
+            $result
+        );
+    }
+
+    public function test_it_sanitizes_cells_before_filtering_rows()
+    {
+        $spreadsheet = $this->makeSpreadsheet([
+            [" \u{00A0}\u{200B} ", 'N/A'],
+            ['valid', 'data'],
+        ]);
+
+        $result = $this->getSanitizedSheetData($spreadsheet);
+
+        $this->assertCount(1, $result);
+        $this->assertSame(['valid', 'data'], $result[0]);
+    }
+
+    public function test_it_keeps_rows_with_at_least_one_non_null_cell()
+    {
+        $spreadsheet = $this->makeSpreadsheet([
+            ['', null, 'X'],
+        ]);
+
+        $result = $this->getSanitizedSheetData($spreadsheet);
+
+        $this->assertCount(1, $result);
+        $this->assertSame([null, null, 'X'], $result[0]);
+    }
+
+    public function test_it_removes_fully_empty_rows()
+    {
+        $spreadsheet = $this->makeSpreadsheet([
+            ['', '', ''],
+            ['A', 'B', 'C'],
+            [null, null, null],
+        ]);
+
+        $result = $this->getSanitizedSheetData($spreadsheet);
+
+        $this->assertCount(1, $result);
+        $this->assertSame(['A', 'B', 'C'], $result[0]);
     }
 }

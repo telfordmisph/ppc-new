@@ -2,6 +2,9 @@
 
 namespace App\Traits;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Illuminate\Support\Facades\Log;
+
 trait Sanitize
 {
   protected function normalizeMonthNames(string $value): string
@@ -74,5 +77,27 @@ trait Sanitize
     }
 
     return $value;
+  }
+
+  protected function getSanitizedSheetData(Spreadsheet $spreadsheet, $sheetToArrayArgs = [
+    null,  // nullValue
+    true,  // calculateFormulas
+    false, // formatData
+    false, // returnCellRef
+    true,  // preserveEmptyRows
+    false, // strictNullComparison
+  ])
+  {
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheetData = $sheet->toArray(...$sheetToArrayArgs);
+
+    $sheetData = array_map(
+      fn($row) => array_map([$this, 'sanitizeExcelCell'], $row),
+      $sheetData
+    );
+
+    $sheetData = array_filter($sheetData, fn($row) => array_filter($row, fn($cell) => $cell !== null));
+
+    return array_values($sheetData);
   }
 }

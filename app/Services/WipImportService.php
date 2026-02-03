@@ -37,10 +37,10 @@ class WipImportService
   protected $f3WipRepository;
   protected $pickUpRepository;
   protected $f3OutRepository;
-  protected $fileValidator;
+  protected $excelValidator;
   protected $f3RawPackageRepository;
   protected $csvReader;
-  protected $flags = IReader::READ_DATA_ONLY | IReader::IGNORE_ROWS_WITH_NO_CELLS;
+  protected $flags = IReader::READ_DATA_ONLY | IReader::IGNORE_ROWS_WITH_NO_CELLS | IReader::IGNORE_EMPTY_CELLS;
   protected $emptyCellFlags = CellIterator::TREAT_EMPTY_STRING_AS_EMPTY_CELL;
   protected string $WIP_QUANTITY_EXCEL_PATH = '\\\\192.168.1.13\\ftproot\\daily_backend_wip.csv';
 
@@ -89,7 +89,7 @@ class WipImportService
     $this->f3RawPackageRepository = $f3RawPackageRepository;
     $this->importTraceRepository = $importTraceRepository;
     $this->packageCapacityService = $packageCapacityService;
-    $this->fileValidator = $fileValidator;
+    $this->excelValidator = $fileValidator;
 
     $this->csvReader = new Csv();
   }
@@ -104,17 +104,6 @@ class WipImportService
     DB::transaction(fn() => $operation($chunk));
 
     $successCounter += count($chunk);
-  }
-
-  private function getSanitizedSheetData($spreadsheet)
-  {
-    $sheet = $spreadsheet->getActiveSheet();
-    $sheetData = $sheet->toArray(...$this->sheetToArrayArgs);
-
-    return $sheetData = array_map(
-      fn($row) => array_map([$this, 'sanitizeExcelCell'], $row),
-      $sheetData
-    );
   }
 
 
@@ -217,7 +206,7 @@ class WipImportService
     string $lockKey,
     callable $rowFormatter
   ): array {
-    $headersData = $this->fileValidator->getExcelCanonicalHeaderSpout($filePath, $expectedHeaders);
+    $headersData = $this->excelValidator->getExcelCanonicalHeaderSpout($filePath, $expectedHeaders);
 
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -412,9 +401,11 @@ class WipImportService
   public function importF1F2PickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheetData = $this->getSanitizedSheetData($spreadsheet);
+    $sheet = $spreadsheet->getActiveSheet();
 
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F1F2_PICKUP_EXPECTED_HEADERS);
+    // $sheetData = $this->getSanitizedSheetData($spreadsheet);
+
+    $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F1F2_PICKUP_EXPECTED_HEADERS);
 
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -425,25 +416,27 @@ class WipImportService
     $map_headers = $headersData['map_headers'];
 
     $chunks = [];
-    $ignoredRows = [];
+    $rowsWithUnknownPartname = [];
     $successCount = 0;
 
     try {
       DB::beginTransaction();
 
-      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-        if ($this->isEmptyRow($row)) {
+      foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
+        $cellIterator = $row->getCellIterator();
+
+        $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
+        if (empty($rowData)) {
           continue;
         }
 
-        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+        $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 
         $rowData['ADDED_BY'] = $importedBy;
 
         $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
         if (!$partnameID) {
-          $ignoredRows[] = $rowData;
-          continue;
+          $rowsWithUnknownPartname[] = $rowData;
         }
 
         $chunks[] = $rowData;
@@ -467,8 +460,8 @@ class WipImportService
         'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
         'data' => [
           'total' => $successCount,
-          'ignored_unknown_partname' => $ignoredRows,
-          'ignored_unknown_partname_count' => count($ignoredRows),
+          'ignored_unknown_partname' => $rowsWithUnknownPartname,
+          'ignored_unknown_partname_count' => count($rowsWithUnknownPartname),
         ]
       ];
     } catch (Exception $e) {
@@ -481,9 +474,10 @@ class WipImportService
   public function importF3PickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheetData = $this->getSanitizedSheetData($spreadsheet);
+    // $sheetData = $this->getSanitizedSheetData($spreadsheet);
+    $sheet = $spreadsheet->getActiveSheet();
 
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_PICKUP_EXPECTED_HEADERS);
+    $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_PICKUP_EXPECTED_HEADERS);
 
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -499,10 +493,17 @@ class WipImportService
     $successCount = 0;
     $hasUnknownRows = false;
 
-    foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      if ($this->isEmptyRow($row)) continue;
+    foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
+      $cellIterator = $row->getCellIterator();
 
-      $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+      $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
+      if (empty($rowData)) {
+        continue;
+      }
+      // foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
+      //   if ($this->isEmptyRow($row)) continue;
+
+      $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 
       $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
       $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
@@ -525,8 +526,6 @@ class WipImportService
         'data' => [
           'ignored_unknown_package' => $ignoredRows,
           'ignored_unknown_package_count' => count($ignoredRows),
-          'ignored_unknown_partname' => $ignoredPartnameRows,
-          'ignored_unknown_partname_count' => count($ignoredPartnameRows),
         ]
       ];
     }
@@ -534,12 +533,15 @@ class WipImportService
     try {
       DB::beginTransaction();
 
-      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-        if ($this->isEmptyRow($row)) {
+      foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
+        $cellIterator = $row->getCellIterator();
+
+        $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
+        if (empty($rowData)) {
           continue;
         }
 
-        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+        $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 
         $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
         $rowData['ADDED_BY'] = $importedBy;
@@ -577,193 +579,12 @@ class WipImportService
     }
   }
 
-  public function importF3WIP($importedBy = null, $file)
-  {
-    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheetData = $this->getSanitizedSheetData($spreadsheet);
-
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);
-
-    if ($headersData['status'] === 'error') {
-      return $headersData;
-    }
-
-    $found_headers = $headersData['found_headers'];
-    $headerRowIndex = $headersData['headerRowIndex'];
-    $map_headers = $headersData['map_headers'];
-
-    $chunks = [];
-    $ignoredRows = [];
-    $successCount = 0;
-    // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
-    $existingRecords = $this->prepareExistingF3WipRecords();
-
-    try {
-      DB::beginTransaction();
-
-      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-        if ($this->isEmptyRow($row)) {
-          continue;
-        }
-
-        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-        $rowData['imported_by'] = $importedBy;
-        $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
-        $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
-        $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
-        $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
-
-        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-
-        if (!$packageID) {
-          // Log::info("Package not found: " . $rowData['package']);
-          $ignoredRows[] = $rowData;
-          continue;
-        }
-
-        $rowData['package'] = $packageID;
-
-        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-
-        $key = "{$rowData['lot_number']}-{$rowData['date_loaded']}";
-
-        // Log::info("Key: " . $key);
-
-        if (isset($existingRecords[$key])) {
-          // Log::info("Skipping existing record: " . print_r($rowData, true));
-          continue;
-        }
-
-        $chunks[] = $rowData;
-
-        if (count($chunks) >= self::CHUNK_SIZE) {
-          $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-          $chunks = [];
-        }
-      }
-
-      if (!empty($chunks)) {
-        $this->insertChunk($chunks, fn($chunks) => $this->f3WipRepository->insertManyF3($chunks), $successCount);
-      }
-      // Log::info("Ignored rows: " . print_r($ignoredRows, true));
-      // Log::info($this->F3_WIP_PATH);
-      // Log::info('F3 Headers: ' . print_r($headers, true));
-
-      $this->importTraceRepository->upsertImport('f3_wip', $importedBy, $successCount);
-
-      DB::commit();
-      return [
-        'status' => 'success',
-        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-        'data' => [
-          'total' => $successCount,
-          // 'ignored' => $ignoredRows,
-          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-          'ignored_unknown_package_count' => count($ignoredRows)
-        ]
-      ];
-    } catch (Exception $e) {
-      DB::rollBack();
-      return ['status' => 'error', 'message' => $e->getMessage()];
-    }
-  }
-
-
-  public function importF3OUT($importedBy = null, $file)
-  {
-    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheetData = $this->getSanitizedSheetData($spreadsheet);
-
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_OUT_EXPECTED_HEADERS);
-
-    if ($headersData['status'] === 'error') {
-      return $headersData;
-    }
-
-    $found_headers = $headersData['found_headers'];
-    $headerRowIndex = $headersData['headerRowIndex'];
-    $map_headers = $headersData['map_headers'];
-    $chunks = [];
-
-    $ignoredRows = [];
-    $successCount = 0;
-    // Log::info("headerRowIndex: " . print_r($headerRowIndex, true));
-    $existingRecords = $this->prepareExistingF3OutRecords();
-
-    try {
-      DB::beginTransaction();
-      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-        if ($this->isEmptyRow($row)) {
-          continue;
-        }
-
-        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
-
-        // Log::info("Processing row {$rowIndex}" . print_r($rowData, true));
-
-        $rowData['imported_by'] = $importedBy;
-        $rowData['date_received'] = $this->parseDate($rowData['date_received'], null);
-        $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'], null);
-        $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'], null);
-        $rowData['date_commit'] = $this->parseDate($rowData['date_commit'], null);
-
-        $packageID = $this->f3RawPackageRepository->getIDByRawPackage($rowData['package']);
-
-        if (!$packageID) {
-          // Log::info("Package not found: " . $rowData['package']);
-          $ignoredRows[] = $rowData;
-          continue;
-        }
-
-        $rowData['package'] = $packageID;
-
-        if (isset($existingRecords["{$rowData['lot_number']}-{$rowData['date_loaded']}"])) {
-          continue;
-        }
-
-        $chunks[] = $rowData;
-
-        if (count($chunks) >= self::CHUNK_SIZE) {
-          $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
-          $chunks = [];
-        }
-      }
-
-      if (!empty($chunks)) {
-        $resultError = $this->insertChunk($chunks, fn($chunks) => $this->f3OutRepository->insertManyCustomer($chunks), $successCount);
-      }
-      // Log::info("Ignored rows: " . print_r($ignoredRows, true));
-      // Log::info($this->F3_WIP_PATH);
-      // Log::info('F3 Headers: ' . print_r($headers, true));
-
-      $this->importTraceRepository->upsertImport('f3_out', $importedBy, $successCount);
-
-      DB::commit();
-      return [
-        'status' => 'success',
-        'message' =>  $successCount === 0 ? 'No new records found.' : 'Import completed successfully.',
-        'data' => [
-          'total' => $successCount,
-          // 'ignored' => $ignoredRows,
-          'ignored_unknown_package' => array_slice($ignoredRows, 0, 100),
-          'ignored_unknown_package_count' => count($ignoredRows)
-        ]
-      ];
-    } catch (Exception $e) {
-      DB::rollBack();
-      return ['status' => 'error', 'message' => $e->getMessage()];
-    }
-  }
-
   public function importF3($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $sheetData = $this->getSanitizedSheetData($spreadsheet);
+    $sheet = $spreadsheet->getActiveSheet();
 
-    $expectedHeaders = WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS;
-    $headersData = $this->fileValidator->getExcelCanonicalHeader($spreadsheet, $expectedHeaders);
+    $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);
     if ($headersData['status'] === 'error') {
       return $headersData;
     }
@@ -781,12 +602,15 @@ class WipImportService
 
       $this->f3WipRepository->deleteTodayRecords();
 
-      foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-        if ($this->isEmptyRow($row)) {
+      foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
+        $cellIterator = $row->getCellIterator();
+
+        $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
+        if (empty($rowData)) {
           continue;
         }
 
-        $rowData = $this->extractRowData($map_headers, $row, $found_headers);
+        $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 
         $rowData['imported_by'] = $importedBy;
         $rowData['date_received'] = $this->parseDate($rowData['date_received'] ?? null);
@@ -819,7 +643,6 @@ class WipImportService
         }
       }
 
-      // Insert remaining rows
       if (!empty($chunksWip)) {
         $this->insertChunk(
           $chunksWip,
@@ -843,7 +666,6 @@ class WipImportService
       ];
     } catch (\Throwable $e) {
       DB::rollBack();
-      // Optionally log the error
       Log::error('Import failed: ' . $e->getMessage());
       return [
         'status' => 'error',

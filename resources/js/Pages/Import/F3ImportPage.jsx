@@ -1,51 +1,29 @@
-import Modal from "@/Components/Modal";
-import React, { useEffect, useRef, useState } from "react";
-import { useMutation } from "@/Hooks/useMutation";
-import { runAsyncToast } from "@/Utils/runAsyncToast";
-import ImportPageLayout from "../../Layouts/ImportPageLayout";
-import { F3_WIP_HEADERS, F3_OUTS_HEADERS } from "@/Constants/ExcelHeaders";
-import Collapse from "@/Components/Collapse";
-import { FaFileUpload } from "react-icons/fa";
-import FileUploader from "@/Components/FileUploader";
-import DataTable from "@/Components/Table";
-import ImportLabel from "../../Components/lastImportLabel";
-import { useImportTraceStore } from "@/Store/importTraceStore";
-import { Link } from "@inertiajs/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
-import { FaLink } from "react-icons/fa6";
-import { Inertia } from "@inertiajs/inertia";
+import Collapse from "@/Components/Collapse";
+import FileUploader from "@/Components/FileUploader";
+import Modal from "@/Components/Modal";
+import DataTable from "@/Components/Table";
+import { F3_OUTS_HEADERS } from "@/Constants/ExcelHeaders";
+import { useMutation } from "@/Hooks/useMutation";
+import { useImportTraceStore } from "@/Store/importTraceStore";
+import { runAsyncToast } from "@/Utils/runAsyncToast";
+import ImportLabel from "../../Components/lastImportLabel";
+import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
 const F3ImportPage = () => {
-	const { data: importTraceData, isLoading: isImportTraceLoading } =
-		useImportTraceStore();
+	const {
+		data: importTraceData,
+		isLoading: isImportTraceLoading,
+		fetchAllImports,
+	} = useImportTraceStore();
 
-	const uploaderWIPRef = useRef(null);
-	const uploaderOUTRef = useRef(null);
 	const uploaderF3Ref = useRef(null);
-	const manualWIPImportRef = useRef(null);
-	const manualOUTImportRef = useRef(null);
 	const manualF3ImportRef = useRef(null);
-	const [selectedWIPFile, setSelectedWIPFile] = useState(null);
-	const [selectedOUTFile, setSelectedOUTFile] = useState(null);
 	const [selectedF3File, setSelectedF3File] = useState(null);
 
-	const f3WipLabel = "F3 WIP";
 	const f3Label = "F3 WIP & OUTS";
-	const f3OutsLabel = "F3 OUTS";
-
-	const {
-		isLoading: isImportWipQuantityLoading,
-		errorMessage: importWipQuantityErrorMessage,
-		errorData: importWipQuantityErrorData,
-		mutate: importWipQuantity,
-	} = useMutation();
-
-	const {
-		isLoading: isImportWipOutsLoading,
-		errorMessage: importOutQuantityErrorMessage,
-		errorData: importOutsErrorData,
-		mutate: importWipOuts,
-	} = useMutation();
 
 	const {
 		isLoading: isImportF3Loading,
@@ -63,12 +41,17 @@ const F3ImportPage = () => {
 		const formData = new FormData();
 		formData.append("file", selectedF3File);
 		runAsyncToast({
-			action: () =>
-				importF3(route("import.importF3"), {
+			action: async () => {
+				const result = await importF3(route("import.importF3"), {
 					body: formData,
 					isContentTypeInclude: false,
 					isFormData: true,
-				}),
+				});
+
+				await fetchAllImports();
+
+				return result;
+			},
 			loadingMessage: "Importing F3 data...",
 			renderSuccess: (result) => (
 				<>
@@ -76,7 +59,7 @@ const F3ImportPage = () => {
 						<span>F3s: </span>{" "}
 						{result?.data?.ignored_unknown_package?.length > 0 &&
 							"Partially imported!"}
-						{result?.data?.ignored_unknown_package?.length == 0 &&
+						{result?.data?.ignored_unknown_package?.length === 0 &&
 							(result?.message || "Successfully imported!")}
 					</div>
 
@@ -108,6 +91,21 @@ const F3ImportPage = () => {
 		}
 	}, [importF3ErrorMessage]);
 
+	const uniquePackages = useMemo(() => {
+		const map = new Map();
+		for (const item of importF3Data?.data?.ignored_unknown_package ?? []) {
+			if (!map.has(item.package)) {
+				map.set(item.package, {
+					...item,
+					PACKAGE: item.package,
+				});
+			}
+		}
+		return [...map.values()];
+	}, [importF3Data?.data?.ignored_unknown_package]);
+
+	console.log("🚀 ~ F3ImportPage ~ uniquePackages:", uniquePackages);
+
 	return (
 		<ImportPageLayout pageName="F3 Wip & Outs">
 			<div className="grid grid-cols-1 w-full gap-4">
@@ -115,31 +113,31 @@ const F3ImportPage = () => {
 					<div className="card-body">
 						<h2 className="card-title">Upload Daily {f3Label}</h2>
 						<p>Upload latest data for F3 WIPs and OUTs.</p>
-						{importF3Data?.data?.ignored_unknown_package.length > 0 && (
+						{importF3Data?.data?.ignored_unknown_package?.length > 0 && (
 							<div className="bg-warning text-warning-content p-2 rounded-lg">
 								<MdWarning className="inline w-4 h-4 mr-2" />
 								Some rows were not imported because their package is unknown
-								(see the ignored rows list below). Add the unknown package first
-								on the{" "}
-								<button
-									type="button"
-									className="font-semibold inline underline cursor-pointer items-center"
-									onClick={() =>
-										window.open(
-											route("f3.raw.package.index"),
-											"_blank",
-											"noopener,noreferrer",
-										)
-									}
+								(see the ignored rows list below).
+								<a
+									href={route("f3.raw.package.createMany", {
+										raw_packages: uniquePackages ?? [],
+									})}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="mx-1 btn btn-outline btn-primary"
 								>
-									<FaLink className="inline w-4 h-4 mr-1" /> F3 Raw Packages
-									page
-								</button>
-								. After that, you can try importing the file again.
+									<div className="inline-grid *:[grid-area:1/1]">
+										<div className="status status-secondary animate-ping"></div>
+										<div className="status status-secondary"></div>
+									</div>
+									Add the unknown packages now
+									<FaExternalLinkAlt className="inline w-4 h-4 ml-1" />
+								</a>
+								then you can try importing the file again.
 							</div>
 						)}
 						<ImportLabel
-							data={importTraceData?.f3_pickup}
+							data={importTraceData?.f3}
 							loading={isImportTraceLoading}
 						/>
 						<div className="card-actions justify-end">
@@ -157,6 +155,7 @@ const F3ImportPage = () => {
 
 								<div className="flex justify-end gap-2">
 									<button
+										type="button"
 										className="btn btn-soft btn-warning"
 										onClick={async () => {
 											manualF3ImportRef.current?.close();
@@ -171,6 +170,7 @@ const F3ImportPage = () => {
 									</button>
 
 									<button
+										type="button"
 										className="btn"
 										onClick={() => manualF3ImportRef.current?.close()}
 										disabled={isImportF3Loading}
@@ -188,6 +188,7 @@ const F3ImportPage = () => {
 							}}
 						/>
 						<button
+							type="button"
 							className="btn btn-primary w-54"
 							onClick={() => manualF3ImportRef.current?.open()}
 							disabled={isImportF3Loading || !selectedF3File}
@@ -196,15 +197,15 @@ const F3ImportPage = () => {
 						</button>
 					</div>
 
-					{importF3Data?.data?.ignored_unknown_package.length > 0 && (
+					{importF3Data?.data?.ignored_unknown_package?.length > 0 && (
 						<Collapse
 							title={`Unknown Package: ignored Rows (Not imported). Click to see details.`}
 							className={"w-full border border-warning text-base-content"}
 							contentClassName={"overflow-x-auto text-base-content"}
 						>
 							<div className="mb-2 ">
-								showing {importF3Data?.data?.ignored_unknown_package.length} out
-								of {importF3Data?.data?.ignored_unknown_package_count}
+								showing {importF3Data?.data?.ignored_unknown_package?.length}{" "}
+								out of {importF3Data?.data?.ignored_unknown_package_count}
 							</div>
 							<div className="overflow-x-auto w-full max-h-96">
 								<DataTable
@@ -218,33 +219,35 @@ const F3ImportPage = () => {
 						</Collapse>
 					)}
 
-					{importF3ErrorMessage && importF3ErrorData?.data && (
-						<Collapse
-							title={`${importF3ErrorMessage}. Click to see details.`}
-							className={"border-red-500 hover:border-red-500 bg-error/10"}
-						>
-							{importF3ErrorData?.data?.missing_headers.length > 0 && (
-								<div className="mt-2">Missing headers: </div>
-							)}
-							<ul className="list">
-								{importF3ErrorData?.data?.missing_headers.map((missing) => (
-									<li className="list-row h-8 leading-none" key={missing}>
-										{missing}
-									</li>
-								))}
-							</ul>
-							{importF3ErrorData?.data?.unknown_headers.length > 0 && (
-								<div className="mt-2">Unknown (ignored): </div>
-							)}
-							<ul className="list">
-								{importF3ErrorData?.data?.unknown_headers.map((unknown) => (
-									<li className="list-row h-8 leading-none" key={unknown}>
-										{unknown}
-									</li>
-								))}
-							</ul>
-						</Collapse>
-					)}
+					{importF3ErrorMessage &&
+						(importF3ErrorData?.data?.missing_headers ||
+							importF3ErrorData?.data?.unknown_headers) && (
+							<Collapse
+								title={`${importF3ErrorMessage}. Click to see details.`}
+								className={"border-red-500 hover:border-red-500 bg-error/10"}
+							>
+								{importF3ErrorData?.data?.missing_headers?.length > 0 && (
+									<div className="mt-2">Missing headers: </div>
+								)}
+								<ul className="list">
+									{importF3ErrorData?.data?.missing_headers?.map((missing) => (
+										<li className="list-row h-8 leading-none" key={missing}>
+											{missing}
+										</li>
+									))}
+								</ul>
+								{importF3ErrorData?.data?.unknown_headers?.length > 0 && (
+									<div className="mt-2">Unknown (ignored): </div>
+								)}
+								<ul className="list">
+									{importF3ErrorData?.data?.unknown_headers?.map((unknown) => (
+										<li className="list-row h-8 leading-none" key={unknown}>
+											{unknown}
+										</li>
+									))}
+								</ul>
+							</Collapse>
+						)}
 
 					<Collapse title={`${f3Label} Excel Headers Required`}>
 						<div className="text-secondary">

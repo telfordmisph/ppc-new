@@ -1,14 +1,14 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { FaSave, FaTimes, FaPlus } from "react-icons/fa";
 import { router, usePage } from "@inertiajs/react";
+import { useEffect, useMemo, useState } from "react";
+import { FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 import { useF3PackagesStore } from "@/Store/f3PackageListStore";
-import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 
 const F3RawPackageMultiUpsert = () => {
 	const toast = useToast();
-	const { raw_packages: serverRawPackages } = usePage().props; // array of packages if editing
+	const { raw_packages: serverRawPackages } = usePage().props;
 
 	const emptyPackage = {
 		raw_package: "",
