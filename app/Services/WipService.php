@@ -434,29 +434,24 @@ class WipService
 
   public function getOUTQuantityAndLotsTotal($useWorkweek, $workweek, $startDate = null, $endDate = null, $includePL = true)
   {
-    $startMinusOneDay = Carbon::parse($startDate)
-      ->subDay()
-      ->format('Y-m-d H:i:s');
+    $startAddedOneDay = Carbon::parse($startDate)->addDay()->format('Y-m-d H:i:s');
+    $endAddedOneDay = Carbon::parse($endDate)->addDay()->format('Y-m-d H:i:s');
 
-    $endMinusOneDay = Carbon::parse($endDate)
-      ->subDay()
-      ->format('Y-m-d H:i:s');
-
-    $f1_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', null, $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f2_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', null, $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
+    $f1_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f2_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
 
     $overall = MergeAndAggregate::mergeAndAggregate([$f1_total_out, $f2_total_out, $f3_total_out], ['package']);
 
-    $f1_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL1', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f2_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL1', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
+    $f1_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f2_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
 
     $overall_pl1 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl1, $f2_total_out_pl1, $f3_total_out_pl1], ['package']);
 
-    $f1_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL6', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f2_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL6', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
-    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startMinusOneDay, $endMinusOneDay);
+    $f1_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f2_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
+    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $overall_pl6 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl6, $f2_total_out_pl6, $f3_total_out_pl6], ['package']);
 
     return response()->json([
