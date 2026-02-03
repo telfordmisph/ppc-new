@@ -93,17 +93,6 @@ const F3PickUpImportPage = () => {
 		}
 	}, [importF3PickUpErrorMessage]);
 
-	// const uniquePackagesMap = new Map();
-
-	// for (const item of importF3PickUpErrorData?.data?.ignored_unknown_package ??
-	// 	[]) {
-	// 	if (!uniquePackagesMap.has(item.raw_package)) {
-	// 		uniquePackagesMap.set(item.raw_package, item);
-	// 	}
-	// }
-
-	// const uniquePackages = [...uniquePackagesMap.values()];
-
 	const uniquePackages = useMemo(() => {
 		const map = new Map();
 		for (const item of importF3PickUpErrorData?.data?.ignored_unknown_package ??

@@ -104,8 +104,6 @@ const F3ImportPage = () => {
 		return [...map.values()];
 	}, [importF3Data?.data?.ignored_unknown_package]);
 
-	console.log("🚀 ~ F3ImportPage ~ uniquePackages:", uniquePackages);
-
 	return (
 		<ImportPageLayout pageName="F3 Wip & Outs">
 			<div className="grid grid-cols-1 w-full gap-4">

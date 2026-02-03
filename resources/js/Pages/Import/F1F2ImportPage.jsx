@@ -186,6 +186,7 @@ const F1F2ImportPage = () => {
 											}}
 										/>
 										<button
+											type="button"
 											className="btn btn-primary w-54"
 											onClick={() => manualWIPImportRef.current?.open()}
 											disabled={isImportWipLoading || !selectedWipFile}
@@ -195,6 +196,7 @@ const F1F2ImportPage = () => {
 									</div>
 								) : (
 									<button
+										type="button"
 										className="btn btn-primary mb-1"
 										onClick={() => ftprootWIPImportRef.current?.open()}
 									>
@@ -258,6 +260,7 @@ const F1F2ImportPage = () => {
 											}}
 										/>
 										<button
+											type="button"
 											className="btn btn-primary w-54"
 											onClick={() => manualOUTImportRef.current?.open()}
 											disabled={isImportOutsLoading || !selectedOutFile}
@@ -267,6 +270,7 @@ const F1F2ImportPage = () => {
 									</div>
 								) : (
 									<button
+										type="button"
 										className="btn btn-primary mb-1"
 										onClick={() => ftprootOUTImportRef.current?.open()}
 									>
@@ -322,6 +326,7 @@ const F1F2ImportPage = () => {
 							</button>
 
 							<button
+								type="button"
 								className="btn"
 								onClick={() => ftprootOUTImportRef.current?.close()}
 								disabled={isImportOutsLoading}
@@ -363,6 +368,7 @@ const F1F2ImportPage = () => {
 							</button>
 
 							<button
+								type="button"
 								className="btn"
 								onClick={() => ftprootWIPImportRef.current?.close()}
 								disabled={isImportWipLoading}
@@ -400,6 +406,7 @@ const F1F2ImportPage = () => {
 							</button>
 
 							<button
+								type="button"
 								className="btn"
 								onClick={() => manualWIPImportRef.current?.close()}
 								disabled={isImportWipLoading}
@@ -438,6 +445,7 @@ const F1F2ImportPage = () => {
 							</button>
 
 							<button
+								type="button"
 								className="btn"
 								onClick={() => manualOUTImportRef.current?.close()}
 								disabled={isImportOutsLoading}
