@@ -230,8 +230,6 @@ class F1F2OutRepository
     $this->shiftOneDayBack($f2Trend, $period);
 
     $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
-    $this->shiftOneDayBack($overallTrend, $period);
-
     return WipTrendParser::parseTrendsByPeriod([
       'f1_trend' => $f1Trend,
       'f2_trend' => $f2Trend,
