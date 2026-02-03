@@ -226,10 +226,10 @@ class F1F2OutRepository
     )->get();
 
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
-    $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
-
     $this->shiftOneDayBack($f1Trend, $period);
     $this->shiftOneDayBack($f2Trend, $period);
+
+    $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
     $this->shiftOneDayBack($overallTrend, $period);
 
     return WipTrendParser::parseTrendsByPeriod([
