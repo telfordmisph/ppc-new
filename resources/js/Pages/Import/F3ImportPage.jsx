@@ -94,6 +94,8 @@ const F3ImportPage = () => {
 	const uniquePackages = useMemo(() => {
 		const map = new Map();
 		for (const item of importF3Data?.data?.ignored_unknown_package ?? []) {
+			if (item.package == null) continue;
+
 			if (!map.has(item.package)) {
 				map.set(item.package, {
 					...item,
@@ -111,7 +113,7 @@ const F3ImportPage = () => {
 					<div className="card-body">
 						<h2 className="card-title">Upload Daily {f3Label}</h2>
 						<p>Upload latest data for F3 WIPs and OUTs.</p>
-						{importF3Data?.data?.ignored_unknown_package?.length > 0 && (
+						{uniquePackages.length > 0 && (
 							<div className="bg-warning text-warning-content p-2 rounded-lg">
 								<MdWarning className="inline w-4 h-4 mr-2" />
 								Some rows were not imported because their package is unknown
