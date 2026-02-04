@@ -1,8 +1,8 @@
+import { Draggable } from "@/Components/DnD/Draggable";
+import { Droppable } from "@/Components/DnD/Droppable";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import clsx from "clsx";
 import React, { useState } from "react";
-import { Draggable } from "@/Components/DnD/Draggable";
-import { Droppable } from "@/Components/DnD/Droppable";
 
 function closenessRatio(value, reference, maxDistance = 50) {
 	const distance = Math.abs(value - reference);
@@ -73,12 +73,10 @@ function generateRandomContainers(count = 20) {
 const containers = generateRandomContainers(20);
 
 const dropHere = () => {
-	return (
-		null
-		// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
-		// 	Drop here
-		// </div>
-	);
+	return null;
+	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
+	// 	Drop here
+	// </div>
 };
 
 const initialDraggables = new Map([
@@ -115,7 +113,7 @@ const initialDraggables = new Map([
 
 function PackageBodySizeCapacityList() {
 	const target = 100;
-	
+
 	const [activeDraggableID, setActiveDraggableID] = useState(null);
 
 	const innerDroppables = {
@@ -141,8 +139,10 @@ function PackageBodySizeCapacityList() {
 		setLocations(
 			Object.fromEntries(
 				Array.from(draggables.keys()).map((id) => {
-					const randomContainer = containerKeys[Math.floor(Math.random() * containerKeys.length)];
-					const randomInner = innerKeys[Math.floor(Math.random() * innerKeys.length)];
+					const randomContainer =
+						containerKeys[Math.floor(Math.random() * containerKeys.length)];
+					const randomInner =
+						innerKeys[Math.floor(Math.random() * innerKeys.length)];
 					return [id, `${randomContainer}-${randomInner}`];
 				}),
 			),
@@ -186,7 +186,9 @@ function PackageBodySizeCapacityList() {
 		);
 	};
 
-	const unassignedCount = Array.from(draggables.values()).filter((d) => locations[d.id] === null).length;
+	const unassignedCount = Array.from(draggables.values()).filter(
+		(d) => locations[d.id] === null,
+	).length;
 
 	return (
 		<div className="relative">
@@ -327,7 +329,11 @@ function PackageBodySizeCapacityList() {
 													key={combinedId}
 													id={combinedId}
 												>
-													<div className={clsx("flex flex-col flex-1 h-full w-full")}>
+													<div
+														className={clsx(
+															"flex flex-col flex-1 h-full w-full",
+														)}
+													>
 														<div className="sticky bg-base-200 z-10 top-0 p-1 text-sm border-b border-base-content/10">
 															<div
 																className="font-medium w-full flex justify-between"
@@ -340,9 +346,11 @@ function PackageBodySizeCapacityList() {
 																	{Number(totalWip).toLocaleString()}
 																</span>
 															</div>
-															<div className={clsx("w-full flex justify-between", {
-																"opacity-50": isEmpty
-															})}>
+															<div
+																className={clsx("w-full flex justify-between", {
+																	"opacity-50": isEmpty,
+																})}
+															>
 																<div className="text-xs">Capacity</div>
 																<span className="font-mono">
 																	{isEmpty ? (
@@ -364,9 +372,11 @@ function PackageBodySizeCapacityList() {
 																	)}
 																</span>
 															</div>
-															<div className={clsx("w-full flex justify-between", {
-																"opacity-50": isEmpty
-															})}>
+															<div
+																className={clsx("w-full flex justify-between", {
+																	"opacity-50": isEmpty,
+																})}
+															>
 																<div className="text-xs">Util</div>
 																<span className="text-lg font-extrabold">
 																	{isEmpty ? (
@@ -415,7 +425,6 @@ function PackageBodySizeCapacityList() {
 							</div>
 						);
 					})}
-
 				</div>
 
 				<DragOverlay
@@ -437,7 +446,10 @@ function PackageBodySizeCapacityList() {
 				</DragOverlay>
 
 				{/* Unassigned droppable */}
-				<Droppable id="unassigned" data={{ className: "mt-4 z-40 flex flex-1" }}>
+				<Droppable
+					id="unassigned"
+					data={{ className: "mt-4 z-40 flex flex-1" }}
+				>
 					<div className="rounded-lg border border-base-content/20 min-h-20 bg-base-200 flex-1">
 						<div className="mb-2 text-sm font-medium text-base-content">
 							{unassignedCount} Unassigned
