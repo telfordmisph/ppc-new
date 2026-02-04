@@ -10,6 +10,7 @@ use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
+use App\Http\Controllers\PackageBodySizeCapacityController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Middleware\AuthMiddleware;
 use App\Http\Controllers\F3Controller;
@@ -137,6 +138,12 @@ Route::prefix('f3')->name('f3.')->group(function () {
         Route::middleware(AuthMiddleware::class . ':f3_raw_package_insert')->group(function () {
             Route::get('/create-many', [F3RawPackageController::class, 'insertMany'])->name('createMany');
         });
+    });
+});
+
+Route::prefix('package-body-size-capacity')->name('package.body_size.capacity.')->group(function () {
+    Route::middleware(AuthMiddleware::class)->group(function () {
+        Route::get('/', [PackageBodySizeCapacityController::class, 'index'])->name('index');
     });
 });
 
