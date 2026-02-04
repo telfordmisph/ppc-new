@@ -48,48 +48,41 @@ const F3PickUpImportPage = () => {
 		if (!selectedPickUpFile) {
 			return;
 		}
-		const handleManualPickUpImport = () => {
-			if (!selectedPickUpFile) {
-				return;
-			}
+		const formData = new FormData();
+		formData.append("file", selectedPickUpFile);
+		runAsyncToast({
+			action: async () => {
+				const result = await importF3PickUp(route("import.importF3PickUp"), {
+					body: formData,
+					isContentTypeInclude: false,
+					isFormData: true,
+				});
 
-			const formData = new FormData();
-			formData.append("file", selectedPickUpFile);
-			runAsyncToast({
-				action: async () => {
-					const result = await importF3PickUp(route("import.importF3PickUp"), {
-						body: formData,
-						isContentTypeInclude: false,
-						isFormData: true,
-					});
+				await fetchAllImports();
 
-					await fetchAllImports();
+				return result;
+			},
+			loadingMessage: "Importing PickUp data...",
+			renderSuccess: (result) => (
+				<>
+					<div className="mb-2 font-bold">
+						F3 PickUps: Successfully imported!
+					</div>
 
-					return result;
-				},
-				loadingMessage: "Importing PickUp data...",
-				renderSuccess: (result) => (
-					<>
-						<div className="mb-2 font-bold">
-							F3 PickUps: Successfully imported!
+					<div className="flex flex-col justify-between">
+						<div className="flex gap-2 px-2">
+							<span className="font-light">new F3 pickup entries:</span>
+							<span className="font-bold">
+								{Number(result?.data?.total ?? 0).toLocaleString()}
+							</span>
 						</div>
+					</div>
+				</>
+			),
 
-						<div className="flex flex-col justify-between">
-							<div className="flex gap-2 px-2">
-								<span className="font-light">new F3 pickup entries:</span>
-								<span className="font-bold">
-									{Number(result?.data?.total ?? 0).toLocaleString()}
-								</span>
-							</div>
-						</div>
-					</>
-				),
+			errorMessage: importF3PickUpErrorMessage,
+		});
 
-				errorMessage: importF3PickUpErrorMessage,
-			});
-
-			uploaderPickUpRef.current?.reset();
-		};
 		uploaderPickUpRef.current?.reset();
 	};
 
@@ -163,7 +156,7 @@ const F3PickUpImportPage = () => {
 
 						{importF3PickUpErrorData?.data?.ignored_unknown_package?.length >
 							0 && (
-							<div className="bg-warning flex items-center text-warning-content p-2 rounded-lg">
+							<div className="bg-warning items-center text-warning-content p-2 rounded-lg">
 								<MdWarning className="inline w-4 h-4 mr-2" />
 								Some rows' package is unknown, so the import has failed (see the
 								unknown package list below)

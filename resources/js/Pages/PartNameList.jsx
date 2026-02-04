@@ -6,6 +6,9 @@ import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import Modal from "@/Components/Modal";
 import Pagination from "@/Components/Pagination";
 import SearchInput from "@/Components/SearchInput";
+import { useMutation } from "@/Hooks/useMutation";
+import { useToast } from "@/Hooks/useToast";
+import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
 
 const PartNameList = () => {
 	const toast = useToast();
@@ -28,7 +31,6 @@ const PartNameList = () => {
 	const [currentPage, setCurrentPage] = useState(
 		serverPartNames.current_page || 1,
 	);
-	const partNameIndexRoute = route("partname.index");
 
 	const {
 		mutate,
@@ -96,17 +98,8 @@ const PartNameList = () => {
 			console.error(error);
 		}
 	};
-	deleteModalRef.current.close();
-	toast.success("Part deleted successfully!");
-};
-catch (error)
-{
-	toast.error(mutateErrorMessage);
-	console.error(error);
-}
-}
 
-return (
+	return (
 		<div className="w-full px-4">
 			<div className="flex items-center justify-between text-center">
 				<h1 className="text-base font-bold">Part Names</h1>
@@ -248,6 +241,6 @@ return (
 			/>
 		</div>
 	);
-}
+};
 
 export default PartNameList;

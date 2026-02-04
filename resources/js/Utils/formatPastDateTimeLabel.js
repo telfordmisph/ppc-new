@@ -26,7 +26,9 @@ export default function formatPastDateTimeLabel(dateInput) {
 
 		if (minutes === 0) return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
 
-		return `${hours} hrs and ${minutes} minutes ago`;
+		const hourLabel = hours === 1 ? "hr" : "hrs";
+		const minuteLabel = minutes === 1 ? "min" : "mins";
+		return `${hours} ${hourLabel} and ${minutes} ${minuteLabel} ago`;
 	}
 
 	// Yesterday
@@ -56,7 +58,7 @@ export default function formatPastDateTimeLabel(dateInput) {
 		if (days > 0) parts.push(days === 1 ? "1 day" : `${days} days`);
 		if (hours > 0) parts.push(hours === 1 ? "1 hour" : `${hours} hours`);
 
-		return parts.join(", ") + " ago";
+		return `${parts.join(", ")} ago`;
 	}
 
 	// Years

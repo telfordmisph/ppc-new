@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useCallback, useState } from "react";
 import DefaultEditableColumn from "@/Components/tanStackTable/defaultEditableColumn";
 import updateNested from "@/Utils/updateNested";
 /**
@@ -11,58 +11,66 @@ import updateNested from "@/Utils/updateNested";
  *        options.defaultColumn - default column definition
  * @returns {Object} table instance + state helpers
  */
-export function useEditableTable(initialData = [], columns, options = {}) {
-    const { defaultColumn = DefaultEditableColumn, onEdit } = options;
-    const [data, setData] = useState(initialData);
-    const [editedRows, setEditedRows] = useState({});
+export function useEditableTable(
+	initialData = [],
+	columns,
+	columnVisibility,
+	setColumnVisibility,
+	options = {},
+) {
+	const { defaultColumn = DefaultEditableColumn, onEdit } = options;
+	const [data, setData] = useState(initialData);
+	const [editedRows, setEditedRows] = useState({});
 
-    console.log("🚀 ~ useEditableTable ~ data:", data)
+	const updateData = useCallback(
+		(rowIndex, accessorKey, value) => {
+			setData((prevData) => {
+				const row = prevData[rowIndex];
+				const updatedRow = updateNested(row, accessorKey, value);
 
-    const updateData = useCallback(
-        (rowIndex, accessorKey, value) => {
-            setData(prevData => {
-                const row = prevData[rowIndex];
-                const updatedRow = updateNested(row, accessorKey, value);
-                
-                if (JSON.stringify(row) === JSON.stringify(updatedRow)) return prevData;
-                
-                const newData = [...prevData];
-                newData[rowIndex] = updatedRow;
+				if (JSON.stringify(row) === JSON.stringify(updatedRow)) return prevData;
 
-                const rowId = row.id;
-                setEditedRows(prev => {
-                    const editedRow = prev[rowId] || {};
-                    return {
-                    ...prev,
-                    [rowId]: updatedRow,
-                    };
-                });
+				const newData = [...prevData];
+				newData[rowIndex] = updatedRow;
 
-                return newData;
-            });
-        },
-        [onEdit]
-    );
+				const rowId = row.id;
+				setEditedRows((prev) => {
+					const editedRow = prev[rowId] || {};
+					return {
+						...prev,
+						[rowId]: updatedRow,
+					};
+				});
 
-    const table = useReactTable({
-        data,
-        columns: columns.filter(col => !col.meta?.hidden),
-        defaultColumn,
-        getRowId: (row) => row.id.toString(),
-        getCoreRowModel: getCoreRowModel(),
-        columnResizeDirection: "ltr",
-        columnResizeMode: "onChange",
-        meta: {
-            updateData,
-        },
-    });
+				return newData;
+			});
+		},
+		[onEdit],
+	);
 
-    return {
-        table,
-        data,
-        setData,
-        editedRows,
-        setEditedRows,
-        updateData,
-    };
+	const table = useReactTable({
+		data,
+		columns: columns.filter((col) => !col.meta?.hidden),
+		defaultColumn,
+		getRowId: (row) => row.id.toString(),
+		getCoreRowModel: getCoreRowModel(),
+		columnResizeDirection: "ltr",
+		columnResizeMode: "onChange",
+		state: {
+			columnVisibility,
+		},
+		meta: {
+			updateData,
+		},
+		onColumnVisibilityChange: setColumnVisibility,
+	});
+
+	return {
+		table,
+		data,
+		setData,
+		editedRows,
+		setEditedRows,
+		updateData,
+	};
 }

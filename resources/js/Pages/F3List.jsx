@@ -7,6 +7,7 @@ import BulkErrors from "@/Components/BulkErrors";
 import ChangeReviewModal from "@/Components/ChangeReviewModal";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import Pagination from "@/Components/Pagination";
 import SearchInput from "@/Components/SearchInput";
 import DateCell from "@/Components/tanStackTable/DateColumn";
 import DropdownCell from "@/Components/tanStackTable/DropdownCell";
@@ -14,6 +15,7 @@ import ReadOnlyColumns from "@/Components/tanStackTable/ReadOnlyColumn";
 import TanstackTable from "@/Components/tanStackTable/TanstackTable";
 import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useFetch } from "@/Hooks/useFetch";
+import { useMutation } from "@/Hooks/useMutation";
 
 const statusOptions = [
 	"SHIPPED",
@@ -28,14 +30,6 @@ const statusOptions = [
 ];
 
 const fullF3Roles = [
-	// "PPC Planner",
-	// "PPC Planner 2",
-	// "PPC Expediter 1",
-	// "PPC Expediter 2",
-	// "PPC Senior Supervisor",
-	// "PPC Manager",
-	// "ppc supervisor",
-	// "programmer 1",
 	"Production Supervisor",
 	"Senior Production Supervisor",
 	"Production Section Head",
@@ -65,9 +59,6 @@ export default function F3List() {
 		totalEntries,
 		emp_data,
 	} = usePage().props;
-
-	console.log("🚀 ~ F3List ~ serverF3WipAndOut:", serverF3WipAndOut);
-	console.log("🚀 ~ F3List ~ emp_data:", emp_data);
 
 	const hasFullF3Access = fullF3Roles.some(
 		(role) => role.toLowerCase() === emp_data.emp_jobtitle.toLowerCase(),
@@ -165,7 +156,6 @@ export default function F3List() {
 		setEditedRows({});
 	}, [serverF3WipAndOut]);
 
-	// console.log(" rowSelectionrowSelection rowSelection:", rowSelection);
 	const openF3RawPackageSelectionModal = (rowIndex, originalF3RawPackage) => {
 		setSelectedRowIndex(rowIndex);
 		setSelectedOriginalF3RawPackage([originalF3RawPackage]);
@@ -183,39 +173,6 @@ export default function F3List() {
 	} = useFetch(route("api.f3.raw.package.index"), {
 		auto: false,
 	});
-	console.log("🚀 ~ F3List ~ f3RawPackages:", f3RawPackages);
-
-	// const readOnlyColumns = React.useCallback(
-	// 	({ accessorKey, header, options = {} }) => ({
-	// 		accessorKey,
-	// 		header,
-	// 		...options,
-	// 		cell: ({ getValue }) => (
-	// 			<span className="opacity-60 cursor-not-allowed">
-	// 				{getValue() ?? "-"}
-	// 			</span>
-	// 		),
-	// 	}),
-	// 	[],
-	// );
-
-	// const editableColumn = React.useCallback(
-	// 	({ accessorKey, header, inputOptions = {}, options = {} }) => ({
-	// 		accessorKey,
-	// 		header,
-	// 		...options,
-	// 		cell: React.memo(({ getValue, row, column }) => (
-	// 			<EditableCell
-	// 				value={getValue()}
-	// 				rowIndex={row.index}
-	// 				columnId={column.id}
-	// 				onChange={handleCellChange}
-	// 				options={inputOptions}
-	// 			/>
-	// 		)),
-	// 	}),
-	// 	[],
-	// );
 
 	const handleCellChange = useCallback((rowIndex, columnId, value) => {
 		setData((prevData) => {
@@ -243,46 +200,6 @@ export default function F3List() {
 			return newData;
 		});
 	}, []);
-
-	// const dateTimeColumn = React.useCallback(
-	// 	(accessorKey, header, options = {}) => ({
-	// 		accessorKey: accessorKey,
-	// 		header: header,
-	// 		...options,
-	// 		cell: ({ getValue, row, column }) => (
-	// 			<DateCell
-	// 				value={getValue()}
-	// 				rowIndex={row.index}
-	// 				columnId={column.id}
-	// 				onChange={handleCellChange}
-	// 			/>
-	// 		),
-	// 	}),
-	// 	[handleCellChange],
-	// );
-
-	// const dateColumn = React.useCallback(
-	// 	(accessorKey, header, options = {}) => ({
-	// 		accessorKey: accessorKey,
-	// 		header: header,
-	// 		...options,
-	// 		cell: ({ getValue, row, column }) => (
-	// 			<DateCell
-	// 				value={getValue()}
-	// 				rowIndex={row.index}
-	// 				columnId={column.id}
-	// 				onChange={handleCellChange}
-	// 				options={{
-	// 					dateFormat: "yyyy-MM-dd",
-	// 					showTimeSelect: false,
-	// 					timeFormat: null,
-	// 					timeIntervals: null,
-	// 				}}
-	// 			/>
-	// 		),
-	// 	}),
-	// 	[handleCellChange],
-	// );
 
 	const statusColumn = React.useMemo(
 		() => ({
@@ -647,6 +564,8 @@ export default function F3List() {
 	const { table, data, setData, editedRows, setEditedRows } = useEditableTable(
 		serverF3WipAndOut.data || [],
 		columns,
+		columnVisibility,
+		setColumnVisibility,
 	);
 
 	const handleResetChanges = () => {
@@ -660,7 +579,6 @@ export default function F3List() {
 		setEditedRows({});
 		setChangesToReview([]);
 		const originalRows = Object.values(originalData);
-		console.log("🚀 ~ handleResetChanges ~ originalRows:", originalRows);
 		setData(originalRows);
 	};
 

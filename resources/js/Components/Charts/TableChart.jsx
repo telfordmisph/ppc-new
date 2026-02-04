@@ -22,29 +22,15 @@ const preferredOrder = [
 	"overall_utilization",
 ];
 
+const columnGroups = [
+	{ key: "wip", label: "WIP", match: "_total_wip" },
+	{ key: "lots", label: "Lots", match: "_total_lots" },
+	{ key: "outs", label: "Outs", match: "_total_outs" },
+	{ key: "capacity", label: "Capacity", match: "_capacity" },
+	{ key: "utilization", label: "Utilization", match: "_utilization" },
+];
+
 const TableChart = ({ data = [], exclude = [] }) => {
-	// const columns = useMemo(() => {
-	//     const allKeys = new Set();
-	//     data.forEach((row) =>
-	//         Object.keys(row || {}).forEach((k) => allKeys.add(k))
-	//     );
-	//     return Array.from(allKeys).filter((key) => !exclude.includes(key));
-	// }, [data, exclude]);
-	// const columns = useMemo(() => {
-	//     const allKeys = new Set();
-	//     data.forEach((row) =>
-	//         Object.keys(row || {}).forEach((k) => allKeys.add(k))
-	//     );
-
-	//     return Array.from(allKeys)
-	//         .filter((key) => !exclude.includes(key))
-	//         .sort((a, b) => a.localeCompare(b));
-	// }, [data, exclude]);
-
-	const columns = preferredOrder.filter((col) =>
-		data.some((row) => Object.hasOwn(row, col)),
-	);
-
 	if (!data.length) {
 		return null;
 	}
@@ -53,50 +39,96 @@ const TableChart = ({ data = [], exclude = [] }) => {
 		if (typeof val === "number") {
 			return val.toLocaleString();
 		}
-		if (typeof val === "string" && !isNaN(val) && val.trim() !== "") {
+		if (typeof val === "string" && !Number.isNaN(val) && val.trim() !== "") {
 			return Number(val).toLocaleString();
 		}
 		return val ?? "-";
 	};
 
+	const visibleColumns = preferredOrder.filter((col) =>
+		data.some((row) => Object.hasOwn(row, col)),
+	);
+
+	const groupedColumns = columnGroups
+		.map((group) => {
+			const cols = visibleColumns.filter((col) => col.includes(group.match));
+
+			return {
+				...group,
+				columns: cols,
+			};
+		})
+		.filter((g) => g.columns.length > 0);
+
+	const flatColumns = groupedColumns.flatMap((g) => g.columns);
+
 	return (
 		<div className="overflow-x-auto h-96">
-			<table className="table table-xs table-pin-rows table-pin-cols">
+			<table className="table bg-transparent table-xs table-pin-rows table-pin-cols">
 				<thead>
 					<tr>
-						{columns.map((col) => (
+						{groupedColumns.map((group) => (
 							<th
-								key={col}
-								className="bg-base-200 text-right font-light whitespace-nowrap"
+								key={group.key}
+								colSpan={group.columns.length}
+								className="bg-base-200 text-center font-semibold"
 							>
-								{col}
+								{group.label}
 							</th>
 						))}
+					</tr>
+
+					<tr>
+						<th className="bg-base-200 min-w-14">Label</th>
+
+						{groupedColumns.flatMap((group) =>
+							group.columns.map((col) => (
+								<th
+									key={col}
+									className="bg-base-200 text-right font-light whitespace-nowrap"
+								>
+									{col}
+								</th>
+							)),
+						)}
+
+						<th className="bg-base-200 min-w-14">Label</th>
 					</tr>
 				</thead>
 
 				<tbody>
-					{data.map((row, index) => (
-						<tr key={index}>
-							{columns.map((col) => (
-								<td
-									key={col}
-									className={`text-right whitespace-nowrap ${
+					{data.map((row, index) => {
+						const zebra = index % 2 === 0 ? "bg-base-100" : "";
+
+						return (
+							<tr key={index}>
+								<th className="bg-base-200 min-w-14 text-left">
+									{row?.label ?? "-"}
+								</th>
+
+								{flatColumns.map((col) => {
+									const isMono =
 										typeof row[col] === "number" ||
-										(
-											typeof row[col] === "string" &&
-												!isNaN(row[col]) &&
-												row[col].trim() !== ""
-										)
+										(typeof row[col] === "string" &&
+											!Number.isNaN(row[col]) &&
+											row[col].trim() !== "")
 											? "font-mono"
-											: ""
-									}`}
-								>
-									{formatValue(row[col])}
-								</td>
-							))}
-						</tr>
-					))}
+											: "";
+
+									return (
+										<td
+											key={col}
+											className={`${zebra} text-right whitespace-nowrap ${isMono}`}
+										>
+											{formatValue(row[col])}
+										</td>
+									);
+								})}
+
+								<th className="bg-base-200 min-w-14">{row?.label ?? "-"}</th>
+							</tr>
+						);
+					})}
 				</tbody>
 			</table>
 		</div>

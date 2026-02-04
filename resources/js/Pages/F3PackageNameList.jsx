@@ -6,8 +6,6 @@ import { TbAlertCircle } from "react-icons/tb";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import Modal from "@/Components/Modal";
 import Pagination from "@/Components/Pagination";
-import Pagination from "@/Components/Pagination";
-import SearchableDropdown from "@/Components/SearchableDropdown";
 import SearchInput from "@/Components/SearchInput";
 import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
@@ -235,47 +233,18 @@ const F3PackageNameList = () => {
 					))}
 				</tbody>
 			</table>
-										<button
-											type="button"
-											className="btn btn-outline"
-											onClick={() => deleteModalRef.current?.close()}
-										>
-											Cancel
-										</button>
-									</div>
-	</Modal>
-							</td>
-						</tr>
-					))
-};
-</tbody>
-			</table>
 
 			<Pagination
-				links=
-{
-	serverPackageGroup.links;
-}
-currentPage = { currentPage };
-goToPage = { goToPage };
-filteredTotal = { filteredTotal };
-overallTotal = { overallTotal };
-start = { start };
-end={end}
+				links={serverPackageGroup.links}
+				currentPage={currentPage}
+				goToPage={goToPage}
+				filteredTotal={filteredTotal}
+				overallTotal={overallTotal}
+				start={start}
+				end={end}
 			/>
-</>
-	)
-<Pagination
-	links={serverPackageGroup.links}
-	currentPage={currentPage}
-	goToPage={goToPage}
-	filteredTotal={filteredTotal}
-	overallTotal={overallTotal}
-	start={start}
-	end={end}
-/>;
-</>
-	)
-}
+		</>
+	);
+};
 
 export default F3PackageNameList;

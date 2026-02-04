@@ -15,7 +15,6 @@ export function formatISOTimestampToDate(timestamp) {
 		minute: "2-digit",
 		second: "2-digit",
 		hour12: false,
-		timeZone: "UTC", // adjust if you want local timezone
 	};
 
 	return date.toLocaleString("en-US", options);

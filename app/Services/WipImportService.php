@@ -40,7 +40,7 @@ class WipImportService
   protected $excelValidator;
   protected $f3RawPackageRepository;
   protected $csvReader;
-  protected $flags = IReader::READ_DATA_ONLY | IReader::IGNORE_ROWS_WITH_NO_CELLS | IReader::IGNORE_EMPTY_CELLS;
+  protected $flags = IReader::READ_DATA_ONLY | IReader::IGNORE_ROWS_WITH_NO_CELLS;
   protected $emptyCellFlags = CellIterator::TREAT_EMPTY_STRING_AS_EMPTY_CELL;
   protected string $WIP_QUANTITY_EXCEL_PATH = '\\\\192.168.1.13\\ftproot\\daily_backend_wip.csv';
 
@@ -311,6 +311,7 @@ class WipImportService
   public function importCapacity($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $this->excelValidator->errorOnMultipleSheet($spreadsheet);
 
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -401,6 +402,7 @@ class WipImportService
   public function importF1F2PickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $this->excelValidator->errorOnMultipleSheet($spreadsheet);
     $sheet = $spreadsheet->getActiveSheet();
 
     // $sheetData = $this->getSanitizedSheetData($spreadsheet);
@@ -474,6 +476,7 @@ class WipImportService
   public function importF3PickUp($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $this->excelValidator->errorOnMultipleSheet($spreadsheet);
     // $sheetData = $this->getSanitizedSheetData($spreadsheet);
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -582,6 +585,7 @@ class WipImportService
   public function importF3($importedBy = null, $file)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+    $this->excelValidator->errorOnMultipleSheet($spreadsheet);
     $sheet = $spreadsheet->getActiveSheet();
 
     $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);

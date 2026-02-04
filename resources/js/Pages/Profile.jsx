@@ -41,7 +41,7 @@ export default function Profile({ profile, errors }) {
 		<>
 			<Head title="Profile" />
 
-			<div className="max-w-3xl p-6 mx-auto border-[1px] rounded-lg">
+			<div className="max-w-3xl p-6 mx-auto border rounded-lg">
 				<h1 className="pb-2 mb-6 text-2xl font-bold border-b">User Profile</h1>
 
 				{profile && (
@@ -61,7 +61,8 @@ export default function Profile({ profile, errors }) {
 								value={[...Array(16)].map(() => "•").join("")}
 							/>
 							<button
-								className="border-blue-500 btn btn-sm border-[1px]"
+								type="button"
+								className="border-blue-500 btn btn-sm border"
 								onClick={() => setPasswordForm(!passwordForm)}
 							>
 								{passwordForm ? "Cancel" : "Change Password"}
@@ -154,6 +155,7 @@ export default function Profile({ profile, errors }) {
 						</div>
 
 						<button
+							type="button"
 							className="w-full mt-2 btn btn-primary"
 							onClick={handleChangePassword}
 						>

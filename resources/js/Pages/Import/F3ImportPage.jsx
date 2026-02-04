@@ -32,18 +32,7 @@ const F3ImportPage = () => {
 		mutate: importF3,
 		data: importF3Data,
 	} = useMutation();
-	const {
-		isLoading: isImportF3Loading,
-		errorMessage: importF3ErrorMessage,
-		errorData: importF3ErrorData,
-		mutate: importF3,
-		data: importF3Data,
-	} = useMutation();
 
-	const handleManualF3Import = () => {
-		if (!selectedF3File) {
-			return;
-		}
 	const handleManualF3Import = () => {
 		if (!selectedF3File) {
 			return;
@@ -92,27 +81,7 @@ const F3ImportPage = () => {
 			),
 			errorMessage: importF3ErrorMessage,
 		});
-					<div className="flex flex-col justify-between">
-						{result?.data?.ignored_unknown_package?.length > 0 && (
-							<div className="bg-warning text-warning-content px-2">
-								ignored rows with unknown packages:{" "}
-								<span>{result?.data?.ignored_unknown_package?.length}</span>
-							</div>
-						)}
-						<div className="flex gap-2 px-2">
-							<span className="font-light">new F3 entries:</span>
-							<span className="font-bold">
-								{Number(result?.data?.total ?? 0).toLocaleString()}
-							</span>
-						</div>
-					</div>
-				</>
-			),
-			errorMessage: importF3ErrorMessage,
-		});
 
-		uploaderF3Ref.current?.reset();
-	};
 		uploaderF3Ref.current?.reset();
 	};
 
@@ -278,22 +247,6 @@ const F3ImportPage = () => {
 							</Collapse>
 						)}
 
-					<Collapse title={`${f3Label} Excel Headers Required`}>
-						<div className="text-secondary">
-							space and whitespace are the same. Case insensitive
-						</div>
-						<ul className="list">
-							{F3_OUTS_HEADERS.map((header) => (
-								<li className="list-row h-8 leading-none" key={header}>
-									{header}
-								</li>
-							))}
-						</ul>
-					</Collapse>
-				</div>
-			</div>
-		</ImportPageLayout>
-	);
 					<Collapse title={`${f3Label} Excel Headers Required`}>
 						<div className="text-secondary">
 							space and whitespace are the same. Case insensitive
