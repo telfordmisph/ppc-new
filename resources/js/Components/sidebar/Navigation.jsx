@@ -1,22 +1,17 @@
-import { FaCheckCircle, FaRecycle } from "react-icons/fa";
-
+import { usePage } from "@inertiajs/react";
+import { BiImport } from "react-icons/bi";
+import { FaBatteryHalf, FaCheckCircle, FaRecycle } from "react-icons/fa";
+import { FaCodeBranch, FaLayerGroup, FaTruckPickup } from "react-icons/fa6";
 import {
 	LuLayoutDashboard,
-	LuListChecks,
 	LuList,
+	LuListChecks,
 	LuPackage,
 } from "react-icons/lu";
-
-import { BiImport } from "react-icons/bi";
-import { TbResize } from "react-icons/tb";
+import { TbProgressCheck, TbResize, TbSettings } from "react-icons/tb";
 import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
-import { usePage } from "@inertiajs/react";
-import { FaCodeBranch, FaLayerGroup, FaTruckPickup } from "react-icons/fa6";
-import { FaBatteryHalf } from "react-icons/fa";
-import { TbSettings } from "react-icons/tb";
 import useUserStore from "@/Store/useUserStore";
-import { TbProgressCheck } from "react-icons/tb";
 
 export default function NavLinks() {
 	const { emp_data } = usePage().props;
@@ -101,6 +96,12 @@ export default function NavLinks() {
 					{
 						href: route("package.capacity.index"),
 						label: "Capacity",
+						icon: <FaBatteryHalf className="w-4 h-4" />,
+						notification: false,
+					},
+					{
+						href: route("package.body_size.capacity.index"),
+						label: "Body Size Capacity",
 						icon: <FaBatteryHalf className="w-4 h-4" />,
 						notification: false,
 					},
