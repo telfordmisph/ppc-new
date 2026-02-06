@@ -12,6 +12,7 @@ use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\PackageBodySizeCapacityController;
 use App\Http\Controllers\F3PackageNamesController;
+use App\Http\Controllers\PickupController;
 use App\Http\Middleware\AuthMiddleware;
 use App\Http\Controllers\F3Controller;
 
@@ -59,6 +60,9 @@ Route::middleware(AuthMiddleware::class)->group(function () {
 
 Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/pickup-dashboard", [DashboardController::class, 'pickupDashboardIndex'])->name('pickup.dashboard');
+});
+Route::middleware(AuthMiddleware::class)->group(function () {
+    Route::get("/pickup-list", [PickupController::class, 'index'])->name('pickup.index');
 });
 Route::middleware(AuthMiddleware::class)->group(function () {
     Route::get("/residual-dashboard", [DashboardController::class, 'residualDashboardIndex'])->name('residual.dashboard');

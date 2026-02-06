@@ -1,6 +1,5 @@
 import { router, usePage } from "@inertiajs/react";
-import { flexRender } from "@tanstack/react-table";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { MdSchedule } from "react-icons/md";
 import BulkErrors from "@/Components/BulkErrors";
@@ -63,9 +62,6 @@ export default function F3List() {
 	const hasFullF3Access = fullF3Roles.some(
 		(role) => role.toLowerCase() === emp_data.emp_jobtitle.toLowerCase(),
 	);
-
-	const modalDropdownRef = useRef(null);
-
 	const start = serverF3WipAndOut.from;
 	const end = serverF3WipAndOut.to;
 	const filteredTotal = serverF3WipAndOut.total;
@@ -78,11 +74,8 @@ export default function F3List() {
 	const [currentPage, setCurrentPage] = useState(
 		serverF3WipAndOut.current_page || 1,
 	);
-	const [searchedF3RawPackage, setSearchedF3RawPackage] = useState(null);
-	const [currentPageF3RawPackage, setCurrentPageF3RawPackage] = useState(1);
 	const perPageF3RawPackage = 50;
 
-	const [rowSelection, setRowSelection] = useState({});
 	const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 	const [originalF3RawPackage, setSelectedOriginalF3RawPackage] = useState([
 		[],
@@ -146,6 +139,7 @@ export default function F3List() {
 
 	useEffect(() => {
 		const rows = serverF3WipAndOut.data || [];
+		console.log("🚀 ~ F3List ~ rows:", rows);
 		setData(rows);
 
 		const map = {};
@@ -707,49 +701,6 @@ export default function F3List() {
 		return colSizes;
 	}, [table.getState().columnSizing, table.getState().columnSizingInfo]);
 
-	const TableRow = React.memo(
-		function TableRow({ row, rowEditedState }) {
-			// const isEdited = editedRows[row.original.id];
-			const isEdited = Object.keys(rowEditedState).length > 0;
-
-			return (
-				<div
-					onClick={() => {
-						table.setRowSelection({ [row.id]: true });
-					}}
-					className={`flex border-b items-center border-base-300 transition-colors
-        ${isEdited ? "bg-yellow-400/10" : ""}`}
-				>
-					{row.getVisibleCells().map((cell) => (
-						<div
-							// onClick={row.getToggleSelectedHandler()}
-							key={cell.id}
-							className="px-2 py-1 border-r border-base-300"
-							style={{
-								width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
-							}}
-						>
-							{flexRender(cell.column.columnDef.cell, cell.getContext())}
-						</div>
-					))}
-				</div>
-			);
-		},
-		(prevProps, nextProps) => {
-			return (
-				prevProps.row === nextProps.row &&
-				prevProps.rowEditedState === nextProps.rowEditedState &&
-				prevProps.columnVisibility === nextProps.columnVisibility
-			);
-			// return (
-			//     prevProps.row === nextProps.row &&
-			//     prevProps.editedRows[prevProps.row.original.id] ===
-			//         nextProps.editedRows[nextProps.row.original.id] &&
-			//     prevProps.columnVisibility === nextProps.columnVisibility
-			// );
-		},
-	);
-
 	const resetAllColumns = () => {
 		table.getAllColumns().forEach((col) => col.resetSize());
 	};
@@ -757,25 +708,6 @@ export default function F3List() {
 	useEffect(() => {
 		resetAllColumns();
 	}, [columnVisibility]);
-
-	// const renderedRows = React.useMemo(
-	//     () =>
-	//         table
-	//             .getRowModel()
-	//             .rows.map((row) => <TableRow key={row.id} row={row} />),
-	//     [table.getRowModel().rows, editedRows, columnVisibility]
-	// );
-
-	// const renderedRows = React.useMemo(
-	// 	() =>
-	// 		table.getRowModel().rows.map((row) => {
-	// 			const rowEditedState = editedRows[row.original.id] || {};
-	// 			return (
-	// 				<TableRow key={row.id} row={row} rowEditedState={rowEditedState} />
-	// 			);
-	// 		}),
-	// 	[table.getRowModel().rows, editedRows, columnVisibility],
-	// );
 
 	const handleF3RawPackageModalSelect = (selectedF3RawPackage) => {
 		if (selectedRowIndex === null) return;

@@ -97,6 +97,8 @@ const F1F2PickUpImportPage = () => {
 				map.set(item.PARTNAME, {
 					...item,
 					PARTNAME: item.PARTNAME,
+					Packagename: item.PACKAGE,
+					Leadcount: item.LC,
 				});
 			}
 		}

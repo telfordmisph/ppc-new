@@ -9,7 +9,7 @@ function Droppable({ id, children, data }) {
 			ref={setNodeRef}
 			style={data?.color ? { "--ring-color": data.color } : {}}
 			className={clsx(
-				"rounded-md transition-all",
+				"rounded-md transition-all duration-75",
 				data.className,
 				isOver && [
 					"ring-2",

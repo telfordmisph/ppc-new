@@ -15,7 +15,7 @@ export function useEditableTable(
 	initialData = [],
 	columns,
 	columnVisibility,
-	setColumnVisibility,
+	setColumnVisibility = () => {},
 	options = {},
 ) {
 	const { defaultColumn = DefaultEditableColumn, onEdit } = options;
@@ -64,6 +64,7 @@ export function useEditableTable(
 		},
 		onColumnVisibilityChange: setColumnVisibility,
 	});
+	console.log("🚀 ~ useEditableTable ~ table:", table);
 
 	return {
 		table,

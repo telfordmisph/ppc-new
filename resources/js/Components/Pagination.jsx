@@ -30,7 +30,6 @@ const Pagination = ({
 			)}
 			<div className="join sticky right-0 flex flex-wrap gap-1">
 				{links?.map((link, index) => {
-					console.log("🚀 ~ Pagination ~ links:", links);
 					const page = link.url
 						? parseInt(new URL(link.url).searchParams.get("page"))
 						: currentPage;

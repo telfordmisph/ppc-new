@@ -432,6 +432,8 @@ class WipImportService
           continue;
         }
 
+        Log::info("Processing row: " . print_r($rowData, true));
+
         $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 
         $rowData['ADDED_BY'] = $importedBy;
@@ -503,8 +505,6 @@ class WipImportService
       if (empty($rowData)) {
         continue;
       }
-      // foreach (array_slice($sheetData, $headerRowIndex) as $rowIndex => $row) {
-      //   if ($this->isEmptyRow($row)) continue;
 
       $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
 

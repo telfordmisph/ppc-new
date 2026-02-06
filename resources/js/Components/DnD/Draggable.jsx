@@ -14,7 +14,7 @@ function Draggable(props) {
 	return (
 		<div
 			className={clsx(
-				"flex border shadow-xl border-base-100 rounded-lg",
+				"relative flex border border-base-100 rounded-lg",
 				props.containerClassName,
 			)}
 			ref={setNodeRef}
@@ -24,7 +24,7 @@ function Draggable(props) {
 			<div
 				{...listeners}
 				{...attributes}
-				className="cursor-grab opacity-75 select-none h-full rounded-lg mb-1 text-base-content flex items-center px-2 hover:bg-secondary/50"
+				className="absolute right-0 cursor-grab opacity-75 select-none h-full rounded-lg mb-1 text-base-content flex items-center px-2 hover:bg-secondary/50"
 			>
 				⠿
 			</div>

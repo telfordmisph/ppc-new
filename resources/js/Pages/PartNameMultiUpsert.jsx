@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
-import { FaSave, FaTimes, FaPlus } from "react-icons/fa";
 import { router, usePage } from "@inertiajs/react";
+import { useMemo, useState } from "react";
+import { FaPlus, FaSave, FaTimes } from "react-icons/fa";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 
@@ -91,7 +91,7 @@ const PartNameMultiInsert = () => {
 								<th>#</th>
 								<th className="w-[220px]">Partname</th>
 								<th className="w-[120px]">Focus Group</th>
-								<th className="w-3.5">Factory</th>
+								<th className="w-[100px]">Factory</th>
 								<th className="w-[120px]">PL</th>
 								<th>Package Name</th>
 								<th className="w-[30px]">Lead Count</th>
@@ -123,19 +123,21 @@ const PartNameMultiInsert = () => {
 											onChange={(e) =>
 												handleInputChange(idx, "Focus_grp", e.target.value)
 											}
-											required
 										/>
 									</td>
 									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
+										<select
+											className="select select-bordered w-full"
 											value={p.Factory}
 											onChange={(e) =>
 												handleInputChange(idx, "Factory", e.target.value)
 											}
 											required
-										/>
+										>
+											<option value="F1">F1</option>
+											<option value="F2">F2</option>
+											<option value="F3">F3</option>
+										</select>
 									</td>
 									<td>
 										<select
@@ -158,7 +160,6 @@ const PartNameMultiInsert = () => {
 											onChange={(e) =>
 												handleInputChange(idx, "Packagename", e.target.value)
 											}
-											required
 										/>
 									</td>
 									<td>
@@ -169,7 +170,6 @@ const PartNameMultiInsert = () => {
 											onChange={(e) =>
 												handleInputChange(idx, "Leadcount", e.target.value)
 											}
-											required
 										/>
 									</td>
 									<td>

@@ -13,7 +13,7 @@ import Dropdown from "@/Components/sidebar/Dropdown";
 import SidebarLink from "@/Components/sidebar/SidebarLink";
 import useUserStore from "@/Store/useUserStore";
 
-export default function NavLinks() {
+export default function NavLinks({ isCollapse = false }) {
 	const { emp_data } = usePage().props;
 	const empData = useUserStore((state) => state.empData);
 
@@ -27,13 +27,15 @@ export default function NavLinks() {
 			style={{ scrollbarWidth: "none" }}
 		>
 			<SidebarLink
+				isIconOnly={isCollapse}
 				href={route("dashboard")}
 				label="Dashboard"
 				icon={<LuLayoutDashboard className="w-4 h-4" />}
-				notifications={0}
+				// notifications={0}
 			/>
 
 			<Dropdown
+				isIconOnly={isCollapse}
 				label="WIP Monitoring"
 				icon={<LuListChecks className="w-4 h-4" />}
 				links={[
@@ -78,6 +80,7 @@ export default function NavLinks() {
 			/>
 
 			<Dropdown
+				isIconOnly={isCollapse}
 				label="Maintenance"
 				icon={<TbSettings className="w-4 h-4" />}
 				links={[
@@ -110,13 +113,15 @@ export default function NavLinks() {
 			/>
 
 			<SidebarLink
+				isIconOnly={isCollapse}
 				href={route("import.index")}
 				label="Import Data"
 				icon={<BiImport className="w-4 h-4" />}
-				notifications={0}
+				// notifications={0}
 			/>
 
 			<SidebarLink
+				isIconOnly={isCollapse}
 				href={route("f3.list.index")}
 				label="F3 Wip & Out List"
 				icon={<LuList className="w-4 h-4" />}
@@ -124,8 +129,17 @@ export default function NavLinks() {
 			/>
 
 			<SidebarLink
+				isIconOnly={isCollapse}
 				href={route("partname.index")}
 				label="Partname List"
+				icon={<LuList className="w-4 h-4" />}
+				notifications={false}
+			/>
+
+			<SidebarLink
+				isIconOnly={isCollapse}
+				href={route("pickup.index")}
+				label="Pickup List"
 				icon={<LuList className="w-4 h-4" />}
 				notifications={false}
 			/>
