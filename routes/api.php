@@ -11,6 +11,7 @@ use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Controllers\F3Controller;
+use App\Http\Controllers\PickupController;
 use App\Http\Controllers\AnalogCalendarController;
 use App\Http\Middleware\ApiAuthMiddleware;
 use App\Http\Middleware\ApiPermissionMiddleware;
@@ -50,6 +51,13 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::middleware(ApiPermissionMiddleware::class . ':partname_mutate')->group(function () {
         Route::patch('/{id}', [PartNameController::class, 'update'])->name('update');
         Route::delete('/{id}', [PartNameController::class, 'destroy'])->name('delete');
+      });
+    });
+
+    Route::prefix('pickup')->name('api.pickup.')->group(function () {
+      Route::middleware(ApiPermissionMiddleware::class . ':pickup_mutate')->group(function () {
+        Route::delete('/bulk-delete', [PickupController::class, 'massGenocide'])
+          ->name('massGenocide');
       });
     });
 

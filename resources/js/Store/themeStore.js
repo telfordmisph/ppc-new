@@ -13,6 +13,12 @@ export const useThemeStore = create((set) => {
 			set({ theme: newTheme });
 		},
 
+		isDarkTheme: () => {
+			const currentTheme =
+				localStorage.getItem(localStorageName) || LIGHT_THEME_NAME;
+			return currentTheme === DARK_THEME_NAME;
+		},
+
 		toggleTheme: () =>
 			set((state) => {
 				const newTheme =

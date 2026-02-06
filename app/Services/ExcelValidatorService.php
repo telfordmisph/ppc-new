@@ -40,7 +40,7 @@ class ExcelValidatorService
     $stringCells = 0;
     $numericCells = 0;
 
-    Log::info("Row: " . print_r($row, true));
+    // Log::info("Row: " . print_r($row, true));
 
     foreach ($row as $cell) {
       if (!is_null($cell) && trim($cell) !== '') {

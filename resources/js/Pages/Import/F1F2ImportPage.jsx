@@ -312,6 +312,7 @@ const F1F2ImportPage = () => {
 
 						<div className="flex justify-end gap-2">
 							<button
+								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									ftprootOUTImportRef.current?.close();
@@ -354,6 +355,7 @@ const F1F2ImportPage = () => {
 
 						<div className="flex justify-end gap-2">
 							<button
+								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									ftprootWIPImportRef.current?.close();
@@ -392,6 +394,7 @@ const F1F2ImportPage = () => {
 
 						<div className="flex justify-end gap-2">
 							<button
+								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									manualWIPImportRef.current?.close();
@@ -431,6 +434,7 @@ const F1F2ImportPage = () => {
 
 						<div className="flex justify-end gap-2">
 							<button
+								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									manualOUTImportRef.current?.close();
