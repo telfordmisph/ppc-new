@@ -8,6 +8,7 @@ use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\ImportTraceController;
 use App\Http\Controllers\PackageGroupController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Controllers\F3Controller;
@@ -88,6 +89,7 @@ Route::middleware([ApiAuthMiddleware::class])
     });
 
     Route::prefix('package')->name('api.package.')->group(function () {
+      Route::get('/packages', [PackageController::class, 'getAllPackages'])->name('all');
       Route::get('/package-groups', [PackageGroupController::class, 'index'])->name('packageGroups');
 
       Route::middleware(ApiPermissionMiddleware::class . ':package_group_mutate')->group(function () {
