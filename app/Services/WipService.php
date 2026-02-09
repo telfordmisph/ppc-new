@@ -70,68 +70,135 @@ class WipService
 
   public function getTodayWip()
   {
-    $endDate = Carbon::now()->endOfDay();
+    $endDate   = Carbon::now()->endOfDay();
     $startDate = Carbon::now()->subDays(25)->startOfDay();
 
+    /*
+  |--------------------------------------------------------------------------
+  | F3
+  |--------------------------------------------------------------------------
+  */
     $f3DataRaw = $this->f3WipRepo->baseF3Query(false)
       ->selectRaw('DATE(date_loaded) AS report_date, SUM(f3.qty) AS f3')
-      // ->whereBetween('date_loaded', [$startDate, $endDate])
-      ->where('date_loaded', ">=", $startDate)
-      ->where('date_loaded', "<", $endDate)
-      ->groupBy(DB::raw('date_loaded'))
+      ->where('date_loaded', '>=', $startDate)
+      ->where('date_loaded', '<',  $endDate)
+      ->groupBy(DB::raw('DATE(date_loaded)'))
       ->get();
 
-    $f3Data = [];
+    $f3ByDate = [];
     foreach ($f3DataRaw as $row) {
-      $f3Data[$row->report_date] = (int) $row->f3;
+      $f3ByDate[$row->report_date] = (int) $row->f3;
     }
 
-    $f1Data = DB::table(self::F1F2_TABLE . ' as wip')
+    /*
+  |--------------------------------------------------------------------------
+  | F1
+  |--------------------------------------------------------------------------
+  */
+    $f1Query = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f1_wip')
       ->whereNotIn('wip.Focus_Group', ['DLT', 'WLT', 'SOF'])
-      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate]);
-      ->where('wip.Date_Loaded', ">=", $startDate)
-      ->where('wip.Date_Loaded', "<", $endDate);
+      ->where('wip.Date_Loaded', '>=', $startDate)
+      ->where('wip.Date_Loaded', '<',  $endDate);
 
     $f1Data = $this->f1f2WipRepo->f1Filters(
-      $f1Data,
+      $f1Query,
       WipConstants::TODAY_WIP_INCLUDED_STATIONS,
       WipConstants::TODAY_WIP_EXCLUDED_STATIONS,
-    )->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
-
-    $f2Data = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f2_wip');
-
-    $f2Data = $this->f1f2WipRepo->applyF2Filters($f2Data, [...WipConstants::EWAN_PROCESS, 'Q-PITRANS1', 'GTTRANS_BE'], 'wip')
-      // ->whereBetween('wip.Date_Loaded', [$startDate, $endDate])
-      ->where('wip.Date_Loaded', ">=", $startDate)
-      ->where('wip.Date_Loaded', "<", $endDate)
+    )
       ->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
 
-    $f1f2Data = DB::query()
+    /*
+  |--------------------------------------------------------------------------
+  | F2
+  |--------------------------------------------------------------------------
+  */
+    $f2Query = DB::table(self::F1F2_TABLE . ' as wip')
+      ->selectRaw('DATE(wip.Date_Loaded) AS report_date, SUM(wip.Qty) AS f2_wip')
+      ->where('wip.Date_Loaded', '>=', $startDate)
+      ->where('wip.Date_Loaded', '<',  $endDate);
+
+    $f2Data = $this->f1f2WipRepo->applyF2Filters(
+      $f2Query,
+      [...WipConstants::EWAN_PROCESS, 'Q-PITRANS1', 'GTTRANS_BE'],
+      'wip'
+    )
+      ->groupBy(DB::raw('DATE(wip.Date_Loaded)'));
+
+    /*
+  |--------------------------------------------------------------------------
+  | FULL OUTER JOIN (F1 + F2)
+  |--------------------------------------------------------------------------
+  */
+    $f1f2Left = DB::query()
       ->fromSub($f1Data, 'f1')
-      ->joinSub($f2Data, 'f2', function ($join) {
+      ->leftJoinSub($f2Data, 'f2', function ($join) {
         $join->on('f1.report_date', '=', 'f2.report_date');
       })
-      ->selectRaw('f1.report_date, f1.f1_wip, f2.f2_wip')
+      ->selectRaw('
+      f1.report_date as report_date,
+      f1.f1_wip,
+      COALESCE(f2.f2_wip, 0) as f2_wip
+    ');
+
+    $f1f2Right = DB::query()
+      ->fromSub($f2Data, 'f2')
+      ->leftJoinSub($f1Data, 'f1', function ($join) {
+        $join->on('f1.report_date', '=', 'f2.report_date');
+      })
+      ->whereNull('f1.report_date')
+      ->selectRaw('
+      f2.report_date as report_date,
+      0 as f1_wip,
+      f2.f2_wip
+    ');
+
+    $f1f2Rows = $f1f2Left
+      ->unionAll($f1f2Right)
       ->get();
 
+    /*
+  |--------------------------------------------------------------------------
+  | INDEX F1 + F2 BY DATE
+  |--------------------------------------------------------------------------
+  */
+    $f1f2ByDate = [];
+    foreach ($f1f2Rows as $row) {
+      $f1f2ByDate[$row->report_date] = [
+        'f1' => (int) $row->f1_wip,
+        'f2' => (int) $row->f2_wip,
+      ];
+    }
+
+    /*
+  |--------------------------------------------------------------------------
+  | GAPLESS CALENDAR MERGE (F1 + F2 + F3)
+  |--------------------------------------------------------------------------
+  */
     $data = [];
-    foreach ($f1f2Data as $row) {
-      $reportDate = $row->report_date;
-      $f3Value = $f3Data[$reportDate] ?? 0;
+    $cursor = $startDate->copy();
+
+    while ($cursor->lte($endDate)) {
+      $date = $cursor->toDateString();
+
+      $f1 = $f1f2ByDate[$date]['f1'] ?? 0;
+      $f2 = $f1f2ByDate[$date]['f2'] ?? 0;
+      $f3 = $f3ByDate[$date] ?? 0;
 
       $data[] = [
-        'date'  => $reportDate,
-        'total' => (int) $row->f1_wip + (int) $row->f2_wip + $f3Value,
-        'f1'    => (int) $row->f1_wip,
-        'f2'    => (int) $row->f2_wip,
-        'f3'    => $f3Value,
+        'date'  => $date,
+        'total' => $f1 + $f2 + $f3,
+        'f1'    => $f1,
+        'f2'    => $f2,
+        'f3'    => $f3,
       ];
+
+      $cursor->addDay();
     }
 
     return response()->json($data);
   }
+
 
   public function getOverallOuts($startDate, $endDate, $useWorkweek, $workweek)
   {
