@@ -1,7 +1,3 @@
-import { router, usePage } from "@inertiajs/react";
-import React, { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { MdSchedule } from "react-icons/md";
 import BulkErrors from "@/Components/BulkErrors";
 import ChangeReviewModal from "@/Components/ChangeReviewModal";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
@@ -15,6 +11,10 @@ import TanstackTable from "@/Components/tanStackTable/TanstackTable";
 import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useFetch } from "@/Hooks/useFetch";
 import { useMutation } from "@/Hooks/useMutation";
+import { router, usePage } from "@inertiajs/react";
+import React, { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { MdSchedule } from "react-icons/md";
 
 const statusOptions = [
 	"SHIPPED",
@@ -247,7 +247,7 @@ export default function F3List() {
 	);
 
 	const columns = React.useMemo(() => {
-		const allColumns = [
+		return [
 			ReadOnlyColumns({
 				accessorKey: "id",
 				header: "ID",
@@ -406,142 +406,142 @@ export default function F3List() {
 			}),
 		];
 
-		if (!hasFullF3Access) {
-			return [
-				ReadOnlyColumns({
-					accessorKey: "id",
-					header: "ID",
-					options: { size: 60, enableHiding: false },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "running_ct",
-					header: "Running CT",
-					inputOptions: { type: "number", step: 0.01 },
-					options: { size: 80 },
-				}),
+		// if (!hasFullF3Access) {
+		// 	return [
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "id",
+		// 			header: "ID",
+		// 			options: { size: 60, enableHiding: false },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "running_ct",
+		// 			header: "Running CT",
+		// 			inputOptions: { type: "number", step: 0.01 },
+		// 			options: { size: 80 },
+		// 		}),
 
-				ReadOnlyColumns({
-					accessorKey: "date_received",
-					header: "Date Received",
-					options: {
-						size: 520,
-					},
-				}),
-				ReadOnlyColumns({
-					accessorKey: "packing_list_srf",
-					header: "Packing List SRF",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "po_number",
-					header: "PO Number",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "machine_number",
-					header: "Machine Number",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "part_number",
-					header: "Part Number",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "package_code",
-					header: "Package Code",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "package",
-					header: "Package",
-					options: {
-						accessorFn: (row) => row.package?.raw_package ?? "-",
-					},
-				}),
-				ReadOnlyColumns({
-					accessorKey: "lot_number",
-					header: "Lot Number",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "process_req",
-					header: "Process Req.",
-					options: {
-						size: 100,
-					},
-				}),
-				ReadOnlyColumns({
-					accessorKey: "qty",
-					header: "Quantity",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "good",
-					header: "Good",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "rej",
-					header: "Rejected",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "res",
-					header: "Residual",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "date_commit",
-					header: "Date Commit",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "actual_date_time",
-					header: "Actual Date/Time",
-				}),
-				statusColumn,
-				ReadOnlyColumns({
-					accessorKey: "do_number",
-					header: "DO Number",
-				}),
-				{
-					accessorKey: "remarks",
-					header: "Remarks",
-					size: 600,
-				},
-				ReadOnlyColumns({
-					accessorKey: "doable",
-					header: "Doable",
-					options: { size: 90 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "focus_group",
-					header: "Focus Group",
-					options: { size: 100 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "gap_analysis",
-					header: "Gap Analysis",
-					options: { size: 150 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "cycle_time",
-					header: "Cycle Time",
-					options: { size: 100 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "imported_by",
-					header: "Imported By",
-					options: { size: 80 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "date_loaded",
-					header: "Date Loaded",
-				}),
-				ReadOnlyColumns({
-					accessorKey: "modified_by",
-					header: "Modified By",
-					options: { size: 80 },
-				}),
-				ReadOnlyColumns({
-					accessorKey: "modified_at",
-					header: "Modified At",
-					options: { size: 120 },
-				}),
-			];
-		} else {
-			return allColumns;
-		}
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "date_received",
+		// 			header: "Date Received",
+		// 			options: {
+		// 				size: 520,
+		// 			},
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "packing_list_srf",
+		// 			header: "Packing List SRF",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "po_number",
+		// 			header: "PO Number",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "machine_number",
+		// 			header: "Machine Number",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "part_number",
+		// 			header: "Part Number",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "package_code",
+		// 			header: "Package Code",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "package",
+		// 			header: "Package",
+		// 			options: {
+		// 				accessorFn: (row) => row.package?.raw_package ?? "-",
+		// 			},
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "lot_number",
+		// 			header: "Lot Number",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "process_req",
+		// 			header: "Process Req.",
+		// 			options: {
+		// 				size: 100,
+		// 			},
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "qty",
+		// 			header: "Quantity",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "good",
+		// 			header: "Good",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "rej",
+		// 			header: "Rejected",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "res",
+		// 			header: "Residual",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "date_commit",
+		// 			header: "Date Commit",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "actual_date_time",
+		// 			header: "Actual Date/Time",
+		// 		}),
+		// 		statusColumn,
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "do_number",
+		// 			header: "DO Number",
+		// 		}),
+		// 		{
+		// 			accessorKey: "remarks",
+		// 			header: "Remarks",
+		// 			size: 600,
+		// 		},
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "doable",
+		// 			header: "Doable",
+		// 			options: { size: 90 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "focus_group",
+		// 			header: "Focus Group",
+		// 			options: { size: 100 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "gap_analysis",
+		// 			header: "Gap Analysis",
+		// 			options: { size: 150 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "cycle_time",
+		// 			header: "Cycle Time",
+		// 			options: { size: 100 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "imported_by",
+		// 			header: "Imported By",
+		// 			options: { size: 80 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "date_loaded",
+		// 			header: "Date Loaded",
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "modified_by",
+		// 			header: "Modified By",
+		// 			options: { size: 80 },
+		// 		}),
+		// 		ReadOnlyColumns({
+		// 			accessorKey: "modified_at",
+		// 			header: "Modified At",
+		// 			options: { size: 120 },
+		// 		}),
+		// 	];
+		// } else {
+		// return allColumns;
+		// }
 	}, [emp_data]);
 
 	const initialColumnVisibility = columns.reduce((acc, col) => {
