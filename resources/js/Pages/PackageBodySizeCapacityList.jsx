@@ -1,11 +1,22 @@
 import { Draggable } from "@/Components/DnD/Draggable";
 import { Droppable } from "@/Components/DnD/Droppable";
+import { MachineDraggable } from "@/Components/DnD/MachineDraggable";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import Tabs from "@/Components/Tabs";
+import { useFetch } from "@/Hooks/useFetch";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { router } from "@inertiajs/react";
 import clsx from "clsx";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-function closenessRatio(value, reference, maxDistance = 50) {
-	const distance = Math.abs(value - reference);
+function closenessRatio(value, minReference, maxReference, maxDistance = 50) {
+	if (value >= minReference && value <= maxReference) {
+		return 1;
+	}
+
+	const distance =
+		value < minReference ? minReference - value : value - maxReference;
+
 	if (distance >= maxDistance) return 0;
 	return 1 - distance / maxDistance;
 }
@@ -13,20 +24,6 @@ function closenessRatio(value, reference, maxDistance = 50) {
 function lerp(a, b, t) {
 	return Math.round(a + (b - a) * t);
 }
-
-const draggable = ({ d, updateDraggable }) => {
-	return (
-		<div className="z-50 w-full items-center bg-base-200 h-full justify-center flex rounded-lg text-sm">
-			<div className="w-30 text-xs pl-1 rounded opacity-75">{d.name}</div>
-			<input
-				type="number"
-				className="w-full rounded"
-				value={d.value}
-				onChange={(e) => updateDraggable(d.id, "value", e.target.value)}
-			/>
-		</div>
-	);
-};
 
 function generateRandomContainers(count = 20) {
 	const result = new Map();
@@ -70,9 +67,13 @@ function generateRandomContainers(count = 20) {
 	return result;
 }
 
-const containers = generateRandomContainers(20);
+const containers = generateRandomContainers(10);
 
 const dropHere = () => {
+	return null;
+	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
+	// 	Drop here
+	// </div>
 	return null;
 	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
 	// 	Drop here
@@ -80,41 +81,110 @@ const dropHere = () => {
 };
 
 const initialDraggables = new Map([
-	["draggable1", { id: "draggable1", name: "HVIS2049VKIFPPDK", value: 150000 }],
-	["draggable2", { id: "draggable2", name: "Item 2", value: 250000 }],
-	["draggable3", { id: "draggable3", name: "Item 3", value: 100000 }],
-	["draggable4", { id: "draggable4", name: "Item 4", value: 350000 }],
-	["draggable5", { id: "draggable5", name: "Item 5", value: 500000 }],
-	["draggable6", { id: "draggable6", name: "Item 6", value: 600000 }],
-	["draggable7", { id: "draggable7", name: "Item 7", value: 200000 }],
-	["draggable8", { id: "draggable8", name: "Item 8", value: 300000 }],
-	["draggable9", { id: "draggable9", name: "Item 9", value: 450000 }],
-	["draggable10", { id: "draggable10", name: "Item 10", value: 120000 }],
-	["draggable11", { id: "draggable11", name: "Item 11", value: 280000 }],
-	["draggable12", { id: "draggable12", name: "Item 12", value: 550000 }],
-	["draggable13", { id: "draggable13", name: "Item 13", value: 320000 }],
-	["draggable14", { id: "draggable14", name: "Item 14", value: 480000 }],
-	["draggable15", { id: "draggable15", name: "Item 15", value: 110000 }],
-	["draggable16", { id: "draggable16", name: "Item 16", value: 750000 }],
-	["draggable17", { id: "draggable17", name: "Item 17", value: 180000 }],
-	["draggable18", { id: "draggable18", name: "Item 18", value: 400000 }],
-	["draggable19", { id: "draggable19", name: "Item 19", value: 130000 }],
-	["draggable20", { id: "draggable20", name: "Item 20", value: 220000 }],
-	["draggable21", { id: "draggable21", name: "Item 21", value: 380000 }],
-	["draggable22", { id: "draggable22", name: "Item 22", value: 140000 }],
-	["draggable23", { id: "draggable23", name: "Item 23", value: 340000 }],
-	["draggable24", { id: "draggable24", name: "Item 24", value: 460000 }],
-	["draggable25", { id: "draggable25", name: "Item 25", value: 580000 }],
-	["draggable26", { id: "draggable26", name: "Item 26", value: 260000 }],
-	["draggable27", { id: "draggable27", name: "Item 27", value: 420000 }],
-	["draggable28", { id: "draggable28", name: "Item 28", value: 170000 }],
-	["draggable29", { id: "draggable29", name: "Item 29", value: 650000 }],
+	[
+		"draggable1",
+		{ id: "draggable1", machineId: 1, name: "HVIS2049VKIFPPDK", value: 150000 },
+	],
+	[
+		"draggable2",
+		{ id: "draggable2", machineId: 1, name: "HVIS2049VKIFPPDK", value: 250000 },
+	],
+	[
+		"draggable3",
+		{ id: "draggable3", machineId: 3, name: "ba 3", value: 100000 },
+	],
+	[
+		"draggable4",
+		{ id: "draggable4", machineId: 4, name: "testing", value: 350000 },
+	],
+	[
+		"draggable5",
+		{ id: "draggable5", machineId: 5, name: "Item 5", value: 500000 },
+	],
+	[
+		"draggable6",
+		{ id: "draggable6", machineId: 6, name: "Item 6", value: 600000 },
+	],
+	[
+		"draggable7",
+		{ id: "draggable7", machineId: 7, name: "Item 7", value: 200000 },
+	],
+	[
+		"draggable8",
+		{ id: "draggable8", machineId: 8, name: "Item 8", value: 300000 },
+	],
+	[
+		"draggable9",
+		{ id: "draggable9", machineId: 9, name: "Item 9", value: 450000 },
+	],
+	[
+		"draggable10",
+		{ id: "draggable10", machineId: 10, name: "Item 10", value: 120000 },
+	],
 ]);
 
+const bodySizePages = {
+	"Body Sizes' Capacity": route("package.body_size.capacity.index"),
+	"Packages' Body Sizes": route("package.body_size.capacity.body-sizes"),
+	Machines: route("package.body_size.capacity.machines"),
+};
+
 function PackageBodySizeCapacityList() {
+	const targetMin = 0;
 	const target = 100;
 
 	const [activeDraggableID, setActiveDraggableID] = useState(null);
+
+	const {
+		data: packages,
+		isLoading: isLoadingPackages,
+		errorMessage: errorMessagePackages,
+		errorData: errorDataPackages,
+		cancel: cancelPackages,
+		fetch: fetchPackages,
+	} = useFetch(route("api.package.all"));
+
+	const [selectedPackage, setSelectedPackage] = useState(
+		Object.values(packages || {})[0],
+	);
+	console.log(
+		"🚀 ~ PackageBodySizeCapacityList ~ selectedPackage:",
+		selectedPackage,
+	);
+
+	const handleSetSelectedPackage = (id) => {
+		setSelectedPackage(packages[id]);
+	};
+
+	const [bodySizeVisibility, setBodySizeVisibility] = useState(() =>
+		Object.fromEntries([...containers.keys()].map((id) => [id, true])),
+	);
+
+	const selectedBodySizeVisibility = Object.keys(bodySizeVisibility).filter(
+		(key) => bodySizeVisibility[key],
+	);
+
+	const bodySizeOptions = [...containers.keys()].map((container) => {
+		return {
+			value: container,
+		};
+	});
+
+	const handleBodySizeVisibilityChange = (selected) => {
+		const newVisibility = {};
+		containers.forEach((value, bodySizeId) => {
+			if (bodySizeId) {
+				newVisibility[bodySizeId] = selected.includes(bodySizeId);
+			}
+		});
+		setBodySizeVisibility(newVisibility);
+	};
+
+	useEffect(() => {
+		setBodySizeVisibility(
+			Object.fromEntries([...containers.keys()].map((id) => [id, true])),
+		);
+	}, [containers]);
 
 	const innerDroppables = {
 		f1: { name: "F1", color: "var(--color-f1color)" },
@@ -124,6 +194,7 @@ function PackageBodySizeCapacityList() {
 
 	// draggables stored as a Map
 	const [draggables, setDraggables] = useState(initialDraggables);
+	console.log("🚀 ~ PackageBodySizeCapacityList ~ draggables:", draggables);
 
 	const activeDraggableObject = activeDraggableID
 		? draggables.get(activeDraggableID)
@@ -132,6 +203,25 @@ function PackageBodySizeCapacityList() {
 	// locations: keep the same structure
 	const [locations, setLocations] = useState({});
 
+	function duplicateDraggable(originalId) {
+		console.log("🚀 ~ duplicateDraggable ~ originalId:", originalId);
+		const newId = `${originalId.id}-${Date.now()}`;
+
+		setDraggables((prev) => {
+			const original = prev.get(originalId.id);
+			if (!original) return prev;
+
+			const newDraggables = new Map(prev);
+			newDraggables.set(newId, { ...original, id: newId });
+			return newDraggables;
+		});
+
+		setLocations((prev) => ({
+			...prev,
+			[newId]: prev[originalId],
+		}));
+	}
+
 	React.useEffect(() => {
 		const containerKeys = Array.from(containers.keys());
 		const innerKeys = Object.keys(innerDroppables);
@@ -139,6 +229,10 @@ function PackageBodySizeCapacityList() {
 		setLocations(
 			Object.fromEntries(
 				Array.from(draggables.keys()).map((id) => {
+					const randomContainer =
+						containerKeys[Math.floor(Math.random() * containerKeys.length)];
+					const randomInner =
+						innerKeys[Math.floor(Math.random() * innerKeys.length)];
 					const randomContainer =
 						containerKeys[Math.floor(Math.random() * containerKeys.length)];
 					const randomInner =
@@ -177,6 +271,11 @@ function PackageBodySizeCapacityList() {
 		});
 	}
 
+	const totalHiddenBodySize = Array.from(containers.entries()).reduce(
+		(count, [bodySizeId]) => count + (!bodySizeVisibility[bodySizeId] ? 1 : 0),
+		0,
+	);
+
 	const getDraggablesInOuter = (outerId) => {
 		const innerIds = Object.keys(innerDroppables).map(
 			(inner) => `${outerId}-${inner}`,
@@ -190,243 +289,245 @@ function PackageBodySizeCapacityList() {
 		(d) => locations[d.id] === null,
 	).length;
 
+	const [selectedPage, setSelectedPage] = useState("Body Sizes' Capacity");
+
+	const handleSelectPage = (name) => {
+		setSelectedPage(name);
+
+		router.visit(bodySizePages[name]);
+	};
+
 	return (
-		<div className="relative">
+		<div className="relative overflow-auto">
+			<Tabs
+				options={Object.keys(bodySizePages)}
+				selectedFactory={selectedPage}
+				handleFactoryChange={handleSelectPage}
+				tabClassName={"mb-2"}
+			/>
+			{/* Header */}
 			<div className="p-2 flex justify-between bg-base-200 shadow-lg">
-				<h1>LFCSP</h1>
+				{/* <h1>LFCSP</h1> */}
+				<MultiSelectSearchableDropdown
+					formFieldName="package_name"
+					options={
+						packages?.map((pkg) => ({
+							value: pkg.package_name,
+							original: pkg,
+						})) || []
+					}
+					returnKey="original"
+					defaultSelectedOptions={selectedPackage}
+					onChange={setSelectedPackage}
+					itemName="package"
+					prompt="Select Package"
+					singleSelect
+					disableSelectedContainer
+					contentClassName={"h-72"}
+				/>
+
+				<MultiSelectSearchableDropdown
+					formFieldName="name"
+					options={bodySizeOptions}
+					defaultSelectedOptions={selectedBodySizeVisibility}
+					onChange={handleBodySizeVisibilityChange}
+					itemName="body size"
+					prompt="Select body sizes to show"
+					disableSearch
+					contentClassName={"h-72"}
+				/>
+
+				<div>{totalHiddenBodySize} body sizes hidden</div>
+
 				<button type="button" className="btn btn-primary">
 					Save for Today
 				</button>
 			</div>
 
-			<DndContext
-				// collisionDetection={closestCenter}
-				onDragStart={handleDragStart}
-				onDragEnd={handleDragEnd}
-			>
-				<div className="grid grid-cols-1 h-full md:grid-cols-2 gap-1 w-full">
+			<DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+				<div
+					className="grid gap-1"
+					style={{
+						gridTemplateColumns: `80px repeat(${Object.keys(innerDroppables).length}, minmax(0, 1fr))`,
+					}}
+				>
+					<div className="font-bold p-2 border-b">Body Size</div>
+
+					{Object.entries(innerDroppables).map(([innerId, innerData]) => (
+						<div
+							key={innerId}
+							className="font-extrabold p-2 border-b text-left"
+							style={{ color: innerData.color }}
+						>
+							{innerData.name}
+						</div>
+					))}
+
+					{/* Rows per outerId */}
 					{Array.from(containers.entries()).map(([outerId, outerData]) => {
-						console.log(
-							"🚀 ~ PackageBodySizeCapacityList ~ outerData:",
-							outerData,
-						);
-						console.log("🚀 ~ PackageBodySizeCapacityList ~ outerId:", outerId);
+						if (!bodySizeVisibility[outerId]) return null;
 
 						const draggablesInOuter = getDraggablesInOuter(outerId);
 						const wip = outerData.wip;
 						const lot = outerData.lot;
 
-						const totalValue = draggablesInOuter.reduce(
-							(sum, d) => sum + d.value,
-							0,
-						);
-
 						return (
-							<div
-								key={outerId}
-								className="relative flex flex-col flex-1/2 rounded-lg border border-base-content/20 shadow-sm"
-							>
-								<div className="flex sticky shadow-lg z-10 -top-8 bg-base-200 px-2 pt-2 items-center justify-between mb-4">
-									<h2 className="text-lg font-semibold">{outerId}</h2>
-									<div className="text-sm text-base-content">
-										Count: {draggablesInOuter.length} • Total: {totalValue}
-									</div>
+							<React.Fragment key={outerId}>
+								{/* OuterId column */}
+								<div className="grid grid-cols-[80px_repeat(auto-fit,minmax(0,1fr))] p-2 border-r border-b border-base-content/20 flex-0 items-center font-medium">
+									{outerId}
 								</div>
 
-								<div className="flex h-full">
-									{Object.entries(innerDroppables).map(
-										([innerId, innerData]) => {
-											const combinedId = `${outerId}-${innerId}`;
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ combinedId:",
-												combinedId,
-											);
-											const totalWip = wip[innerId] || 0;
+								{/* InnerDroppables columns */}
+								{Object.entries(innerDroppables).map(([innerId, innerData]) => {
+									const combinedId = `${outerId}-${innerId}`;
+									const totalWip = wip[innerId] || 0;
 
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ totalWip:",
-												totalWip,
-											);
-											const totalLot = lot[innerId] || 0;
+									const innerDraggables = Array.from(
+										draggables.values(),
+									).filter((d) => locations[d.id] === combinedId);
 
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ locations:",
-												locations,
-											);
-											const innerDraggables = Array.from(
-												draggables.values(),
-											).filter((d) => {
-												return locations[d.id] === combinedId;
-											});
+									const totalInnerValue = innerDraggables.reduce(
+										(sum, d) => sum + d.value,
+										0,
+									);
 
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ innerDraggables:",
-												innerDraggables,
-											);
+									const potentialCapacityAddedActiveDraggable =
+										totalInnerValue +
+										(activeDraggableObject
+											? activeDraggableObject.value *
+												(locations[activeDraggableID] === combinedId ? -1 : 1)
+											: 0);
 
-											const isEmpty =
-												!activeDraggableID && innerDraggables.length === 0;
+									const utilPercentage =
+										totalInnerValue > 0
+											? ((totalWip / totalInnerValue) * 100).toFixed(2)
+											: "0.00";
 
-											const isActiveDraggableInside = activeDraggableObject
-												? locations[activeDraggableID] === combinedId
-												: false;
+									const potentialUtilPercentage =
+										potentialCapacityAddedActiveDraggable > 0
+											? (
+													(totalWip / potentialCapacityAddedActiveDraggable) *
+													100
+												).toFixed(2)
+											: "0.00";
 
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ isActiveDraggableInside:",
-												isActiveDraggableInside,
-											);
+									const ratio = closenessRatio(
+										potentialUtilPercentage,
+										targetMin,
+										target,
+										1,
+									);
+									console.log(
+										"🚀 ~ PackageBodySizeCapacityList ~ ratio:",
+										combinedId,
+										ratio,
+									);
 
-											console.log(
-												"🚀 ~ PackageBodySizeCapacityList ~ innerDraggables:",
-												innerDraggables,
-											);
+									const defaultColor = [255, 0, 0];
+									const green = [0, 255, 0];
+									const textColor = {
+										color: `rgb(
+                    ${lerp(defaultColor[0], green[0], ratio)},
+                    ${lerp(defaultColor[1], green[1], ratio)},
+                    ${lerp(defaultColor[2], green[2], ratio)}
+                  )`,
+									};
 
-											const totalInnerValue = innerDraggables.reduce(
-												(sum, d) => sum + d.value,
-												0,
-											);
+									const isEmpty =
+										!activeDraggableID && innerDraggables.length === 0;
 
-											const potentialCapacityAddedActiveDraggable =
-												totalInnerValue +
-												(activeDraggableObject
-													? activeDraggableObject.value
-													: 0) *
-													(isActiveDraggableInside ? -1 : 1);
-
-											const utilPercentage =
-												totalInnerValue > 0
-													? ((totalWip / totalInnerValue) * 100).toFixed(2)
-													: "0.00";
-
-											const potentialUtilPercentage =
-												potentialCapacityAddedActiveDraggable > 0
-													? (
-															(totalWip /
-																potentialCapacityAddedActiveDraggable) *
-															100
-														).toFixed(2)
-													: 0;
-
-											const ratio = closenessRatio(
-												potentialUtilPercentage,
-												target,
-											);
-
-											const defaultColor = [255, 0, 0];
-											const green = [0, 255, 0];
-
-											const textColor = {
-												color: `rgb(
-                      ${lerp(defaultColor[0], green[0], ratio)},
-                      ${lerp(defaultColor[1], green[1], ratio)},
-                      ${lerp(defaultColor[2], green[2], ratio)}
-                    )`,
-											};
-
-											return (
-												<Droppable
-													data={{ color: innerData.color, className: "flex-1" }}
-													key={combinedId}
-													id={combinedId}
+									return (
+										<Droppable
+											key={combinedId}
+											id={combinedId}
+											data={{ color: innerData.color }}
+										>
+											<div
+												className={clsx(
+													"px-2 py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
+													{
+														"bg-red-500/10": ratio === 0,
+													},
+												)}
+												style={{ borderLeftColor: innerData.color }}
+											>
+												{/* WIP and Util labels */}
+												<div
+													className={clsx("flex justify-between mb-1 text-xs", {
+														"opacity-75": isEmpty,
+													})}
 												>
-													<div
-														className={clsx(
-															"flex flex-col flex-1 h-full w-full",
-														)}
-													>
-														<div className="sticky bg-base-200 z-10 top-0 p-1 text-sm border-b border-base-content/10">
-															<div
-																className="font-medium w-full flex justify-between"
-																style={{ color: innerData.color }}
-															>
-																<div className="text-xs">
-																	{innerData.name} WIP
-																</div>
-																<span className="font-mono">
-																	{Number(totalWip).toLocaleString()}
-																</span>
-															</div>
-															<div
-																className={clsx("w-full flex justify-between", {
-																	"opacity-50": isEmpty,
-																})}
-															>
-																<div className="text-xs">Capacity</div>
-																<span className="font-mono">
-																	{isEmpty ? (
-																		"-"
-																	) : (
-																		<div>
-																			{activeDraggableID && (
-																				<span className="line-through text-xs opacity-75 mr-1">
-																					{Number(
-																						totalInnerValue,
-																					).toLocaleString()}
-																				</span>
-																			)}
-
-																			{Number(
-																				potentialCapacityAddedActiveDraggable,
-																			).toLocaleString()}
-																		</div>
-																	)}
-																</span>
-															</div>
-															<div
-																className={clsx("w-full flex justify-between", {
-																	"opacity-50": isEmpty,
-																})}
-															>
-																<div className="text-xs">Util</div>
-																<span className="text-lg font-extrabold">
-																	{isEmpty ? (
-																		"-"
-																	) : (
-																		<div>
-																			{activeDraggableID && (
-																				<span className="line-through text-xs opacity-75 mr-1">
-																					{`${utilPercentage}%`}
-																				</span>
-																			)}
-																			<span
-																				style={isEmpty ? {} : textColor}
-																			>{`${potentialUtilPercentage}%`}</span>
-																		</div>
-																	)}
-																</span>
-															</div>
+													<div className="pl-1 flex w-50 flex-col gap-1">
+														<div className="flex justify-between">
+															<span>WIP</span>
+															<span className="font-mono">
+																{totalWip.toLocaleString()}
+															</span>
 														</div>
-
-														<div className="flex h-full flex-col flex-1 p-1">
-															{innerDraggables.length > 0
-																? innerDraggables.map((d) => (
-																		<Draggable
-																			key={d.id}
-																			id={d.id}
-																			containerClassName={clsx(
-																				"h-8 justify-between",
-																				{
-																					"opacity-0":
-																						activeDraggableID === d.id,
-																				},
-																			)}
-																		>
-																			{draggable({ d, updateDraggable })}
-																		</Draggable>
-																	))
-																: dropHere()}
+														<div className="flex justify-between">
+															<span>Capacity</span>
+															<span className="font-mono">
+																{potentialCapacityAddedActiveDraggable.toLocaleString()}
+															</span>
 														</div>
 													</div>
-												</Droppable>
-											);
-										},
-									)}
-								</div>
-							</div>
+
+													<div className="text-lg items-end flex flex-col justify-end font-extrabold">
+														<div
+															className={clsx(
+																"flex-1 line-through text-xs mr-1",
+																{
+																	"opacity-0": !activeDraggableID,
+																},
+															)}
+														>
+															{utilPercentage.toLocaleString()}
+														</div>
+														<div
+															className={clsx("flex-1", {
+																"opacity-25": isEmpty,
+															})}
+															style={isEmpty ? {} : textColor}
+														>
+															{isEmpty ? "-" : `${potentialUtilPercentage}%`}
+														</div>
+													</div>
+												</div>
+
+												{/* Draggables */}
+												<div className="flex flex-col gap-px">
+													{innerDraggables.length > 0
+														? innerDraggables.map((d) => (
+																<Draggable
+																	key={d.id}
+																	id={d.id}
+																	containerClassName={clsx(
+																		"h-8 w-full bg-base-100 border border-base-content/20",
+																		{
+																			"opacity-0": activeDraggableID === d.id,
+																		},
+																	)}
+																>
+																	<MachineDraggable
+																		d={d}
+																		updateDraggable={updateDraggable}
+																		dupeFunction={duplicateDraggable}
+																	/>
+																</Draggable>
+															))
+														: dropHere()}
+												</div>
+											</div>
+										</Droppable>
+									);
+								})}
+							</React.Fragment>
 						);
 					})}
 				</div>
 
+				{/* Drag overlay */}
 				<DragOverlay
 					adjustScale={false}
 					transition="transform 150ms cubic-bezier(0.2, 0, 0, 1)"
@@ -434,13 +535,14 @@ function PackageBodySizeCapacityList() {
 					{activeDraggableID ? (
 						<div
 							className={clsx(
-								"h-8 justify-between ring-2 rounded-lg ring-accent",
+								"h-8 w-full bg-base-100 ring-2 rounded-lg ring-accent",
 							)}
 						>
-							{draggable({
-								d: draggables.get(activeDraggableID),
-								updateDraggable,
-							})}
+							<MachineDraggable
+								d={draggables.get(activeDraggableID)}
+								updateDraggable={updateDraggable}
+								isOverlay
+							/>
 						</div>
 					) : null}
 				</DragOverlay>
@@ -450,7 +552,7 @@ function PackageBodySizeCapacityList() {
 					id="unassigned"
 					data={{ className: "mt-4 z-40 flex flex-1" }}
 				>
-					<div className="rounded-lg border border-base-content/20 min-h-20 bg-base-200 flex-1">
+					<div className="rounded-lg border border-base-content/20 min-h-20 bg-base-200 flex-1 p-2">
 						<div className="mb-2 text-sm font-medium text-base-content">
 							{unassignedCount} Unassigned
 						</div>
@@ -462,13 +564,11 @@ function PackageBodySizeCapacityList() {
 										key={d.id}
 										id={d.id}
 										containerClassName={clsx(
-											"bg-base-300 w-32 h-8 justify-between border-base-content/20",
-											{
-												"opacity-0": activeDraggableID === d.id,
-											},
+											"bg-base-300 w-full h-8 border-base-content/20",
+											{ "opacity-0": activeDraggableID === d.id },
 										)}
 									>
-										{draggable({ d, updateDraggable })}
+										<MachineDraggable d={d} updateDraggable={updateDraggable} />
 									</Draggable>
 								))}
 							{Array.from(draggables.values()).filter(

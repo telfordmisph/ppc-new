@@ -17,4 +17,14 @@ class PackageBodySizeCapacityController extends Controller
   {
     return Inertia::render('PackageBodySizeCapacityList', []);
   }
+
+  public function bodySizes(Request $request)
+  {
+    return Inertia::render('PackageBodySizeCapacityBodySizeList', []);
+  }
+
+  public function machines(Request $request)
+  {
+    return Inertia::render('PackageBodySizeCapacityMachineList', []);
+  }
 }

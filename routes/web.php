@@ -8,6 +8,7 @@ use App\Http\Controllers\General\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageGroupController;
+use App\Http\Controllers\PackageController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\PackageBodySizeCapacityController;
@@ -92,15 +93,21 @@ Route::prefix('partname')->name('partname.')->group(function () {
     });
 });
 
-Route::prefix('package')->name('package.group.')->group(function () {
+Route::prefix('package')->group(function () {
     Route::middleware(AuthMiddleware::class)->group(function () {
-        Route::get('/', [PackageGroupController::class, 'index'])->name('index');
+        Route::get('/', [PackageController::class, 'index'])->name('index');
     });
-    Route::middleware(AuthMiddleware::class . ':package_group_edit')->group(function () {
-        Route::get('/{id}/edit', [PackageGroupController::class, 'upsert'])->name('edit');
-    });
-    Route::middleware(AuthMiddleware::class . ':package_group_insert')->group(function () {
-        Route::get('/create', [PackageGroupController::class, 'upsert'])->name('create');
+
+    Route::middleware(AuthMiddleware::class)->name('package.group.')->group(function () {
+        Route::middleware(AuthMiddleware::class)->group(function () {
+            Route::get('/', [PackageGroupController::class, 'index'])->name('index');
+        });
+        Route::middleware(AuthMiddleware::class . ':package_group_edit')->group(function () {
+            Route::get('/{id}/edit', [PackageController::class, 'upsert'])->name('edit');
+        });
+        Route::middleware(AuthMiddleware::class . ':package_group_insert')->group(function () {
+            Route::get('/create', [PackageController::class, 'upsert'])->name('create');
+        });
     });
 });
 
@@ -148,6 +155,12 @@ Route::prefix('f3')->name('f3.')->group(function () {
 Route::prefix('package-body-size-capacity')->name('package.body_size.capacity.')->group(function () {
     Route::middleware(AuthMiddleware::class)->group(function () {
         Route::get('/', [PackageBodySizeCapacityController::class, 'index'])->name('index');
+    });
+    Route::middleware(AuthMiddleware::class)->group(function () {
+        Route::get('/body-sizes', [PackageBodySizeCapacityController::class, 'bodySizes'])->name('body-sizes');
+    });
+    Route::middleware(AuthMiddleware::class)->group(function () {
+        Route::get('/machines', [PackageBodySizeCapacityController::class, 'machines'])->name('machines');
     });
 });
 
