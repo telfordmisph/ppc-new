@@ -1,7 +1,3 @@
-import { Link, router, usePage } from "@inertiajs/react";
-import { useEffect, useRef, useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { FaPlus } from "react-icons/fa6";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import Modal from "@/Components/Modal";
 import Pagination from "@/Components/Pagination";
@@ -9,6 +5,10 @@ import SearchInput from "@/Components/SearchInput";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 import { formatISOTimestampToDate } from "@/Utils/formatISOTimestampToDate";
+import { Link, router, usePage } from "@inertiajs/react";
+import { useEffect, useRef, useState } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa6";
 
 const PartNameList = () => {
 	const toast = useToast();
@@ -103,9 +103,14 @@ const PartNameList = () => {
 		<div className="w-full px-4">
 			<div className="flex items-center justify-between text-center">
 				<h1 className="text-base font-bold">Part Names</h1>
-				<Link href={route("partname.create")} className="btn btn-primary">
-					<FaPlus /> Add PartName
-				</Link>
+				<div className="flex gap-2">
+					<Link href={route("partname.create")} className="btn btn-primary">
+						<FaPlus /> Add a PartName
+					</Link>
+					<Link href={route("partname.createMany")} className="btn btn-primary">
+						<FaPlus /> Add Many PartNames
+					</Link>
+				</div>
 			</div>
 
 			<div className="flex justify-between py-4">

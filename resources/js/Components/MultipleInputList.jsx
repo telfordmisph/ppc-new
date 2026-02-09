@@ -47,16 +47,22 @@ export default function MultiInputList({
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 					onKeyDown={handleKeyDown}
-					className="input"
+					className="input w-50"
 					placeholder={`Enter ${ItemLabel || "item"}`}
 				/>
 				<button
 					type="button"
 					className="btn btn-sm btn-secondary"
 					onClick={handleAdd}
+					disabled={!inputValue}
 				>
 					Add
 				</button>
+				<span>
+					{selectedItems.length === 0 &&
+						inputValue &&
+						"you must add this to proceed"}
+				</span>
 			</div>
 
 			<ul className="flex mt-2 flex-col gap-2">

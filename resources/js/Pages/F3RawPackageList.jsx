@@ -1,8 +1,3 @@
-import { Link, router, usePage } from "@inertiajs/react";
-import { useEffect, useRef, useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import { FaPlus } from "react-icons/fa6";
-import { TbAlertCircle } from "react-icons/tb";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
 import Modal from "@/Components/Modal";
 import Pagination from "@/Components/Pagination";
@@ -11,6 +6,11 @@ import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { Link, router, usePage } from "@inertiajs/react";
+import { useEffect, useRef, useState } from "react";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa6";
+import { TbAlertCircle } from "react-icons/tb";
 
 const F3RawPackageList = () => {
 	const toast = useToast();
@@ -103,9 +103,20 @@ const F3RawPackageList = () => {
 					handleFactoryChange={() => router.visit(route("f3.package.index"))}
 				/>
 
-				<Link href={route("f3.raw.package.create")} className="btn btn-primary">
-					<FaPlus /> Add F3 Raw Package
-				</Link>
+				<div className="flex gap-2">
+					<Link
+						href={route("f3.raw.package.create")}
+						className="btn btn-primary"
+					>
+						<FaPlus /> Add a F3 Raw Package
+					</Link>
+					<Link
+						href={route("f3.raw.package.createMany")}
+						className="btn btn-primary"
+					>
+						<FaPlus /> Add Many F3 Raw Packages
+					</Link>
+				</div>
 			</div>
 
 			<div className="flex justify-between py-4">

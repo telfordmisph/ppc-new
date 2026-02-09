@@ -1,9 +1,9 @@
-import { router, usePage } from "@inertiajs/react";
-import { useState } from "react";
-import { FaSave } from "react-icons/fa";
 import MultiInputList from "@/Components/MultipleInputList";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
+import { router, usePage } from "@inertiajs/react";
+import { useState } from "react";
+import { FaSave } from "react-icons/fa";
 
 const PackageGroupUpsert = () => {
 	const toast = useToast();
@@ -30,6 +30,14 @@ const PackageGroupUpsert = () => {
 
 	const handleUpsert = async (e) => {
 		e.preventDefault();
+
+		if (packages.length === 0) {
+			toast.error(
+				"Please add at least one package. Click the 'Add' button if you have filled the first row.",
+			);
+
+			return;
+		}
 
 		const formData = {
 			id: packageGroup?.id || null,
@@ -104,6 +112,7 @@ const PackageGroupUpsert = () => {
 							onChange={handleItemsChange}
 						/>
 
+						<p className="label">Press Enter key or click the 'Add' button</p>
 						<p className="label">A package name cannot be in multiple group</p>
 					</fieldset>
 
