@@ -74,10 +74,6 @@ const dropHere = () => {
 	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
 	// 	Drop here
 	// </div>
-	return null;
-	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
-	// 	Drop here
-	// </div>
 };
 
 const initialDraggables = new Map([
@@ -229,10 +225,6 @@ function PackageBodySizeCapacityList() {
 		setLocations(
 			Object.fromEntries(
 				Array.from(draggables.keys()).map((id) => {
-					const randomContainer =
-						containerKeys[Math.floor(Math.random() * containerKeys.length)];
-					const randomInner =
-						innerKeys[Math.floor(Math.random() * innerKeys.length)];
 					const randomContainer =
 						containerKeys[Math.floor(Math.random() * containerKeys.length)];
 					const randomInner =
