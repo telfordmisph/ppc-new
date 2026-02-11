@@ -4,12 +4,12 @@ import { useState } from "react";
 
 const bodySizePages = {
 	"Body Sizes' Capacity": route("package.body_size.capacity.index"),
-	"Packages' Body Sizes": route("package.body_size.capacity.body-sizes"),
+	"Body Sizes": route("package.body_size.capacity.body-sizes"),
 	Machines: route("package.body_size.capacity.machines"),
 };
 
 function PackageBodySizeCapacityBodySizeList() {
-	const [selectedPage, setSelectedPage] = useState("Packages' Body Sizes");
+	const [selectedPage, setSelectedPage] = useState("Body Sizes");
 
 	const handleSelectPage = (name) => {
 		setSelectedPage(name);

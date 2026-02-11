@@ -8,7 +8,7 @@ use App\Models\F3;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use App\Services\BulkUpdater;
+use App\Services\BulkUpserter;
 
 class F3Controller extends Controller
 {
@@ -84,7 +84,7 @@ class F3Controller extends Controller
     $rows = $request->all();
     $user = session('emp_data');
 
-    $bulkUpdater = new BulkUpdater(new F3(), self::columnRules, self::dateColumns, $this->columnHandlers);
+    $bulkUpdater = new BulkUpserter(new F3(), self::columnRules, self::dateColumns, $this->columnHandlers);
 
     $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
 

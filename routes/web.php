@@ -9,6 +9,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\MachineController;
+use App\Http\Controllers\BodySizeController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\PackageBodySizeCapacityController;
@@ -157,10 +159,10 @@ Route::prefix('package-body-size-capacity')->name('package.body_size.capacity.')
         Route::get('/', [PackageBodySizeCapacityController::class, 'index'])->name('index');
     });
     Route::middleware(AuthMiddleware::class)->group(function () {
-        Route::get('/body-sizes', [PackageBodySizeCapacityController::class, 'bodySizes'])->name('body-sizes');
+        Route::get('/body-sizes', [BodySizeController::class, 'index'])->name('body-sizes');
     });
     Route::middleware(AuthMiddleware::class)->group(function () {
-        Route::get('/machines', [PackageBodySizeCapacityController::class, 'machines'])->name('machines');
+        Route::get('/machines', [MachineController::class, 'index'])->name('machines');
     });
 });
 

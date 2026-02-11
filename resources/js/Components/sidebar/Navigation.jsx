@@ -1,4 +1,5 @@
-import { usePage } from "@inertiajs/react";
+import Dropdown from "@/Components/sidebar/Dropdown";
+import SidebarLink from "@/Components/sidebar/SidebarLink";
 import { BiImport } from "react-icons/bi";
 import { FaBatteryHalf, FaCheckCircle, FaRecycle } from "react-icons/fa";
 import { FaCodeBranch, FaLayerGroup, FaTruckPickup } from "react-icons/fa6";
@@ -9,18 +10,8 @@ import {
 	LuPackage,
 } from "react-icons/lu";
 import { TbProgressCheck, TbResize, TbSettings } from "react-icons/tb";
-import Dropdown from "@/Components/sidebar/Dropdown";
-import SidebarLink from "@/Components/sidebar/SidebarLink";
-import useUserStore from "@/Store/useUserStore";
 
 export default function NavLinks({ isCollapse = false }) {
-	const { emp_data } = usePage().props;
-	const empData = useUserStore((state) => state.empData);
-
-	const role = empData?.emp_jobtitle || "";
-
-	console.log("🚀 ~ NavLinks ~ role:", role);
-
 	return (
 		<nav
 			className="flex flex-col space-y-1 overflow-y-auto grow"

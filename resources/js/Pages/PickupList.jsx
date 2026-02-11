@@ -1,5 +1,3 @@
-import { router, usePage } from "@inertiajs/react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
 import Pagination from "@/Components/Pagination";
 import CheckBoxColumn from "@/Components/tanStackTable/CheckBoxColumn";
 import DropdownCell from "@/Components/tanStackTable/DropdownCell";
@@ -8,6 +6,8 @@ import TanstackTable from "@/Components/tanStackTable/TanstackTable";
 import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
+import { router, usePage } from "@inertiajs/react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 const statusOptions = ["F1", "F2", "F3"];
 
@@ -210,17 +210,9 @@ const PickupList = () => {
 		[],
 	);
 
-	const columnVisibility = columns.reduce((acc, col) => {
-		if (col.accessorKey) {
-			acc[col.accessorKey] = true;
-		}
-		return acc;
-	}, {});
-
 	const { table, data, setData, editedRows, setEditedRows } = useEditableTable(
 		serverPickups.data || [],
 		columns,
-		columnVisibility,
 	);
 
 	const handleDelete = async () => {

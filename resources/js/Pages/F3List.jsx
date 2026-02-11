@@ -1,7 +1,3 @@
-import { router, usePage } from "@inertiajs/react";
-import React, { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { MdSchedule } from "react-icons/md";
 import BulkErrors from "@/Components/BulkErrors";
 import ChangeReviewModal from "@/Components/ChangeReviewModal";
 import MaxItemDropdown from "@/Components/MaxItemDropdown";
@@ -15,6 +11,10 @@ import TanstackTable from "@/Components/tanStackTable/TanstackTable";
 import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useFetch } from "@/Hooks/useFetch";
 import { useMutation } from "@/Hooks/useMutation";
+import { router, usePage } from "@inertiajs/react";
+import React, { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { MdSchedule } from "react-icons/md";
 
 const statusOptions = [
 	"SHIPPED",
@@ -66,11 +66,9 @@ export default function F3List() {
 	const end = serverF3WipAndOut.to;
 	const filteredTotal = serverF3WipAndOut.total;
 	const overallTotal = totalEntries ?? filteredTotal;
-	// const [data, setData] = React.useState(serverF3WipAndOut.data || []);
 	const [f3SearchInput, setF3SearchInput] = useState(serverSearch || "");
 	const [f3DateInput, setF3DateInput] = useState(serverDateLoaded || null);
 	const [maxItem, setMaxItem] = useState(serverPerPage || 25);
-	// const [editedRows, setEditedRows] = React.useState({});
 	const [currentPage, setCurrentPage] = useState(
 		serverF3WipAndOut.current_page || 1,
 	);
@@ -80,35 +78,7 @@ export default function F3List() {
 	const [originalF3RawPackage, setSelectedOriginalF3RawPackage] = useState([
 		[],
 	]);
-	const [originalData, setOriginalData] = useState({});
-	const [showChangeModal, setShowChangeModal] = useState(false);
-	const [changesToReview, setChangesToReview] = useState([]);
 	const [f3RawPackageSearchInput, setF3RawPackageSearchInput] = useState("");
-
-	const getChanges = () => {
-		const changes = [];
-
-		for (const rowId in editedRows) {
-			const original = originalData[rowId];
-			const edited = editedRows[rowId];
-
-			for (const field in edited) {
-				const before = original[field];
-				const after = edited[field];
-
-				if (before !== after) {
-					changes.push({
-						rowId,
-						field,
-						before,
-						after,
-					});
-				}
-			}
-		}
-
-		return changes;
-	};
 
 	const {
 		mutate: mutateF3,
@@ -125,30 +95,6 @@ export default function F3List() {
 	}, [mutateF3ErrorMessage, mutateF3ErrorData]);
 
 	const saveChangeIDModal = "save_change_modal_id";
-
-	const handleSaveClick = () => {
-		const changes = getChanges();
-		if (changes.length === 0) {
-			alert("No changes to save.");
-			return;
-		}
-		document.getElementById(saveChangeIDModal).showModal();
-		setChangesToReview(changes);
-		setShowChangeModal(true);
-	};
-
-	useEffect(() => {
-		const rows = serverF3WipAndOut.data || [];
-		console.log("🚀 ~ F3List ~ rows:", rows);
-		setData(rows);
-
-		const map = {};
-		rows.forEach((row) => {
-			map[row.id] = row;
-		});
-		setOriginalData(map);
-		setEditedRows({});
-	}, [serverF3WipAndOut]);
 
 	const openF3RawPackageSelectionModal = (rowIndex, originalF3RawPackage) => {
 		setSelectedRowIndex(rowIndex);
@@ -555,43 +501,28 @@ export default function F3List() {
 		initialColumnVisibility,
 	);
 
-	const { table, data, setData, editedRows, setEditedRows } = useEditableTable(
-		serverF3WipAndOut.data || [],
-		columns,
+	const {
+		table,
+		data,
+		setData,
+		editedRows,
+		setEditedRows,
+		getChanges,
+		changes,
+		handleResetChanges,
+	} = useEditableTable(serverF3WipAndOut.data || [], columns, {
 		columnVisibility,
 		setColumnVisibility,
-	);
+	});
 
-	const handleResetChanges = () => {
-		if (Object.keys(editedRows).length === 0) {
-			alert("No changes to reset.");
+	const handleSaveClick = () => {
+		const computedChanges = getChanges();
+		if (computedChanges.length === 0) {
+			alert("No changes to save.");
 			return;
 		}
-
-		if (!confirm("Are you sure you want to discard all changes?")) return;
-
-		setEditedRows({});
-		setChangesToReview([]);
-		const originalRows = Object.values(originalData);
-		setData(originalRows);
+		document.getElementById(saveChangeIDModal).showModal();
 	};
-
-	// const table = useReactTable({
-	// 	data,
-	// 	columns,
-	// 	state: {
-	// 		columnVisibility,
-	// 		rowSelection,
-	// 	},
-	// 	enableRowVirtualization: true,
-	// 	meta: { onCellChange: handleCellChange },
-	// 	enableRowSelection: true,
-	// 	enableMultiRowSelection: false,
-	// 	onRowSelectionChange: setRowSelection,
-	// 	defaultColumn: { minSize: 10, maxSize: 1200 },
-	// 	columnResizeMode: "onChange",
-	// 	getCoreRowModel: getCoreRowModel(),
-	// });
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -725,13 +656,6 @@ export default function F3List() {
 				["package"]: selectedF3RawPackage[0],
 			};
 
-			// setEditedRows((prevEdited) => ({
-			//     ...prevEdited,
-			//     []: {
-			//         ...newData[selectedRowIndex],
-			//     },
-			// }));
-
 			const rowId = newData[selectedRowIndex].id;
 
 			setEditedRows((prev) => ({
@@ -856,7 +780,7 @@ export default function F3List() {
 
 								<ChangeReviewModal
 									modalID={saveChangeIDModal}
-									changes={changesToReview}
+									changes={changes}
 									onClose={() =>
 										document.getElementById(saveChangeIDModal).close()
 									}

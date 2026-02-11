@@ -30,16 +30,15 @@ trait MassDeletesByIds
     try {
       $deleted = $modelClass::whereIn('id', $ids)->delete();
     } catch (\Exception $e) {
-      Log::info("Exception: " . json_encode($e));
-      Log::info("ddException: " . json_encode($e->getCode()));
-      Log::info("ddException: " . json_encode($e->getCode()));
-      Log::info("ddException: " . json_encode($e->getCode()));
+      // Log::info("Exception: " . json_encode($e));
+      // Log::info("ddException: " . json_encode($e->getCode()));
+      // Log::info("ddException: " . json_encode($e->getCode()));
+      // Log::info("ddException: " . json_encode($e->getCode()));
 
       if ($e->getCode() === '23000') {
-        // 'This item cannot be deleted because it is still used in a other place. Review the item before deleting it.'
         return response()->json([
           'status' => 'error',
-          'message' => 'This item cannot be deleted because it is still used in a other place. Review the item before deleting it.',
+          'message' => 'Some items cannot be deleted because they are still used elsewhere. Please review these items before deleting them.',
         ], 400);
       }
     }

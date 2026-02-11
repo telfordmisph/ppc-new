@@ -1,13 +1,12 @@
+import { useMutation } from "@/Hooks/useMutation";
+import { useToast } from "@/Hooks/useToast";
 import { router, usePage } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import { FaPlus, FaSave, FaTimes } from "react-icons/fa";
-import { useMutation } from "@/Hooks/useMutation";
-import { useToast } from "@/Hooks/useToast";
 
 const PartNameMultiInsert = () => {
 	const toast = useToast();
 	const { parts: serverParts } = usePage().props;
-	console.log("🚀 ~ PartNameMultiInsert ~ part:", serverParts);
 	const emptyPart = {
 		Partname: "",
 		Focus_grp: "",
@@ -20,8 +19,6 @@ const PartNameMultiInsert = () => {
 	};
 
 	const initialPartnames = useMemo(() => {
-		console.log("changed");
-
 		if (serverParts?.length) {
 			return serverParts.map((p) => ({
 				Partname: p.Partname || "",
@@ -57,8 +54,6 @@ const PartNameMultiInsert = () => {
 		setParts(parts.filter((_, i) => i !== index));
 
 	const handleReset = () => {
-		console.log("🚀 ~ handleReset ~ initialPartnames:", initialPartnames);
-
 		setParts(initialPartnames);
 	};
 
@@ -69,8 +64,6 @@ const PartNameMultiInsert = () => {
 		const method = "POST";
 
 		try {
-			console.log("🚀 ~ PartNameMultiInsert ~ parssssssssts:", parts);
-
 			await mutate(url, { method, body: parts });
 			toast.success("Parts created successfully!");
 			router.visit(route("partname.index"));

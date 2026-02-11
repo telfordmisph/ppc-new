@@ -78,7 +78,7 @@ function TableBodyRow({
 					<td
 						className={clsx({
 							"animate-hehe bg-base-300 w-full text-[0px]": isLoading,
-							// "bg-base-300": rowIndex % 2 === 0,
+							"bg-base-300": rowIndex % 2 === 0,
 						})}
 						key={cell.id}
 						style={{

@@ -21,8 +21,8 @@ const bodySizePages = {
 	Machines: route("package.body_size.capacity.machines"),
 };
 
-function PackageBodySizeCapacityMachineList() {
-	const [selectedPage, setSelectedPage] = useState("Machines");
+function BodySizeList() {
+	const [selectedPage, setSelectedPage] = useState("Body Sizes");
 
 	const handleSelectPage = (name) => {
 		setSelectedPage(name);
@@ -31,64 +31,45 @@ function PackageBodySizeCapacityMachineList() {
 	};
 
 	const {
-		machines: serverMachines,
+		bodySizes: serverBodySize,
 		search: serverSearch,
 		perPage: serverPerPage,
 		totalEntries,
 	} = usePage().props;
 
-	const start = serverMachines.from;
-	const end = serverMachines.to;
-	const filteredTotal = serverMachines.total;
+	const start = serverBodySize.from;
+	const end = serverBodySize.to;
+	const filteredTotal = serverBodySize.total;
 	const overallTotal = totalEntries ?? filteredTotal;
-	const [machineSearchInput, setMachineSearchInput] = useState(
-		serverSearch || "",
-	);
+	const [searchInput, setSearchInput] = useState(serverSearch || "");
 	const [maxItem, setMaxItem] = useState(serverPerPage || 25);
 	const [currentPage, setCurrentPage] = useState(
-		serverMachines.current_page || 1,
-	);
-	const [originalData, setOriginalData] = useState({});
-	console.log(
-		"🚀 ~ PackageBodySizeCapacityMachineList ~ originalData:",
-		originalData,
+		serverBodySize.current_page || 1,
 	);
 
 	const {
-		mutate: mutateMachine,
-		isLoading: isMutateMachineLoading,
-		errorMessage: mutateMachineErrorMessage,
-		errorData: mutateMachineErrorData,
-		cancel: mutateMachineCancel,
-	} = useMutation(route("api.machines.bulkUpdate"));
+		mutate: mutateBodySizes,
+		isLoading: isMutateBodySizesLoading,
+		errorMessage: mutateBodySizesErrorMessage,
+		errorData: mutateBodySizesErrorData,
+		cancel: mutateBodySizesCancel,
+	} = useMutation(route("api.body-sizes.bulkUpdate"));
 
 	const {
-		mutate: deleteMachine,
+		mutate: deleteBodySize,
 		isLoading: isDeleteLoading,
 		errorMessage: deleteErrorMessage,
 		errorData: deleteErrorData,
 		cancel: deleteCancel,
-	} = useMutation(route("api.machines.massGenocide"));
+	} = useMutation(route("api.body-sizes.massGenocide"));
 
 	useEffect(() => {
-		if (!mutateMachineErrorMessage) return;
+		if (!mutateBodySizesErrorMessage) return;
 
-		toast.error(mutateMachineErrorMessage);
-	}, [mutateMachineErrorMessage, mutateMachineErrorData]);
+		toast.error(mutateBodySizesErrorMessage);
+	}, [mutateBodySizesErrorMessage, mutateBodySizesErrorData]);
 
 	const saveChangeIDModal = "save_change_modal_id";
-
-	useEffect(() => {
-		const rows = serverMachines.data || [];
-		setData(rows);
-
-		const map = {};
-		rows.forEach((row) => {
-			map[row.id] = row;
-		});
-		setOriginalData(map);
-		setEditedRows({});
-	}, [serverMachines]);
 
 	const columns = React.useMemo(() => {
 		return [
@@ -99,7 +80,7 @@ function PackageBodySizeCapacityMachineList() {
 			}),
 			{
 				accessorKey: "name",
-				header: "Machine Name",
+				header: "Body Size",
 				type: "string",
 			},
 		];
@@ -107,25 +88,20 @@ function PackageBodySizeCapacityMachineList() {
 
 	const {
 		table,
-		data,
-		setData,
 		editedRows,
-		setEditedRows,
-		handleResetChanges,
 		handleAddNewRow,
+		handleResetChanges,
 		getChanges,
 		changes,
 		checkedRows,
-	} = useEditableTable(serverMachines.data || [], columns, {
+	} = useEditableTable(serverBodySize.data || [], columns, {
 		createEmptyRow: () => ({
 			name: "",
 		}),
 		isMultipleSelection: true,
 	});
-	console.log(
-		"🚀 ~ PackageBodySizeCapacityMachineList ~ editedRows:",
-		editedRows,
-	);
+
+	const deleteModalRef = useRef(null);
 
 	const handleSaveClick = () => {
 		const computedChanges = getChanges();
@@ -140,7 +116,7 @@ function PackageBodySizeCapacityMachineList() {
 		const timer = setTimeout(() => {
 			router.reload({
 				data: {
-					search: machineSearchInput,
+					search: searchInput,
 					perPage: maxItem,
 					page: 1,
 				},
@@ -151,22 +127,20 @@ function PackageBodySizeCapacityMachineList() {
 		}, 700);
 
 		return () => clearTimeout(timer);
-	}, [machineSearchInput]);
+	}, [searchInput]);
 
-	const goToPageMachineList = (page) => {
+	const goToPageList = (page) => {
 		router.reload({
-			data: { search: machineSearchInput, perPage: maxItem, page },
+			data: { search: searchInput, perPage: maxItem, page },
 			preserveState: true,
 			preserveScroll: true,
 		});
 		setCurrentPage(page);
 	};
 
-	const deleteModalRef = useRef(null);
-
 	const changeMaxItemPerPage = (maxItem) => {
 		router.reload({
-			data: { search: machineSearchInput, perPage: maxItem, page: 1 },
+			data: { search: searchInput, perPage: maxItem, page: 1 },
 			preserveState: true,
 			preserveScroll: true,
 		});
@@ -176,7 +150,7 @@ function PackageBodySizeCapacityMachineList() {
 	const refresh = () => {
 		router.reload({
 			data: {
-				search: machineSearchInput,
+				search: searchInput,
 				perPage: maxItem,
 				page: currentPage,
 			},
@@ -187,7 +161,7 @@ function PackageBodySizeCapacityMachineList() {
 
 	const handleDelete = async () => {
 		try {
-			await deleteMachine(route("api.machines.massGenocide"), {
+			await deleteBodySize(route("api.body-sizes.massGenocide"), {
 				body: {
 					ids: Object.keys(table.getState().rowSelection),
 				},
@@ -196,7 +170,7 @@ function PackageBodySizeCapacityMachineList() {
 
 			refresh();
 			deleteModalRef.current.close();
-			toast.success("Machines deleted successfully!");
+			toast.success("Body Sizes deleted successfully!");
 		} catch (error) {
 			toast.error(error?.message);
 			console.error(error);
@@ -220,8 +194,8 @@ function PackageBodySizeCapacityMachineList() {
 							<div className="flex gap-2 sticky left-0 items-center">
 								<div className="w-70">
 									<SearchInput
-										initialSearchInput={machineSearchInput}
-										onSearchChange={setMachineSearchInput}
+										initialSearchInput={searchInput}
+										onSearchChange={setSearchInput}
 									/>
 									<button
 										type="button"
@@ -229,14 +203,14 @@ function PackageBodySizeCapacityMachineList() {
 										onClick={() => handleAddNewRow()}
 									>
 										<FaPlus className="mr-2" />
-										Add New Asset
+										Add New Body Size
 									</button>
 								</div>
 							</div>
 						</div>
 
 						<div className="px-2 w-full">
-							{<BulkErrors errors={mutateMachineErrorData?.data || []} />}
+							{<BulkErrors errors={mutateBodySizesErrorData?.data || []} />}
 						</div>
 
 						<div className="flex px-2 justify-between items-center gap-2">
@@ -283,17 +257,17 @@ function PackageBodySizeCapacityMachineList() {
 										document.getElementById(saveChangeIDModal).close()
 									}
 									onSave={async () => {
-										await mutateMachine(route("api.machines.bulkUpdate"), {
+										await mutateBodySizes(route("api.body-sizes.bulkUpdate"), {
 											method: "PATCH",
 											body: editedRows,
 										});
 
 										document.getElementById(saveChangeIDModal).close();
 
-										toast.success("Machine updated successfully!");
+										toast.success("Body Size updated successfully!");
 										refresh();
 									}}
-									isLoading={isMutateMachineLoading}
+									isLoading={isMutateBodySizesLoading}
 								/>
 							</div>
 						</div>
@@ -302,9 +276,9 @@ function PackageBodySizeCapacityMachineList() {
 					<TanstackTable table={table} />
 
 					<Pagination
-						links={serverMachines.links}
+						links={serverBodySize.links}
 						currentPage={currentPage}
-						goToPage={goToPageMachineList}
+						goToPage={goToPageList}
 						filteredTotal={filteredTotal}
 						overallTotal={overallTotal}
 						start={start}
@@ -315,7 +289,7 @@ function PackageBodySizeCapacityMachineList() {
 
 			<DeleteModal
 				ref={deleteModalRef}
-				id="machineDeleteModal"
+				id="bodySizeDeleteModal"
 				message="Are you sure you want to delete these body size/s?"
 				errorMessage={deleteErrorMessage}
 				isLoading={isDeleteLoading}
@@ -327,4 +301,4 @@ function PackageBodySizeCapacityMachineList() {
 	);
 }
 
-export default PackageBodySizeCapacityMachineList;
+export default BodySizeList;

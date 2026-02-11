@@ -763,14 +763,11 @@ class WipService
       ->orderBy('f2_total_wip', 'desc')
       ->groupBy('size_bucket');
 
-
-    $baseF3Query = DB::table((new F3)->getTable() . ' as wip')
-      ->leftJoin('f3_raw_packages as raw', 'wip.package', '=', 'raw.id')
-      ->leftJoin('f3_package_names as f3_pkg', 'raw.package_id', '=', 'f3_pkg.id')
-      ->selectRaw("
+    $baseF3Query = $this->f3WipRepo->baseF3Query();
+    $baseF3Query = $baseF3Query->selectRaw("
         CASE WHEN raw.canonical_body_size
         " . $canonicalClause . "
-        SUM(wip.qty) AS f3_total_wip,
+        SUM(f3.qty) AS f3_total_wip,
         COUNT(DISTINCT lot_number) AS f3_total_lots
     ")
       ->orderBy('f3_total_wip', 'desc')
@@ -794,7 +791,7 @@ class WipService
 
     $f3QueryWip = $baseF3Query;
     $f3QueryWip = $this->f3WipRepo->filterByPackageName($f3QueryWip, $packageNames);
-    $f3QueryWip = $this->applyDateOrWorkweekWipFilter($f3QueryWip, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
+    $f3QueryWip = $this->applyDateOrWorkweekWipFilter($f3QueryWip, 'f3.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3QueryWip = $f3QueryWip->get();
 
     $f1Unknown = $f2QueryWip->firstWhere('size_bucket', 'others/unknown')?->f1_total_wip ?? 0;

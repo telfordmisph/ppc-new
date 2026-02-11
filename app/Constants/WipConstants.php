@@ -305,6 +305,7 @@ class WipConstants
   public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];
   // public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV1', 'DLT', 'WLT', 'SOF'];
   public const FINAL_QA_STATION = ['GTTBOX', 'GTTFVI', 'GTTOQA'];
+  public const FINAL_QA_STATION_T = ['GTTBOX_T', 'GTTFVI_T', 'GTTOQA_T'];
   public const TRANSFER_QA = ['GTRANS_BOX', 'GTTRANS_QA'];
   public const EWAN_PROCESS = ['GTTRES_T', 'GTSUBCON', 'GTGOUT', 'GTARCH_T', 'GTTBINLOC'];
   public const EXCLUDED_F1F2_STATIONS = ['GTTRES_T', 'GTARCH_T'];
@@ -319,6 +320,11 @@ class WipConstants
   public const REEL_TRANSFER_B3 = ['GTREEL', 'GTTRANS_B3'];
   public const F1_EXCLUDED_PLANT = "ADPI";
   public const REEL_EXCLUDED_STATIONS_F1_OVERALL = [
+    ...self::BRAND_TRANSFER_B3,
+    ...self::EWAN_PROCESS,
+    ...self::FINAL_QA_STATION
+  ];
+  public const REEL_EXCLUDED_STATIONS_F1_BODY_SIZE_CAPACITY = [
     ...self::BRAND_TRANSFER_B3,
     ...self::EWAN_PROCESS,
     ...self::FINAL_QA_STATION

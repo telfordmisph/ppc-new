@@ -4,8 +4,9 @@ import clsx from "clsx";
 function Draggable(props) {
 	const { attributes, listeners, setNodeRef, transform } = useDraggable({
 		id: props.id,
+		data: props.data,
 	});
-	console.log("🚀 ~ Draggable ~ props:", props);
+
 	const style = transform
 		? {
 				transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,

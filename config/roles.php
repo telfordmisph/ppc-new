@@ -4,11 +4,32 @@ $permission_sets = [
   'basic_f3' => ['f3_read', 'f3_edit'],
   'f3_full' => ['f3_read', 'f3_edit', 'f3_delete', 'f3_insert'],
 
+  'machine_mutate' => [
+    'machine_mutate',
+    // 'machine_edit', 
+    // 'machine_delete', 
+    // 'machine_insert'
+  ],
+
   'f3_mutate' => [
     'f3_mutate',
     // 'f3_edit', 
     // 'f3_delete', 
     // 'f3_insert'
+  ],
+
+  'body_size_mutate' => [
+    'body_size_mutate',
+    // 'body_size_edit', 
+    // 'body_size_delete', 
+    // 'body_size_insert'
+  ],
+
+  'body_size_capacity_mutate' => [
+    'body_size_capacity_mutate',
+    // 'body_size_capacity_edit', 
+    // 'body_size_capacity_delete', 
+    // 'body_size_capacity_insert'
   ],
 
   // faulty
@@ -92,7 +113,10 @@ $full_access = array_merge(
   $permission_sets['f3_raw_package_mutate'],
   $permission_sets['partname_mutate'],
   $permission_sets['f3_package_mutate'],
-  $permission_sets['import_data_all']
+  $permission_sets['import_data_all'],
+  $permission_sets['machine_mutate'],
+  $permission_sets['body_size_mutate'],
+  $permission_sets['body_size_capacity_mutate'],
 );
 
 $full_access_except_f3_import = array_merge(
@@ -109,7 +133,10 @@ $full_access_except_f3_import = array_merge(
   $permission_sets['f3_raw_package_mutate'],
   $permission_sets['partname_mutate'],
   $permission_sets['f3_package_mutate'],
-  $permission_sets['import_data_all']
+  $permission_sets['import_data_all'],
+  $permission_sets['machine_mutate'],
+  $permission_sets['body_size_mutate'],
+  $permission_sets['body_size_capacity_mutate'],
 );
 
 return [

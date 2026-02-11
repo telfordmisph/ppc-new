@@ -6,8 +6,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
-class BulkUpdater
+class BulkUpserter
 {
   protected Model $model;
   protected array $dateColumns = [];
@@ -33,6 +34,10 @@ class BulkUpdater
     $this->columnHandlers = $columnHandlers;
   }
 
+  protected function isNewRow(string|int $id): bool
+  {
+    return is_string($id) && str_starts_with($id, 'new-');
+  }
 
   /**
    * Perform bulk update
@@ -44,15 +49,19 @@ class BulkUpdater
   public function update(array $rows, ?int $modifiedBy = null): array
   {
     $errors = [];
+    $insertedIds = [];
     $updatedIds = [];
 
     DB::transaction(function () use ($rows, $modifiedBy, &$errors, &$updatedIds) {
       foreach ($rows as $id => $fields) {
         if (empty($fields)) continue;
-        Log::info("Updating row: " . json_encode($fields));
 
-        $modelInstance = $this->model->find($id);
-        if (!$modelInstance) continue;
+        $isNew = $this->isNewRow($id);
+
+        Log::info(($isNew ? "Inserting" : "Updating") . " row: " . json_encode($fields));
+
+        // $modelInstance = $this->model->find($id);
+        // if (!$modelInstance) continue;
 
         $fieldsForValidation = $fields;
 
@@ -62,53 +71,52 @@ class BulkUpdater
           }
         }
 
-        $validator = Validator::make($fieldsForValidation, $this->columnRules, [
-          '*.integer' => 'Invalid value ":input" for column ":attribute". Must be an integer.',
-          '*.string' => 'Invalid value ":input" for column ":attribute". Must be a string.',
-          '*.date' => 'Invalid date ":input" for column ":attribute".',
-          '*.exists' => 'Value ":input" for column ":attribute" does not exist.',
-          '*.unique' => 'Value ":input" for column ":attribute" already exists.',
-        ]);
+        $rules = [];
+        foreach ($this->columnRules as $column => $rule) {
+          $rules[$column] = $rule instanceof \Closure
+            ? $rule($isNew ? null : $id, $fieldsForValidation)
+            : $rule;
+        }
+
+        $validator = Validator::make(
+          $fieldsForValidation,
+          $rules,
+          [
+            '*.integer' => 'Invalid value ":input" for column ":attribute". Must be an integer.',
+            '*.string' => 'Invalid value ":input" for column ":attribute". Must be a string.',
+            '*.date' => 'Invalid date ":input" for column ":attribute".',
+            '*.exists' => 'Value ":input" for column ":attribute" does not exist.',
+            '*.unique' => 'Value ":input" for column ":attribute" already exists.',
+          ]
+        );
+
+        // $validator = Validator::make($fieldsForValidation, $this->columnRules, [
+        //   '*.integer' => 'Invalid value ":input" for column ":attribute". Must be an integer.',
+        //   '*.string' => 'Invalid value ":input" for column ":attribute". Must be a string.',
+        //   '*.date' => 'Invalid date ":input" for column ":attribute".',
+        //   '*.exists' => 'Value ":input" for column ":attribute" does not exist.',
+        //   '*.unique' => 'Value ":input" for column ":attribute" already exists.',
+        // ]);
 
         Log::info("fields: " . json_encode($fields));
+        $normalizedData = $this->normalizeFields($fields);
 
         if ($validator->fails()) {
-          $errors[$id] = $validator->errors()->all();
+          $errors[$id] = $validator->errors()->messages();
           continue;
         }
 
-        $updateData = $fieldsForValidation;
-
-        foreach ($fields as $column => $value) {
-
-          Log::info("value: " . json_encode($value));
-
-          // Apply custom handler first, if defined
-          // if (isset($this->columnHandlers[$column]) && is_callable($this->columnHandlers[$column])) {
-          //   $value = call_user_func($this->columnHandlers[$column], $value);
-          // }
-
-          // Date normalization
-          if (in_array($column, $this->dateColumns)) {
-            $normalized = $this->normalizeDate($value);
-            $updateData[$column] = $normalized;
-            continue;
-          }
-
-          // Handle array FK for relations
-          if (is_array($value) && isset($value['id'])) {
-            $updateData[$column] = $value['id'];
-            continue;
-          }
-
-          $updateData[$column] = $value;
+        if ($modifiedBy !== null) {
+          $normalizedData['modified_by'] = $modifiedBy;
         }
 
-        if (!empty($updateData)) {
-          if ($modifiedBy !== null) {
-            $updateData['modified_by'] = $modifiedBy;
-          }
-          $modelInstance->update($updateData);
+        if ($isNew) {
+          $modelInstance = $this->model->create($normalizedData);
+          $insertedIds[] = $modelInstance->id;
+        } else {
+          $modelInstance = $this->model->find($id);
+          if (!$modelInstance) continue;
+          $modelInstance->update($normalizedData);
           $updatedIds[] = $id;
         }
       }
@@ -116,8 +124,31 @@ class BulkUpdater
 
     return [
       'updated' => $updatedIds,
+      'inserted' => $insertedIds,
       'errors' => $errors,
     ];
+  }
+
+  protected function normalizeFields(array $fields): array
+  {
+    $normalized = [];
+
+    foreach ($fields as $column => $value) {
+
+      if (in_array($column, $this->dateColumns)) {
+        $normalized[$column] = $this->normalizeDate($value);
+        continue;
+      }
+
+      if (is_array($value) && isset($value['id'])) {
+        $normalized[$column] = $value['id'];
+        continue;
+      }
+
+      $normalized[$column] = $value;
+    }
+
+    return $normalized;
   }
 
   protected function normalizeDate(string|null $value): ?string

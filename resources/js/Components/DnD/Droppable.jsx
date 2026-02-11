@@ -2,7 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import clsx from "clsx";
 
 function Droppable({ id, children, data }) {
-	const { isOver, setNodeRef } = useDroppable({ id });
+	const { isOver, setNodeRef } = useDroppable({ id, data });
 
 	return (
 		<div

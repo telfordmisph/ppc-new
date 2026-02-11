@@ -12,6 +12,9 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Controllers\F3Controller;
+use App\Http\Controllers\MachineController;
+use App\Http\Controllers\BodySizeController;
+use App\Http\Controllers\PackageBodySizeCapacityController;
 use App\Http\Controllers\PickupController;
 use App\Http\Controllers\AnalogCalendarController;
 use App\Http\Middleware\ApiAuthMiddleware;
@@ -75,6 +78,32 @@ Route::middleware([ApiAuthMiddleware::class])
     Route::prefix('f3-wip-out')->name('api.f3.')->group(function () {
       Route::middleware(ApiPermissionMiddleware::class . ':f3_mutate')->group(function () {
         Route::patch('/', [F3Controller::class, 'bulkUpdate'])->name('bulkUpdate');
+      });
+    });
+
+    Route::prefix('machines')->name('api.machines.')->group(function () {
+      Route::middleware(ApiPermissionMiddleware::class . ':machine_mutate')->group(function () {
+        Route::patch('/', [MachineController::class, 'bulkUpdate'])->name('bulkUpdate');
+      });
+
+      Route::middleware(ApiPermissionMiddleware::class . ':machine_mutate')->group(function () {
+        Route::delete('/mass-delete', [MachineController::class, 'massGenocide'])->name('massGenocide');
+      });
+    });
+
+    Route::prefix('body-sizes')->name('api.body-sizes.')->group(function () {
+      Route::middleware(ApiPermissionMiddleware::class . ':body_size_mutate')->group(function () {
+        Route::patch('/', [BodySizeController::class, 'bulkUpdate'])->name('bulkUpdate');
+      });
+
+      Route::middleware(ApiPermissionMiddleware::class . ':body_size_mutate')->group(function () {
+        Route::delete('/mass-delete', [BodySizeController::class, 'massGenocide'])->name('massGenocide');
+      });
+
+      Route::prefix('/capacity')->name('capacity.')->group(function () {
+        Route::middleware(ApiPermissionMiddleware::class . ':body_size_capacity_mutate')->group(function () {
+          Route::patch('/bulkUpsert', [PackageBodySizeCapacityController::class, 'bulkUpsert'])->name('bulkUpsert');
+        });
       });
     });
 
