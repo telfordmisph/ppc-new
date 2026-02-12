@@ -74,7 +74,7 @@ class BodySizeRepository
   {
     $f3Query = $this->f3WipRepo->baseF3Query();
     $f3Query = $f3Query->selectRaw('
-          SUM(f3.Qty) AS total_f3,
+          SUM(f3.Qty) AS total_wip,
           raw.canonical_body_size AS body_size,
           COUNT(f3.lot_number) AS lot_id
       ');
