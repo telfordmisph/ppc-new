@@ -10,6 +10,8 @@ import { router, usePage } from "@inertiajs/react";
 import clsx from "clsx";
 import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { FaPlus } from "react-icons/fa6";
+import { Tooltip } from "react-tooltip";
 
 function closenessRatio(value, minReference, maxReference, maxDistance = 50) {
 	if (value >= minReference && value <= maxReference) {
@@ -43,14 +45,14 @@ const bodySizePages = {
 const UNASSIGNED = "unassigned";
 
 function PackageBodySizeCapacityList() {
+	const [hoveredDroppable, setHoveredDroppable] = useState(null);
+
 	const { bodySizes, machines } = usePage().props;
-	console.log("🚀 ~ PackageBodySizeCapacityList ~ machines:", machines);
 
 	const containers = React.useMemo(
 		() => new Map(bodySizes.map((item) => [item.key, item.value])),
 		[bodySizes],
 	);
-	console.log("🚀 ~ PackageBodySizeCapacityList ~ containers:", containers);
 
 	const initializeDraggables = useCallback(() => {
 		const machineDraggables = new Map();
@@ -101,7 +103,6 @@ function PackageBodySizeCapacityList() {
 
 	const [draggables, setDraggables] = useState(initialDraggables);
 	const [locations, setLocations] = useState({});
-	console.log("🚀 ~ PackageBodySizeCapacityList ~ draggables:", draggables);
 
 	const initializedLocations = useCallback(() => {
 		setLocations((prev) => {
@@ -135,7 +136,7 @@ function PackageBodySizeCapacityList() {
 	};
 
 	// console.log("🚀 ~ PackageBodySizeCapacityList ~ draggables:", draggables);
-	console.log("🚀 ~ PackageBodySizeCapacityList ~ locations:", locations);
+	// console.log("🚀 ~ PackageBodySizeCapacityList ~ locations:", locations);
 	// console.log("🚀 ~ PackageBodySizeCapacityList ~ machines:", machines);
 	// console.log("🚀 ~ containers:", containers);
 	// console.log("🚀 ~ containersOLD:", containersOLD);
@@ -194,24 +195,40 @@ function PackageBodySizeCapacityList() {
 		setActiveDraggableID(event.active.id);
 	}
 
-	function handleDragEnd(event) {
-		const { active, over } = event;
+	function handleDragEnd({
+		event,
+		draggableId,
+		bodySizeName,
+		factoryId,
+		overId,
+	}) {
+		let activeId = draggableId || null;
+		let newBodySizeName = bodySizeName || null;
+		let newFactory = factoryId || null;
+		let targetId = overId || null;
 
-		const newBodySizeName = over ? over.data.current.bodySizeName : null;
-		const newFactory = over ? over.data.current.factoryId : null;
+		if (event) {
+			activeId = event.active?.id || null;
+			targetId = event.over?.id || null;
+			newBodySizeName = event.over
+				? event.over.data.current.bodySizeName
+				: null;
+			newFactory = event.over ? event.over.data.current.factoryId : null;
+		}
+
+		if (!activeId) return;
 
 		setLocations((prev) => ({
 			...prev,
-			[active.id]: over ? (over.id === UNASSIGNED ? null : over.id) : null,
+			[activeId]: targetId === UNASSIGNED ? null : targetId,
 		}));
 
 		setDraggables((prev) => {
-			const item = prev.get(active.id);
+			const item = prev.get(activeId);
 			if (!item) return prev;
 
 			const next = new Map(prev);
-
-			next.set(active.id, {
+			next.set(activeId, {
 				...item,
 				bodySizeName: newBodySizeName,
 				factory: newFactory,
@@ -258,7 +275,6 @@ function PackageBodySizeCapacityList() {
 
 	const unassignDraggable = useCallback((draggable) => {
 		const id = draggable.id;
-		console.log("🚀 ~ PackageBodySizeCapacityList ~ id:", id);
 
 		setDraggables((prev) => {
 			const item = prev.get(id);
@@ -317,7 +333,6 @@ function PackageBodySizeCapacityList() {
 
 	const handleSave = async () => {
 		const currentMachines = initializeDraggables();
-		console.log("🚀 ~ handleSave ~ currentMachines:", currentMachines);
 
 		const isTheSame = (oldItem, newItem) => {
 			if (!oldItem) return false;
@@ -426,9 +441,12 @@ function PackageBodySizeCapacityList() {
 				</div>
 			</div>
 
-			<DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+			<DndContext
+				onDragStart={handleDragStart}
+				onDragEnd={(event) => handleDragEnd({ event })}
+			>
 				<div
-					className="grid gap-1 overflow-auto h-[calc(100vh-300px)]"
+					className="grid gap-1 overflow-auto h-[calc(100vh-100px)] pb-10"
 					style={{
 						gridTemplateColumns: `50px repeat(${Object.keys(factoryDroppables).length}, minmax(0, 1fr))`,
 					}}
@@ -528,17 +546,40 @@ function PackageBodySizeCapacityList() {
 													}}
 												>
 													<div
+														role="button"
 														className={clsx(
-															"group py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
+															"group relative py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
 															{
 																"bg-red-500/10": ratio === 0,
+																"ring ring-accent":
+																	hoveredDroppable?.id === combinedId,
 															},
 														)}
 														style={{
 															borderLeftColor: factoryData.color,
 															...(isEmpty ? {} : textColor),
 														}}
+														onMouseEnter={() =>
+															setHoveredDroppable({
+																id: combinedId,
+																bodySizeName: bodySizeData.name,
+																factoryId: factoryId,
+															})
+														}
 													>
+														<a
+															href={null}
+															role="button"
+															className={clsx(
+																"machine-pick-tooltip absolute top-0 -left-8 cursor-default btn btn-primary text-white rounded px-2 py-1 transition-all duration-200 ease-out",
+																hoveredDroppable?.id === combinedId
+																	? "opacity-100 translate-x-0 pointer-events-auto"
+																	: "opacity-0 -translate-x-2 pointer-events-none",
+															)}
+														>
+															<FaPlus />
+														</a>
+
 														<div
 															className={clsx(
 																"flex justify-between mb-1 px-2 text-xs",
@@ -598,7 +639,7 @@ function PackageBodySizeCapacityList() {
 																		CAP
 																	</span>
 																	<span className="font-mono">
-																		{potentialCapacityAddedActiveDraggable}
+																		{potentialCapacityAddedActiveDraggable.toLocaleString()}
 																	</span>
 																</div>
 																<div className="flex justify-end">
@@ -699,13 +740,48 @@ function PackageBodySizeCapacityList() {
 										<MachineDraggable d={d} updateDraggable={updateDraggable} />
 									</Draggable>
 								))}
-							{Array.from(draggables.values()).filter(
-								(d) => locations[d.id] === null,
-							).length === 0 && null}
 						</div>
 					</div>
 				</Droppable>
 			</DndContext>
+
+			<Tooltip
+				style={{ borderRadius: "8px", padding: "4px" }}
+				anchorSelect={`.machine-pick-tooltip`}
+				clickable
+				offset={2}
+			>
+				<div className="p-1 text-center">
+					assign {!unassignedCount && "(0 left)"}
+				</div>
+				<div
+					className="flex w-40 flex-col gap-px overflow-y-auto"
+					style={{ maxHeight: "200px" }}
+				>
+					{Array.from(draggables.values())
+						.filter((d) => locations[d.id] === null)
+						.map((d) => (
+							<button
+								type="button"
+								key={d.id}
+								className="btn btn-outline btn-sm rounded-sm px-1"
+								onClick={() => {
+									handleDragEnd({
+										draggableId: d.id,
+										bodySizeName: hoveredDroppable.bodySizeName,
+										factoryId: hoveredDroppable.factoryId,
+										overId: hoveredDroppable.id,
+									});
+								}}
+							>
+								<div className="flex w-full justify-between">
+									<div>{d.name}</div>
+									<div className="text-xs font-light">{d.value}</div>
+								</div>
+							</button>
+						))}
+				</div>
+			</Tooltip>
 		</div>
 	);
 }
