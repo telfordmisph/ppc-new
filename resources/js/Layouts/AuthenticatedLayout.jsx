@@ -1,6 +1,3 @@
-import { usePage } from "@inertiajs/react";
-import axios from "axios";
-import { useEffect, useState } from "react";
 import Footer from "@/Components/Footer";
 import NavBar from "@/Components/NavBar";
 import Sidebar from "@/Components/Sidebar/SideBar";
@@ -9,6 +6,9 @@ import { useImportTraceStore } from "@/Store/importTraceStore";
 import { useWipStore } from "@/Store/overallDailyWipTrendStore";
 import useUserStore from "@/Store/useUserStore";
 import { useWorkweekStore } from "@/Store/workweekListStore";
+import { usePage } from "@inertiajs/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 export default function AuthenticatedLayout({ header, children }) {
 	const { url } = usePage();
@@ -117,7 +117,7 @@ export default function AuthenticatedLayout({ header, children }) {
 			<Sidebar />
 			<div className="h-full flex flex-col flex-1 overflow-y-hidden">
 				<NavBar />
-				<main className="px-4 py-8 z-10 flex-1 w-full relative overflow-y-auto">
+				<main className="p-4 z-10 flex-1 w-full relative overflow-y-auto">
 					<div className="w-full">{children}</div>
 				</main>
 				<Footer />

@@ -111,6 +111,7 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 				id: newId,
 				...baseRow,
 				...overrides,
+				isNew: true,
 			};
 
 			setData((prev) => [...prev, newRow]);

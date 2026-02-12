@@ -27,13 +27,6 @@ function lerp(a, b, t) {
 	return Math.round(a + (b - a) * t);
 }
 
-const dropHere = () => {
-	return null;
-	// <div className="opacity-25 flex flex-1 items-center justify-center rounded border border-dashed text-sm h-full">
-	// 	Drop here
-	// </div>
-};
-
 const factoryDroppables = {
 	f1: { name: "F1", color: "var(--color-f1color)" },
 	f2: { name: "F2", color: "var(--color-f2color)" },
@@ -50,7 +43,7 @@ const bodySizePages = {
 const UNASSIGNED = "unassigned";
 
 function PackageBodySizeCapacityList() {
-	const { profiles, bodySizes, machines } = usePage().props;
+	const { bodySizes, machines } = usePage().props;
 	console.log("🚀 ~ PackageBodySizeCapacityList ~ machines:", machines);
 
 	const containers = React.useMemo(
@@ -390,7 +383,7 @@ function PackageBodySizeCapacityList() {
 	};
 
 	return (
-		<div className="relative overflow-auto">
+		<div className="relative">
 			<Tabs
 				options={Object.keys(bodySizePages)}
 				selectedFactory={selectedPage}
@@ -435,7 +428,7 @@ function PackageBodySizeCapacityList() {
 
 			<DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
 				<div
-					className="grid gap-1"
+					className="grid gap-1 overflow-auto h-[calc(100vh-300px)]"
 					style={{
 						gridTemplateColumns: `50px repeat(${Object.keys(factoryDroppables).length}, minmax(0, 1fr))`,
 					}}
@@ -463,12 +456,10 @@ function PackageBodySizeCapacityList() {
 
 							return (
 								<React.Fragment key={bodySizeNameId}>
-									{/* OuterId column */}
 									<div className="grid grid-cols-[50px_repeat(auto-fit,minmax(0,1fr))] border-r border-b border-base-content/20 flex-0 items-center font-medium">
 										{bodySizeNameId}
 									</div>
 
-									{/* InnerDroppables columns */}
 									{Object.entries(factoryDroppables).map(
 										([factoryId, factoryData]) => {
 											const combinedId = `${bodySizeNameId}-${factoryId}`;
@@ -495,17 +486,14 @@ function PackageBodySizeCapacityList() {
 
 											const utilPercentage =
 												totalInnerValue > 0
-													? ((totalWip / totalInnerValue) * 100).toFixed(2)
-													: "0.00";
+													? (totalWip / totalInnerValue) * 100
+													: 0;
 
 											const potentialUtilPercentage =
 												potentialCapacityAddedActiveDraggable > 0
-													? (
-															(totalWip /
-																potentialCapacityAddedActiveDraggable) *
-															100
-														).toFixed(2)
-													: "0.00";
+													? (totalWip / potentialCapacityAddedActiveDraggable) *
+														100
+													: 0;
 
 											const ratio = closenessRatio(
 												potentialUtilPercentage,
@@ -541,7 +529,7 @@ function PackageBodySizeCapacityList() {
 												>
 													<div
 														className={clsx(
-															"py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
+															"group py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
 															{
 																"bg-red-500/10": ratio === 0,
 															},
@@ -551,7 +539,6 @@ function PackageBodySizeCapacityList() {
 															...(isEmpty ? {} : textColor),
 														}}
 													>
-														{/* WIP and Util labels */}
 														<div
 															className={clsx(
 																"flex justify-between mb-1 px-2 text-xs",
@@ -560,28 +547,7 @@ function PackageBodySizeCapacityList() {
 																},
 															)}
 														>
-															<div className="pl-1 flex w-40 flex-col">
-																<div className="flex justify-between">
-																	<span className="opacity-50">WIP</span>
-																	<span className="font-mono">
-																		{totalWip.toLocaleString()}
-																	</span>
-																</div>
-																<div className="flex justify-between">
-																	<span className="opacity-50">CAP</span>
-																	<span className="font-mono">
-																		{potentialCapacityAddedActiveDraggable.toLocaleString()}
-																	</span>
-																</div>
-																<div className="flex justify-between">
-																	<span className="opacity-50">LOT</span>
-																	<span className="font-mono">
-																		{totalLot.toLocaleString()}
-																	</span>
-																</div>
-															</div>
-
-															<div className="text-md items-end flex flex-col justify-end font-extrabold">
+															<div className="text-md items-start flex flex-col justify-start font-extrabold">
 																<div
 																	className={clsx("flex-1 text-base-content", {
 																		"opacity-25": isEmpty,
@@ -589,7 +555,13 @@ function PackageBodySizeCapacityList() {
 																>
 																	{isEmpty
 																		? "-"
-																		: `${potentialUtilPercentage}%`}
+																		: `${potentialUtilPercentage.toLocaleString(
+																				"en-US",
+																				{
+																					minimumFractionDigits: 2,
+																					maximumFractionDigits: 2,
+																				},
+																			)}%`}
 																</div>
 																<div
 																	className={clsx(
@@ -599,12 +571,48 @@ function PackageBodySizeCapacityList() {
 																		},
 																	)}
 																>
-																	{utilPercentage.toLocaleString()}
+																	{utilPercentage.toLocaleString("en-US", {
+																		minimumFractionDigits: 2,
+																		maximumFractionDigits: 2,
+																	})}
+																</div>
+															</div>
+
+															<div className="pl-1 flex w-40 flex-col">
+																<div className="flex justify-end">
+																	<span
+																		className="opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0 
+               																transition-all duration-200 ease-in-out pr-2"
+																	>
+																		WIP
+																	</span>
+																	<span className="font-mono">
+																		{totalWip.toLocaleString()}
+																	</span>
+																</div>
+																<div className="flex justify-end">
+																	<span
+																		className="opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0 
+               																transition-all duration-200 ease-in-out pr-2"
+																	>
+																		CAP
+																	</span>
+																	<span className="font-mono">
+																		{potentialCapacityAddedActiveDraggable}
+																	</span>
+																</div>
+																<div className="flex justify-end">
+																	<span
+																		className="opacity-0 -translate-x-2 group-hover:opacity-50 group-hover:translate-x-0 
+               																transition-all duration-200 ease-in-out pr-2"
+																	>
+																		LOT
+																	</span>
+																	<span className="font-mono">{totalLot}</span>
 																</div>
 															</div>
 														</div>
 
-														{/* Draggables */}
 														<div className="flex flex-col">
 															{innerDraggables.length > 0
 																? innerDraggables.map((d) => (
@@ -631,7 +639,7 @@ function PackageBodySizeCapacityList() {
 																			/>
 																		</Draggable>
 																	))
-																: dropHere()}
+																: null}
 														</div>
 													</div>
 												</Droppable>
@@ -644,7 +652,6 @@ function PackageBodySizeCapacityList() {
 					)}
 				</div>
 
-				{/* Drag overlay */}
 				<DragOverlay
 					adjustScale={false}
 					transition="transform 150ms cubic-bezier(0.2, 0, 0, 1)"
@@ -664,7 +671,6 @@ function PackageBodySizeCapacityList() {
 					) : null}
 				</DragOverlay>
 
-				{/* Unassigned droppable */}
 				<Droppable
 					id={UNASSIGNED}
 					data={{
@@ -695,7 +701,7 @@ function PackageBodySizeCapacityList() {
 								))}
 							{Array.from(draggables.values()).filter(
 								(d) => locations[d.id] === null,
-							).length === 0 && dropHere()}
+							).length === 0 && null}
 						</div>
 					</div>
 				</Droppable>
