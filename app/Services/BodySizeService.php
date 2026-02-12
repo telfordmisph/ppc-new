@@ -30,8 +30,8 @@ class BodySizeService
             'value' => [
               'name' => $item->name,
               'id'   => $item->id,
-              'wip'  => ['f1' => 0, 'f2' => 0, 'f3_8mm' => 0, 'f3_12mm' => 0,],
-              'lot'  => ['f1' => 0, 'f2' => 0, 'f3_8mm' => 0, 'f3_12mm' => 0,],
+              'wip'  => ['f1' => 0, 'f2' => 0, 'f38mm' => 0, 'f312mm' => 0,],
+              'lot'  => ['f1' => 0, 'f2' => 0, 'f38mm' => 0, 'f312mm' => 0,],
             ],
           ],
         ];
@@ -49,8 +49,8 @@ class BodySizeService
 
     $this->applyFactoryData($result, $f1Data, 'f1');
     $this->applyFactoryData($result, $f2Data, 'f2');
-    $this->applyFactoryData($result, $f38mmData, 'f3_8mm');
-    $this->applyFactoryData($result, $f312mmData, 'f3_12mm');
+    $this->applyFactoryData($result, $f38mmData, 'f38mm');
+    $this->applyFactoryData($result, $f312mmData, 'f312mm');
 
     $output = array_values($result);
 
