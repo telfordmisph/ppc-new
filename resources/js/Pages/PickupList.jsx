@@ -1,6 +1,4 @@
 import Pagination from "@/Components/Pagination";
-import CheckBoxColumn from "@/Components/tanStackTable/CheckBoxColumn";
-import DropdownCell from "@/Components/tanStackTable/DropdownCell";
 import ReadOnlyColumns from "@/Components/tanStackTable/ReadOnlyColumn";
 import TanstackTable from "@/Components/tanStackTable/TanstackTable";
 import { useEditableTable } from "@/Hooks/useEditableTable";
@@ -34,31 +32,6 @@ const PickupList = () => {
 	const [currentPage, setCurrentPage] = useState(
 		serverPickups.current_page || 1,
 	);
-
-	const getChanges = () => {
-		const changes = [];
-
-		for (const rowId in editedRows) {
-			const original = originalData[rowId];
-			const edited = editedRows[rowId];
-
-			for (const field in edited) {
-				const before = original[field];
-				const after = edited[field];
-
-				if (before !== after) {
-					changes.push({
-						rowId,
-						field,
-						before,
-						after,
-					});
-				}
-			}
-		}
-
-		return changes;
-	};
 
 	const {
 		mutate,
@@ -138,33 +111,32 @@ const PickupList = () => {
 		});
 	}, []);
 
-	const factoryColumn = React.useMemo(
-		() => ({
-			accessorKey: "factory",
-			header: "Factory",
-			size: 100,
-			cell: React.memo(({ getValue, row, column }) => {
-				const value = getValue();
+	// const factoryColumn = React.useMemo(
+	// 	() => ({
+	// 		accessorKey: "factory",
+	// 		header: "Factory",
+	// 		size: 100,
+	// 		cell: React.memo(({ getValue, row, column }) => {
+	// 			const value = getValue();
 
-				return (
-					<div className="w-full">
-						<DropdownCell
-							statusOptions={statusOptions}
-							value={value}
-							rowIndex={row.index}
-							columnId={column.id}
-							onChange={handleCellChange}
-						/>
-					</div>
-				);
-			}),
-		}),
-		[],
-	);
+	// 			return (
+	// 				<div className="w-full">
+	// 					<DropdownCell
+	// 						statusOptions={statusOptions}
+	// 						value={value}
+	// 						rowIndex={row.index}
+	// 						columnId={column.id}
+	// 						onChange={handleCellChange}
+	// 					/>
+	// 				</div>
+	// 			);
+	// 		}),
+	// 	}),
+	// 	[],
+	// );
 
 	const columns = React.useMemo(
 		() => [
-			CheckBoxColumn,
 			ReadOnlyColumns({
 				accessorKey: "id",
 				header: "ID",
@@ -180,7 +152,7 @@ const PickupList = () => {
 				header: "Lot ID",
 				type: "string",
 			},
-			factoryColumn,
+			// factoryColumn,
 			{
 				accessorKey: "PACKAGE",
 				header: "Package Name",
@@ -210,10 +182,26 @@ const PickupList = () => {
 		[],
 	);
 
-	const { table, data, setData, editedRows, setEditedRows } = useEditableTable(
-		serverPickups.data || [],
-		columns,
-	);
+	const {
+		table,
+		setData,
+		editedRows,
+		setEditedRows,
+		handleResetChanges,
+		handleAddNewRow,
+		getChanges,
+		changes,
+	} = useEditableTable(serverPickups.data || [], columns, {
+		createEmptyRow: () => ({
+			LC: 0,
+			LOTID: "",
+			PARTNAME: "",
+			PACKAGE: "",
+			QTY: 0,
+			factory: "",
+		}),
+		isMultipleSelection: true,
+	});
 
 	const handleDelete = async () => {
 		try {
@@ -231,33 +219,6 @@ const PickupList = () => {
 			toast.error(error?.message);
 			console.error(error);
 		}
-	};
-
-	useEffect(() => {
-		const rows = serverPickups.data || [];
-		console.log("🚀 ~ rowsrowsrows ~ rows:", rows);
-		setData(rows);
-
-		const map = {};
-		rows.forEach((row) => {
-			map[row.id_pickup] = row;
-		});
-		setOriginalData(map);
-		setEditedRows({});
-	}, [serverPickups]);
-
-	const handleResetChanges = () => {
-		if (Object.keys(editedRows).length === 0) {
-			alert("No changes to reset.");
-			return;
-		}
-
-		if (!confirm("Are you sure you want to discard all changes?")) return;
-
-		setEditedRows({});
-		setChangesToReview([]);
-		const originalRows = Object.values(originalData);
-		setData(originalRows);
 	};
 
 	return (

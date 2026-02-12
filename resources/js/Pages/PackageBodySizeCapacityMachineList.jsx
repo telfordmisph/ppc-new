@@ -78,18 +78,6 @@ function PackageBodySizeCapacityMachineList() {
 
 	const saveChangeIDModal = "save_change_modal_id";
 
-	useEffect(() => {
-		const rows = serverMachines.data || [];
-		setData(rows);
-
-		const map = {};
-		rows.forEach((row) => {
-			map[row.id] = row;
-		});
-		setOriginalData(map);
-		setEditedRows({});
-	}, [serverMachines]);
-
 	const columns = React.useMemo(() => {
 		return [
 			ReadOnlyColumns({
@@ -107,21 +95,18 @@ function PackageBodySizeCapacityMachineList() {
 
 	const {
 		table,
-		data,
-		setData,
 		editedRows,
-		setEditedRows,
 		handleResetChanges,
 		handleAddNewRow,
 		getChanges,
 		changes,
-		checkedRows,
 	} = useEditableTable(serverMachines.data || [], columns, {
 		createEmptyRow: () => ({
 			name: "",
 		}),
 		isMultipleSelection: true,
 	});
+
 	console.log(
 		"🚀 ~ PackageBodySizeCapacityMachineList ~ editedRows:",
 		editedRows,
