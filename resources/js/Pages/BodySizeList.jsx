@@ -83,6 +83,16 @@ function BodySizeList() {
 				header: "Body Size",
 				type: "string",
 			},
+			ReadOnlyColumns({
+				accessorKey: "modified_at",
+				header: "Modified At",
+				options: { size: 140, enableHiding: false },
+			}),
+			ReadOnlyColumns({
+				accessorKey: "modified_by",
+				header: "Modified By",
+				options: { size: 140, enableHiding: false },
+			}),
 		];
 	}, []);
 
@@ -192,7 +202,7 @@ function BodySizeList() {
 					<div className="rounded-lg z-100 flex flex-col gap-2 sticky -top-8 bg-base-200">
 						<div className="flex justify-between items-center gap-2 px-2 pt-4">
 							<div className="flex gap-2 sticky left-0 items-center">
-								<div className="w-70">
+								<div className="w-full flex gap-1 justify-between">
 									<SearchInput
 										initialSearchInput={searchInput}
 										onSearchChange={setSearchInput}
@@ -273,8 +283,6 @@ function BodySizeList() {
 						</div>
 					</div>
 
-					<TanstackTable table={table} />
-
 					<Pagination
 						links={serverBodySize.links}
 						currentPage={currentPage}
@@ -284,6 +292,7 @@ function BodySizeList() {
 						start={start}
 						end={end}
 					/>
+					<TanstackTable table={table} />
 				</div>
 			</div>
 

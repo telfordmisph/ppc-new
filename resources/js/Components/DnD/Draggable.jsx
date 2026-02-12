@@ -27,6 +27,7 @@ function Draggable(props) {
 			<div
 				{...listeners}
 				{...attributes}
+				tabIndex={-1}
 				className="cursor-grab opacity-75 select-none h-full flex items-center px-2 hover:bg-secondary/50"
 			>
 				⠿

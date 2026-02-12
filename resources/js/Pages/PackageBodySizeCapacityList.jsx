@@ -406,7 +406,7 @@ function PackageBodySizeCapacityList() {
 				tabClassName={"mb-2"}
 			/>
 			{/* Header */}
-			<div className="p-2 flex justify-between bg-base-200 shadow-lg">
+			<div className="p-2 flex justify-between bg-base-200 shadow-lg items-center">
 				<MultiSelectSearchableDropdown
 					formFieldName="name"
 					options={bodySizeOptions}
@@ -417,11 +417,12 @@ function PackageBodySizeCapacityList() {
 					disableSearch
 					contentClassName={"h-72"}
 				/>
-
 				{totalHiddenBodySize > 0 && (
 					<div>{totalHiddenBodySize} body sizes hidden</div>
 				)}
-
+				<a href={null} className="unassigend-machine-droppable-tooltip btn">
+					{unassignedCount} Unassigned machine/s
+				</a>
 				<div className="flex gap-2">
 					<button
 						type="button"
@@ -441,28 +442,35 @@ function PackageBodySizeCapacityList() {
 				</div>
 			</div>
 
+			<div
+				className="sticky top-10 grid overflow-auto pr-3"
+				style={{
+					gridTemplateColumns: `50px repeat(${Object.keys(factoryDroppables).length}, minmax(0, 1fr))`,
+				}}
+			>
+				<div className="font-bold border-b">Body Size</div>
+
+				{Object.entries(factoryDroppables).map(([factoryId, factoryData]) => (
+					<div
+						key={factoryId}
+						className="font-extrabold border-b text-left content-end"
+						style={{ color: factoryData.color }}
+					>
+						{factoryData.name}
+					</div>
+				))}
+			</div>
+
 			<DndContext
 				onDragStart={handleDragStart}
 				onDragEnd={(event) => handleDragEnd({ event })}
 			>
 				<div
-					className="grid gap-1 overflow-auto h-[calc(100vh-100px)] pb-10"
+					className="grid overflow-auto h-[calc(100vh-260px)] pb-10"
 					style={{
 						gridTemplateColumns: `50px repeat(${Object.keys(factoryDroppables).length}, minmax(0, 1fr))`,
 					}}
 				>
-					<div className="font-bold p-2 border-b">Body Size</div>
-
-					{Object.entries(factoryDroppables).map(([factoryId, factoryData]) => (
-						<div
-							key={factoryId}
-							className="font-extrabold p-2 border-b text-left"
-							style={{ color: factoryData.color }}
-						>
-							{factoryData.name}
-						</div>
-					))}
-
 					{/* Rows per outerId */}
 					{Array.from(containers.entries()).map(
 						([bodySizeNameId, bodySizeData]) => {
@@ -474,8 +482,8 @@ function PackageBodySizeCapacityList() {
 
 							return (
 								<React.Fragment key={bodySizeNameId}>
-									<div className="grid grid-cols-[50px_repeat(auto-fit,minmax(0,1fr))] border-r border-b border-base-content/20 flex-0 items-center font-medium">
-										{bodySizeNameId}
+									<div className="relative grid grid-cols-[50px_repeat(auto-fit,minmax(0,1fr))] border-b border-base-content/20 flex-0 items-center font-medium">
+										<div className="sticky top-0">{bodySizeNameId}</div>
 									</div>
 
 									{Object.entries(factoryDroppables).map(
@@ -535,6 +543,10 @@ function PackageBodySizeCapacityList() {
 											const isEmpty =
 												!activeDraggableID && innerDraggables.length === 0;
 
+											const hovered =
+												hoveredDroppable?.id === combinedId &&
+												!activeDraggableID;
+
 											return (
 												<Droppable
 													key={combinedId}
@@ -551,8 +563,7 @@ function PackageBodySizeCapacityList() {
 															"group relative py-1 border-b border-b-base-content/20 border-l flex flex-col w-full h-full",
 															{
 																"bg-red-500/10": ratio === 0,
-																"ring ring-accent":
-																	hoveredDroppable?.id === combinedId,
+																"ring ring-accent": hovered,
 															},
 														)}
 														style={{
@@ -569,10 +580,9 @@ function PackageBodySizeCapacityList() {
 													>
 														<a
 															href={null}
-															role="button"
 															className={clsx(
 																"machine-pick-tooltip absolute top-0 -left-8 cursor-default btn btn-primary text-white rounded px-2 py-1 transition-all duration-200 ease-out",
-																hoveredDroppable?.id === combinedId
+																hovered
 																	? "opacity-100 translate-x-0 pointer-events-auto"
 																	: "opacity-0 -translate-x-2 pointer-events-none",
 															)}
@@ -712,37 +722,47 @@ function PackageBodySizeCapacityList() {
 					) : null}
 				</DragOverlay>
 
-				<Droppable
-					id={UNASSIGNED}
-					data={{
-						className: "mt-4 z-40 flex flex-1",
-						bodySizeName: null,
-						factoryId: null,
-					}}
+				<Tooltip
+					style={{ borderRadius: "8px", padding: "4px" }}
+					anchorSelect={`.unassigend-machine-droppable-tooltip`}
+					clickable
+					offset={2}
 				>
-					<div className="rounded-lg border border-base-content/20 min-h-20 bg-base-200 flex-1 p-2">
-						<div className="mb-2 text-sm font-medium text-base-content">
-							{unassignedCount} Unassigned
+					<Droppable
+						id={UNASSIGNED}
+						data={{
+							className: "mt-4 z-40 flex flex-1",
+							bodySizeName: null,
+							factoryId: null,
+						}}
+					>
+						<div
+							className="w-50 min-h-20 flex-1 p-2  overflow-y-auto"
+							style={{ maxHeight: "200px" }}
+						>
+							<div className="flex gap-1 flex-wrap">
+								{Array.from(draggables.values())
+									.filter((d) => locations[d.id] === null)
+									.map((d) => (
+										<Draggable
+											key={d.id}
+											id={d.id}
+											data={{ draggable: d, bodySizeName: UNASSIGNED }}
+											containerClassName={clsx(
+												"w-40 h-8 border-base-content/20",
+												{ "opacity-0": activeDraggableID === d.id },
+											)}
+										>
+											<MachineDraggable
+												d={d}
+												updateDraggable={updateDraggable}
+											/>
+										</Draggable>
+									))}
+							</div>
 						</div>
-						<div className="flex gap-3 flex-wrap">
-							{Array.from(draggables.values())
-								.filter((d) => locations[d.id] === null)
-								.map((d) => (
-									<Draggable
-										key={d.id}
-										id={d.id}
-										data={{ draggable: d, bodySizeName: UNASSIGNED }}
-										containerClassName={clsx(
-											"bg-base-300 w-40 h-8 border-base-content/20",
-											{ "opacity-0": activeDraggableID === d.id },
-										)}
-									>
-										<MachineDraggable d={d} updateDraggable={updateDraggable} />
-									</Draggable>
-								))}
-						</div>
-					</div>
-				</Droppable>
+					</Droppable>
+				</Tooltip>
 			</DndContext>
 
 			<Tooltip
@@ -752,10 +772,12 @@ function PackageBodySizeCapacityList() {
 				offset={2}
 			>
 				<div className="p-1 text-center">
-					assign {!unassignedCount && "(0 left)"}
+					assign to {hoveredDroppable?.bodySizeName} -
+					{factoryDroppables[hoveredDroppable?.factoryId]?.name}
+					{!unassignedCount && "(0 left)"}
 				</div>
 				<div
-					className="flex w-40 flex-col gap-px overflow-y-auto"
+					className="flex w-50 flex-col gap-px overflow-y-auto"
 					style={{ maxHeight: "200px" }}
 				>
 					{Array.from(draggables.values())
@@ -764,13 +786,13 @@ function PackageBodySizeCapacityList() {
 							<button
 								type="button"
 								key={d.id}
-								className="btn btn-outline btn-sm rounded-sm px-1"
+								className="btn btn-ghost border-b border-b-white/20 btn-sm rounded-sm px-1"
 								onClick={() => {
 									handleDragEnd({
 										draggableId: d.id,
-										bodySizeName: hoveredDroppable.bodySizeName,
-										factoryId: hoveredDroppable.factoryId,
-										overId: hoveredDroppable.id,
+										bodySizeName: hoveredDroppable?.bodySizeName,
+										factoryId: hoveredDroppable?.factoryId,
+										overId: hoveredDroppable?.id,
 									});
 								}}
 							>

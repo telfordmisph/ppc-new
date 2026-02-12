@@ -10,5 +10,6 @@ class BodySize extends Model
   public $timestamps = false;
   protected $fillable = [
     'name',
+    'modified_by'
   ];
 }

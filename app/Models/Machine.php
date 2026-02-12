@@ -12,6 +12,7 @@ class Machine extends Model
 
   protected $fillable = [
     'name',
+    'modified_by'
   ];
 
   public function capacityProfiles()

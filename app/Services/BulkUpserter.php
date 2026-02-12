@@ -46,7 +46,7 @@ class BulkUpserter
    * @param int|null $modifiedBy Optional user id for tracking
    * @return array Result summary with updated ids and errors
    */
-  public function update(array $rows, ?int $modifiedBy = null): array
+  public function update(array $rows, ?string $modifiedBy = null): array
   {
     $errors = [];
     $insertedIds = [];

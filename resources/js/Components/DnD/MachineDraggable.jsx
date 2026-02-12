@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import React, { useState } from "react";
 import { BiDuplicate } from "react-icons/bi";
-import { PiArrowBendRightDownFill } from "react-icons/pi";
+import { FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import getColorForMachine, {
 	getBackgroundForMachine,
@@ -93,7 +93,7 @@ const MachineDraggable = React.memo(function MachineDraggable({
 							}
 						}}
 					>
-						<PiArrowBendRightDownFill size={20} />
+						<FaTrash size={20} />
 					</button>
 				)}
 			</div>
