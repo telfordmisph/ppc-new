@@ -53,9 +53,10 @@ class BulkUpserter
     $updatedIds = [];
 
     DB::transaction(function () use ($rows, $modifiedBy, &$errors, &$updatedIds) {
-      foreach ($rows as $id => $fields) {
+      foreach ($rows as $row) {
+        $id = $row['id'] ?? null;
+        $fields = $row;
         if (empty($fields)) continue;
-
         $isNew = $this->isNewRow($id);
 
         Log::info(($isNew ? "Inserting" : "Updating") . " row: " . json_encode($fields));

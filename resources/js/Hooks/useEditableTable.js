@@ -51,9 +51,6 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 				const row = prevData[rowIndex];
 				const updatedRow = updateNested(row, accessorKey, value);
 
-				console.log("🚀 ~ useEditableTable ~ row:", row);
-				console.log("🚀 ~ useEditableTable ~ updatedRow:", updatedRow);
-
 				if (JSON.stringify(row) === JSON.stringify(updatedRow)) return prevData;
 
 				const newData = [...prevData];
@@ -61,7 +58,6 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 
 				const rowId = row.id;
 				setEditedRows((prev) => {
-					const editedRow = prev[rowId] || {};
 					return {
 						...prev,
 						[rowId]: updatedRow,

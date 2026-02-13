@@ -32,39 +32,58 @@ export default function ChangeReviewModal({
 							<span className="text-green-500 text-left w-1/2">After</span>
 						</div>
 					</li>
-					{Object.entries(groupedChanges).map(([rowId, rowChanges]) => (
-						<div key={rowId} className="border border-base-content/25 p-3">
-							<div className="font-medium mb-2">Row ID: {rowId}</div>
-							<ul className="space-y-1">
-								{rowChanges.map((c, idx) => (
-									<li
-										key={`${idx}-${c.field}-${c.before}-${c.after}`}
-										className="flex bg-base-300/75 justify-between items-center"
-									>
-										<span className="font-medium w-4/12">{c.field}</span>
-										<div className="flex justify-between gap-2 w-8/12">
-											<span className="text-right w-1/2">
-												<KeyValueRenderer
-													data={c.before}
-													beforeData={c.before}
-												/>
-											</span>
-											<span>
-												<FaArrowRight className="opacity-50" />
-											</span>
-											<span className="text-left w-1/2">
-												{/* {c.after} */}
-												<KeyValueRenderer
-													data={c.after}
-													beforeData={c.before}
-												/>
-											</span>
-										</div>
-									</li>
-								))}
-							</ul>
-						</div>
-					))}
+					{Object.entries(groupedChanges).map(([rowId, rowChanges]) => {
+						const hasIsNew = rowChanges.some((c) => c?.field === "isNew");
+
+						return (
+							<div
+								key={rowId}
+								className={`border border-base-content/25 p-3 ${
+									hasIsNew ? "bg-yellow-100/25" : ""
+								}`}
+							>
+								<div className="font-medium mb-2 flex items-center gap-2">
+									Row ID: {rowId}
+									{hasIsNew && (
+										<span className="badge font-light badge-soft bg-yellow-300">
+											new
+										</span>
+									)}
+								</div>
+								<ul className="space-y-1">
+									{rowChanges.map((c, idx) => {
+										if (c?.field === "isNew") return null;
+
+										return (
+											<li
+												key={`${idx}-${c.field}-${c.before}-${c.after}`}
+												className="flex bg-base-300/75 justify-between items-center"
+											>
+												<span className="font-medium w-4/12">{c.field}</span>
+												<div className="flex justify-between gap-2 w-8/12">
+													<span className="text-right w-1/2">
+														<KeyValueRenderer
+															data={c.before}
+															beforeData={c.before}
+														/>
+													</span>
+													<span>
+														<FaArrowRight className="opacity-50" />
+													</span>
+													<span className="text-left w-1/2">
+														<KeyValueRenderer
+															data={c.after}
+															beforeData={c.before}
+														/>
+													</span>
+												</div>
+											</li>
+										);
+									})}
+								</ul>
+							</div>
+						);
+					})}
 				</div>
 
 				<div className="mt-4 flex justify-end space-x-2">
