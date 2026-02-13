@@ -45,7 +45,7 @@ export default function ChangeReviewModal({
 								<div className="font-medium mb-2 flex items-center gap-2">
 									Row ID: {rowId}
 									{hasIsNew && (
-										<span className="badge font-light badge-soft bg-yellow-300">
+										<span className="badge font-light badge-soft bg-yellow-300/20 border-yellow-300/50">
 											new
 										</span>
 									)}
