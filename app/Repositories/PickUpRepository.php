@@ -34,63 +34,63 @@ class PickUpRepository
 
   public function getTotalQuantity($startDate, $endDate)
   {
-    return DB::table(self::TABLE_NAME)
-      // ->whereBetween('DATE_CREATED', [$startDate, $endDate])
+    return DB::table(self::TABLE_NAME . ' as pickup')
       ->where('DATE_CREATED', ">=", $startDate)
       ->where('DATE_CREATED', "<", $endDate)
 
       ->sum('QTY');
   }
 
-  private function applyFactoryFilter($query, string $factory)
+  public function getFactoryTotalQuantityRanged($factory, $startDate, $endDate)
   {
     $factory = strtoupper($factory);
 
+    $query = DB::table(self::TABLE_NAME . ' as pickup')
+      ->where('DATE_CREATED', '>=', $startDate)
+      ->where('DATE_CREATED', '<', $endDate);
+
     if ($factory === 'F3') {
+      // join F3 table
       $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
     } elseif (in_array($factory, ['F1', 'F2'])) {
-      $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
-        ->where('part.Factory', $factory);
+      $partNames = DB::table(self::PART_NAME_TABLE)
+        ->where('Factory', $factory)
+        ->pluck('Partname');
+
+      $query->whereIn('pickup.PARTNAME', $partNames);
     }
 
-    return $query;
-  }
-
-  public function getFactoryTotalQuantityRanged($factory, $startDate, $endDate)
-  {
-    $query = DB::table(self::TABLE_NAME . ' as pickup')
-      ->where('pickup.DATE_CREATED', ">=", $startDate)
-      ->where('pickup.DATE_CREATED', "<", $endDate);
-
-    $query = $this->applyFactoryFilter($query, $factory);
     return $query->sum('pickup.QTY');
   }
 
   public function getFactoryPlTotalQuantity($factory, $pl, $startDate, $endDate)
   {
-    $partSubquery = DB::table(self::PART_NAME_TABLE)
-      ->selectRaw('Partname, Factory, PL')
-      ->distinct();
+    $factory = strtoupper($factory);
 
     $query = DB::table(self::TABLE_NAME . ' as pickup')
-      ->joinSub($partSubquery, 'part', function ($join) {
-        $join->on('pickup.PARTNAME', '=', 'part.Partname');
-      })
-      ->where('pickup.DATE_CREATED', ">=", $startDate)
-      ->where('pickup.DATE_CREATED', "<", $endDate);
+      ->where('DATE_CREATED', '>=', $startDate)
+      ->where('DATE_CREATED', '<', $endDate);
 
-    if (strtoupper($factory) == 'F3') {
+    if ($factory === 'F3') {
       $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
     } else {
-      $query->where('part.Factory', $factory);
+      // Get Partnames that match both Factory and PL
+      $partNames = DB::table(self::PART_NAME_TABLE)
+        ->where('Factory', $factory)
+        ->where('PL', $pl)
+        ->pluck('Partname');
+
+      $query->whereIn('pickup.PARTNAME', $partNames);
     }
 
-    return $query
-      ->where('part.PL', $pl)
-      ->sum('pickup.QTY');
+    if ($factory !== 'F3') {
+      $query->whereIn('pickup.PARTNAME', $partNames);
+    }
+
+    return $query->sum('pickup.QTY');
   }
 
-  public function filterByPackageName($query, ?array $packageNames, $factory)
+  public function filterByPackageName($query, ?array $packageNames)
   {
     if (is_string($packageNames)) {
       $packageNames = explode(',', $packageNames);
@@ -113,41 +113,25 @@ class PickUpRepository
 
   public function getPackageSummary($chartStatus, $startDate, $endDate)
   {
-    $today = Carbon::today()->toDateString();
-    $tomorrow = Carbon::tomorrow()->toDateString();
-
     $query = DB::table(self::TABLE_NAME . ' as pickup')
-      ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_wip, COUNT(DISTINCT pickup.LOTID) as total_lots')
-      // ->whereBetween('pickup.DATE_CREATED', [$startDate, $endDate]);
-      ->where('pickup.DATE_CREATED', ">=", $startDate)
-      ->where('pickup.DATE_CREATED', "<", $endDate);
+      ->selectRaw('PACKAGE, SUM(QTY) as total_wip, COUNT(DISTINCT LOTID) as total_lots')
+      ->where('DATE_CREATED', '>=', $startDate)
+      ->where('DATE_CREATED', '<', $endDate);
 
+    $chartStatus = strtoupper($chartStatus);
 
-    switch ($chartStatus) {
-      case 'F1':
-      case 'F2':
-        $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
-          ->where('part.Factory', $chartStatus);
-        break;
-
-      case 'F3':
-        $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
-        break;
-
-      case 'PL1':
-      case 'PL6':
-        $query->join(self::PART_NAME_TABLE . ' as part', 'pickup.PARTNAME', '=', 'part.Partname')
-          ->where('part.PL', $chartStatus);
-        break;
-
-      case 'all':
-        break;
-
-      default:
-        // $query->whereRaw('DATE(pickup.DATE_CREATED) = CURDATE()');
-        $query->where('pickup.DATE_CREATED', '>=', $today)
-          ->where('pickup.DATE_CREATED', '<', $tomorrow);
-        break;
+    if (in_array($chartStatus, ['F1', 'F2'])) {
+      $partNames = DB::table(self::PART_NAME_TABLE)
+        ->where('Factory', $chartStatus)
+        ->pluck('Partname');
+      $query->whereIn('pickup.PARTNAME', $partNames);
+    } elseif ($chartStatus === 'F3') {
+      $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
+    } elseif (in_array($chartStatus, ['PL1', 'PL6'])) {
+      $partNames = DB::table(self::PART_NAME_TABLE)
+        ->where('PL', $chartStatus)
+        ->pluck('Partname');
+      $query->whereIn('pickup.PARTNAME', $partNames);
     }
 
     return $query->groupBy('pickup.PACKAGE')
@@ -158,8 +142,17 @@ class PickUpRepository
   public function getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
   {
     $query = DB::table(self::TABLE_NAME . ' as pickup');
-    $query = $this->applyFactoryFilter($query, $factory);
-    $query = $this->filterByPackageName($query, $packageName, $factory);
+    $query = $this->filterByPackageName($query, $packageName);
+
+    $factory = strtoupper($factory);
+    if ($factory === 'F3') {
+      $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
+    } elseif (in_array($factory, ['F1', 'F2'])) {
+      $partNames = DB::table(self::PART_NAME_TABLE)
+        ->where('Factory', $factory)
+        ->pluck('Partname');
+      $query->whereIn('pickup.PARTNAME', $partNames);
+    }
 
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
@@ -168,24 +161,14 @@ class PickUpRepository
         $startDate,
         $endDate,
         'pickup.DATE_CREATED',
-        // * If in the future this get complicated, apply WipConstants::FACTORY_AGGREGATES
         self::aggregateColumn,
         ['pickup.PACKAGE as package'],
-        workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
+        workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range']
       );
     } else {
-      $query = $query->where('pickup.DATE_CREATED', '>=', $startDate)
-        ->where('pickup.DATE_CREATED', '<', $endDate);
-
-      $query = $query->select(
-        "pickup.PARTNAME",
-        "pickup.LOTID",
-        "pickup.QTY",
-        "pickup.PACKAGE",
-        "pickup.LC",
-        "pickup.ADDED_BY",
-        "pickup.DATE_CREATED",
-      );
+      $query->where('pickup.DATE_CREATED', '>=', $startDate)
+        ->where('pickup.DATE_CREATED', '<', $endDate)
+        ->select('pickup.PARTNAME', 'pickup.LOTID', 'pickup.QTY', 'pickup.PACKAGE', 'pickup.LC', 'pickup.ADDED_BY', 'pickup.DATE_CREATED');
     }
 
     return $query;
