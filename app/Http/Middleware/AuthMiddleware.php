@@ -47,7 +47,11 @@ class AuthMiddleware
                 ->first();
         });
 
-        // Log::info("Current User: " . json_encode($currentUser));
+        Log::info("Current User: " . json_encode($currentUser));
+
+        if (strtolower($currentUser?->emp_dept ?? '') !== 'ppc') {
+            return Inertia::render('Forbidden');
+        }
 
         // $role = strtolower(trim($currentUser->emp_jobtitle));
         // Log::info("role: " . json_encode($role));
@@ -67,27 +71,27 @@ class AuthMiddleware
         //     return Inertia::render('Forbidden');
         // }
 
-        $role = strtolower(trim($currentUser->emp_jobtitle));
-        Log::info("role: " . json_encode($role));
+        // $role = strtolower(trim($currentUser->emp_jobtitle));
+        // Log::info("role: " . json_encode($role));
 
-        $rolesConfig = config('roles');
-        Log::info("rolesConfig: " . json_encode($rolesConfig));
+        // $rolesConfig = config('roles');
+        // Log::info("rolesConfig: " . json_encode($rolesConfig));
 
         // Make a lowercase version of rolesConfig keys for comparison
-        $rolesConfigLower = [];
-        foreach ($rolesConfig as $key => $permissions) {
-            $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
-        }
+        // $rolesConfigLower = [];
+        // foreach ($rolesConfig as $key => $permissions) {
+        //     $rolesConfigLower[strtolower($key)] = array_map('strtolower', $permissions);
+        // }
 
-        if ($permission && !array_key_exists($role, $rolesConfigLower)) {
-            Log::info("Role not found: " . json_encode($rolesConfigLower));
-            return Inertia::render('Forbidden');
-        }
+        // if ($permission && !array_key_exists($role, $rolesConfigLower)) {
+        //     Log::info("Role not found: " . json_encode($rolesConfigLower));
+        //     return Inertia::render('Forbidden');
+        // }
 
-        if ($permission && !in_array(strtolower($permission), $rolesConfigLower[$role])) {
-            Log::info("Permission not allowed: " . json_encode($rolesConfigLower[$role]));
-            return Inertia::render('Forbidden');
-        }
+        // if ($permission && !in_array(strtolower($permission), $rolesConfigLower[$role])) {
+        //     Log::info("Permission not allowed: " . json_encode($rolesConfigLower[$role]));
+        //     return Inertia::render('Forbidden');
+        // }
 
 
         // Log::info($request->headers->all());

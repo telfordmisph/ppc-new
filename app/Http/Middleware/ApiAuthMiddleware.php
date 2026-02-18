@@ -39,7 +39,7 @@ class ApiAuthMiddleware
       return response()->json(['error' => 'Unauthenticated', 'message' => $this->sessionTimeOutMessage], 401);
     }
 
-    $role = strtolower(trim($currentUser->emp_jobtitle));
+    $role = strtolower(trim($currentUser?->emp_jobtitle));
 
     // Convert roles keys and permissions to lowercase for comparison
 
