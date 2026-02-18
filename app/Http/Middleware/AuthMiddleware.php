@@ -49,7 +49,9 @@ class AuthMiddleware
 
         Log::info("Current User: " . json_encode($currentUser));
 
-        if (strtolower($currentUser?->emp_dept ?? '') !== 'ppc') {
+        $dept = strtolower($currentUser?->emp_dept ?? '');
+
+        if ($dept !== 'ppc' && $dept !== 'mis') {
             return Inertia::render('Forbidden');
         }
 

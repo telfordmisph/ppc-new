@@ -45,7 +45,9 @@ class ApiPermissionMiddleware
         ->first();
     });
 
-    if (strtolower($currentUser?->emp_dept ?? '') !== 'ppc') {
+    $dept = strtolower($currentUser?->emp_dept ?? '');
+
+    if ($dept !== 'ppc' && $dept !== 'mis') {
       return response()->json([
         'status' => 'error',
         'error' => 'Unauthorized',
