@@ -57,7 +57,7 @@ class BulkUpserter
     $insertedIds = [];
     $updatedIds = [];
 
-    DB::transaction(function () use ($rows, $modifiedBy, &$errors, &$updatedIds) {
+    DB::transaction(function () use ($rows, $modifiedBy, &$errors, &$updatedIds, &$insertedIds) {
       foreach ($rows as $row) {
         $id = $row['id'] ?? null;
         $fields = $row;
@@ -111,7 +111,7 @@ class BulkUpserter
 
         if ($isNew) {
           $modelInstance = $this->model->create($normalizedData);
-          $insertedIds[] = $modelInstance->id;
+          $insertedIds[] = $modelInstance->getKey();
         } else {
           $modelInstance = $this->model->find($id);
           if (!$modelInstance) continue;
@@ -120,7 +120,6 @@ class BulkUpserter
         }
       }
     });
-
 
     if (!empty($errors)) {
       $maxErrorRows = 20;

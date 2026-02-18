@@ -234,7 +234,7 @@ class PickUpRepository
     ]));
   }
 
-  public function insertMany(array $data, ?int $importedBy = null)
+  private function upsertPickup($data = null, $importedBy = null)
   {
     $upserter = new BulkUpserter(
       new PickUp(),
@@ -262,45 +262,26 @@ class PickUpRepository
       );
     }
 
+    return $result;
+  }
+
+  public function insertMany(array $data, ?int $importedBy = null)
+  {
+    $result = $this->upsertPickup($data, $importedBy);
     return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
 
   public function insertF3Many(array $data, ?int $importedBy = null)
   {
-    $upserter = new BulkUpserter(
-      new PickUp(),
-      [
-        'LC' => 'required|integer',
-        'QTY' => 'required|integer',
-        'PARTNAME' => 'required',
-        'PACKAGE' => 'required',
-        'LOTID' => 'required',
-      ],
-      attributeNames: [
-        'LC' => 'LC',
-        'QTY' => 'QTY',
-        'PARTNAME' => 'PARTNAME',
-        'PACKAGE' => 'PACKAGE',
-        'LOTID' => 'LOTID',
-      ]
-    );
+    $result = $this->upsertPickup($data, $importedBy);
 
-    $result = $upserter->update($data, $importedBy);
+    $rows = collect($result['inserted'])
+      ->map(fn($id) => [
+        'ppc_pickup_id' => $id,
+      ])
+      ->toArray();
 
-    if (!empty($result['errors'])) {
-      throw new \Exception(
-        'Some rows failed validation: ' . implode('; ', $result['errorMessages'])
-      );
-    }
-
-    foreach ($result['inserted'] as $id) {
-      $pickup = PickUp::find($id);
-      if ($pickup) {
-        F3Pickup::create([
-          'ppc_pickup_id' => $pickup->id_pickup,
-        ]);
-      }
-    }
+    F3Pickup::insert($rows);
 
     return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
