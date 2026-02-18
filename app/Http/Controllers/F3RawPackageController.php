@@ -6,7 +6,8 @@ use App\Models\F3RawPackage;
 use App\Models\F3PackageName;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Validation\Rule;
+use App\Services\BulkUpserter;
 use Illuminate\Http\Request;
 
 class F3RawPackageController extends Controller
@@ -48,93 +49,50 @@ class F3RawPackageController extends Controller
     return $request->validate($this->rules());
   }
 
-  public function store(Request $request)
+  public function bulkUpdate(Request $request)
   {
-    return $this->upsertF3RawPackage($request);
+    $rows = $request->all();
+    $user = session('emp_data');
+
+    $columnRules = [
+      'raw_package' => fn($id) => [
+        'required',
+        'string',
+        Rule::unique('f3_raw_packages', 'raw_package')
+          ->ignore(is_numeric($id) ? $id : null),
+      ],
+      'package_id' => fn($id) => [
+        'required',
+        'int',
+        Rule::exists('f3_package_names', 'id'),
+      ],
+      'lead_count' => 'nullable|integer',
+      'dimension' => 'nullable|string|max:50',
+    ];
+
+    $bulkUpdater = new BulkUpserter(new F3RawPackage(), $columnRules, [], []);
+
+    $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+
+    if (!empty($result['errors'])) {
+      return response()->json([
+        'status' => 'error',
+        'message' => 'You have ' . count($result['errors']) . ' error/s',
+        'data' => $result['errors']
+      ], 422);
+    }
+
+    return response()->json([
+      'status' => 'ok',
+      'message' => 'Updated successfully',
+      'updated' => $result['updated']
+    ]);
   }
 
   public function update(Request $request, $id)
   {
     return $this->upsertF3RawPackage($request, $id);
   }
-
-  /**
-   * Handle creating or updating a F3RawPackage
-   *
-   * @param Request $request
-   * @param int|null $id
-   * @return \Illuminate\Http\JsonResponse
-   */
-  private function upsertF3RawPackage(Request $request, ?int $id = null)
-  {
-    $validated = $this->validateF3RawPackages($request);
-
-    $records = isset($validated[0]) ? $validated : [$validated];
-
-    DB::beginTransaction();
-
-    try {
-      $results = [];
-
-      foreach ($records as $index => $data) {
-
-        $package = F3PackageName::where('package_name', $data['package_name'])
-          ->firstOrFail();
-
-        $data['package_id'] = $package->id;
-        unset($data['package_name']);
-
-        $rawPackage = $data['raw_package'];
-        $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
-        $data['raw_package_normalized'] = $rawPackageNormalized;
-
-        $duplicateQuery = F3RawPackage::where('raw_package_normalized', $rawPackageNormalized);
-
-        if ($id) {
-          $duplicateQuery->where('id', '!=', $id);
-        }
-
-        if ($duplicateQuery->exists()) {
-          $rowIndex = $index + 1;
-          $row = count($records) === 1 ? '' : " (row {$rowIndex})";
-
-          throw new \Exception(
-            "The raw_package '{$rawPackage}' already exists{$row}."
-          );
-        }
-
-        if ($id && count($records) === 1) {
-          $f3RawPackage = F3RawPackage::findOrFail($id);
-          $f3RawPackage->update($data);
-        } else {
-          $f3RawPackage = F3RawPackage::create($data);
-        }
-
-        $results[] = $f3RawPackage->load('f3_package_name');
-      }
-
-      DB::commit();
-
-      return response()->json([
-        'message' => count($results) > 1
-          ? 'F3 raw packages processed successfully'
-          : 'F3 raw package processed successfully',
-        'data' => count($results) > 1 ? $results : $results[0],
-      ]);
-    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-      DB::rollBack();
-      return response()->json([
-        'message' => 'Package name or F3 raw package not found.'
-      ], 422);
-    } catch (\Throwable $e) {
-      DB::rollBack();
-      return response()->json([
-        'message' => $e->getMessage(),
-        'error' => $e->getMessage()
-      ], 500);
-    }
-  }
-
 
   public function upsert($id = null)
   {

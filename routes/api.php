@@ -50,7 +50,7 @@ Route::middleware([ApiAuthMiddleware::class])
     });
 
     Route::prefix('partname')->name('api.partname.')->group(function () {
-      Route::post('/', [PartNameController::class, 'store'])->name('store');
+      Route::patch('/create-many', [PartNameController::class, 'bulkUpdate'])->name('bulkUpdate');
 
       Route::middleware(ApiPermissionMiddleware::class . ':partname_mutate')->group(function () {
         Route::patch('/{id}', [PartNameController::class, 'update'])->name('update');
@@ -69,7 +69,7 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::get('/list', [F3RawPackageController::class, 'index'])->name('index');
 
       Route::middleware(ApiPermissionMiddleware::class . ':f3_raw_package_mutate')->group(function () {
-        Route::post('/', [F3RawPackageController::class, 'store'])->name('store');
+        Route::patch('/create-many', [F3RawPackageController::class, 'bulkUpdate'])->name('bulkUpdate');
         Route::patch('/{id}', [F3RawPackageController::class, 'update'])->name('update');
         Route::delete('/{id}', [F3RawPackageController::class, 'destroy'])->name('delete');
       });

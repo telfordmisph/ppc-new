@@ -45,30 +45,27 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 		setEditedRows({});
 	}, [initialData]);
 
-	const updateData = useCallback(
-		(rowIndex, accessorKey, value) => {
-			setData((prevData) => {
-				const row = prevData[rowIndex];
-				const updatedRow = updateNested(row, accessorKey, value);
+	const updateData = useCallback((rowIndex, accessorKey, value) => {
+		setData((prevData) => {
+			const row = prevData[rowIndex];
+			const updatedRow = updateNested(row, accessorKey, value);
 
-				if (JSON.stringify(row) === JSON.stringify(updatedRow)) return prevData;
+			if (JSON.stringify(row) === JSON.stringify(updatedRow)) return prevData;
 
-				const newData = [...prevData];
-				newData[rowIndex] = updatedRow;
+			const newData = [...prevData];
+			newData[rowIndex] = updatedRow;
 
-				const rowId = row.id;
-				setEditedRows((prev) => {
-					return {
-						...prev,
-						[rowId]: updatedRow,
-					};
-				});
-
-				return newData;
+			const rowId = row.id;
+			setEditedRows((prev) => {
+				return {
+					...prev,
+					[rowId]: updatedRow,
+				};
 			});
-		},
-		[onEdit],
-	);
+
+			return newData;
+		});
+	}, []);
 
 	const derivedColumns = useMemo(() => {
 		const visibleColumns = columns.filter((col) => !col.meta?.hidden);
@@ -110,21 +107,39 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 				isNew: true,
 			};
 
-			setData((prev) => [...prev, newRow]);
+			setData((prev) => [newRow, ...prev]);
 
 			setEditedRows((prev) => ({
-				...prev,
 				[newId]: newRow,
+				...prev,
 			}));
 		},
 		[table, createEmptyRow],
 	);
 
+	const handleDeleteRow = (rowIds) => {
+		if (!confirm("Are you sure you want to delete this row?")) return;
+
+		const newRows = data.filter((row) => !rowIds.includes(row.id));
+		setData(newRows);
+
+		console.log("🚀 ~ handleDeleteRow ~ rowIds:", rowIds);
+		setEditedRows((prev) => {
+			const newEditedRows = {};
+			for (const rowId in prev) {
+				if (!rowIds.includes(Number(rowId))) {
+					newEditedRows[rowId] = prev[rowId];
+				}
+			}
+			return newEditedRows;
+		});
+	};
+
 	const handleResetChanges = () => {
-		if (Object.keys(editedRows).length === 0) {
-			alert("No changes to reset.");
-			return;
-		}
+		// if (Object.keys(editedRows).length === 0) {
+		// 	alert("No changes to reset.");
+		// 	return;
+		// }
 
 		if (!confirm("Are you sure you want to discard all changes?")) return;
 
@@ -168,6 +183,7 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 		setEditedRows,
 		handleAddNewRow,
 		handleResetChanges,
+		handleDeleteRow,
 		changes,
 		getChanges,
 		checkedRows: Object.keys(table.getState().rowSelection),

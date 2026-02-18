@@ -141,7 +141,7 @@ class AutoImportController extends Controller
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
             'data' => $result['data'] ?? [],
-        ]);
+        ], $result['status'] === 'success' ? 200 : 422);
     }
 
     public function importF3PickUp(Request $request)
@@ -161,7 +161,7 @@ class AutoImportController extends Controller
             'status' => $result['status'] ?? 'success',
             'message' => $result['message'] ?? 'Import completed',
             'data' => $result['data'] ?? [],
-        ]);
+        ], $result['status'] === 'success' ? 200 : 422);
     }
 
     public function importF3(Request $request)

@@ -1,27 +1,29 @@
-import { defineConfig } from 'vite';
-import laravel from 'laravel-vite-plugin';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import tailwindcss from '@tailwindcss/vite';
-import { fileURLToPath } from 'url';
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import laravel from "laravel-vite-plugin";
+import path from "path";
+import { defineConfig } from "vite";
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
 
 export default defineConfig({
-    resolve: {
-        alias: {
-            // '@': path.resolve(__dirname, './resources/js'),
-            ziggy: path.resolve('vendor/tightenco/ziggy/dist'),
-            'ziggy-js': path.resolve('vendor/tightenco/ziggy/dist/index.esm.js'),
-        }
-    },
-    plugins: [
-        laravel({
-            input: 'resources/js/app.jsx',
-            refresh: true,
-        }),
-        react(),
-        tailwindcss(),
-    ],
+	resolve: {
+		alias: {
+			// '@': path.resolve(__dirname, './resources/js'),
+			ziggy: path.resolve("vendor/tightenco/ziggy/dist"),
+			"ziggy-js": path.resolve("vendor/tightenco/ziggy/dist/index.esm.js"),
+		},
+	},
+	plugins: [
+		laravel({
+			input: "resources/js/app.jsx",
+			refresh: true,
+		}),
+		react(),
+		tailwindcss(),
+	],
+	server: {
+		port: 5174,
+	},
 });

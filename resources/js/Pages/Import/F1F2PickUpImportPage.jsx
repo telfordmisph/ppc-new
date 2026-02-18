@@ -1,6 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { MdWarning } from "react-icons/md";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
 import Modal from "@/Components/Modal";
@@ -10,6 +7,10 @@ import { useDownloadFile } from "@/Hooks/useDownload";
 import { useMutation } from "@/Hooks/useMutation";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
+import { router } from "@inertiajs/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
@@ -105,6 +106,15 @@ const F1F2PickUpImportPage = () => {
 		return [...map.values()];
 	}, [importPickUpData?.data?.ignored_unknown_partname]);
 
+	const handlePartnameNavigate = () => {
+		router.visit(route("partname.createManyPrefill"), {
+			method: "post",
+			data: {
+				parts: uniquePartnames ?? [],
+			},
+		});
+	};
+
 	return (
 		<ImportPageLayout pageName="F1/F2 PickUp">
 			<div className="grid grid-cols-1 w-full gap-4">
@@ -120,12 +130,9 @@ const F1F2PickUpImportPage = () => {
 									{importPickUpData?.data?.ignored_unknown_partname?.length}{" "}
 									partname/s were not recognized.
 								</span>
-								<a
-									href={route("partname.createMany", {
-										parts: uniquePartnames ?? [],
-									})}
-									target="_blank"
-									rel="noopener noreferrer"
+								<button
+									type="button"
+									onClick={handlePartnameNavigate}
 									className="btn btn-outline btn-primary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
@@ -134,7 +141,7 @@ const F1F2PickUpImportPage = () => {
 									</div>
 									Add the unknown partnames now
 									<FaExternalLinkAlt className="inline w-4 h-4 ml-1" />
-								</a>
+								</button>
 							</div>
 						)}
 
@@ -223,31 +230,46 @@ const F1F2PickUpImportPage = () => {
 						</Collapse>
 					)}
 
-					{importPickUpErrorMessage && importPickUpErrorData?.data && (
+					{(importPickUpErrorData?.data?.missing_headers?.length ||
+						importPickUpErrorData?.data?.unknown_headers?.length) && (
 						<Collapse
 							title={`${importPickUpErrorMessage}. Click to see details.`}
-							className={"border-red-500 hover:border-red-500 bg-error/10"}
+							className="border-red-500 hover:border-red-500 bg-error/10"
 						>
-							{importPickUpErrorData?.data?.missing_headers.length > 0 && (
-								<div className="mt-2">Missing headers: </div>
+							{importPickUpErrorData?.data?.missing_headers?.length > 0 && (
+								<div className="mt-2">
+									Missing headers:
+									<ul className="list">
+										{importPickUpErrorData.data.missing_headers.map(
+											(missing, index) => (
+												<li
+													className="list-row h-8 leading-none"
+													key={`${missing}-${index}`}
+												>
+													{missing}
+												</li>
+											),
+										)}
+									</ul>
+								</div>
 							)}
-							<ul className="list">
-								{importPickUpErrorData?.data?.missing_headers.map((missing) => (
-									<li className="list-row h-8 leading-none" key={missing}>
-										{missing}
-									</li>
-								))}
-							</ul>
-							{importPickUpErrorData?.data?.unknown_headers.length > 0 && (
-								<div className="mt-2">Unknown (ignored): </div>
+							{importPickUpErrorData?.data?.unknown_headers?.length > 0 && (
+								<div className="mt-2">
+									Unknown (ignored):
+									<ul className="list">
+										{importPickUpErrorData.data.unknown_headers.map(
+											(unknown, index) => (
+												<li
+													className="list-row h-8 leading-none"
+													key={`${unknown}-${index}`}
+												>
+													{unknown}
+												</li>
+											),
+										)}
+									</ul>
+								</div>
 							)}
-							<ul className="list">
-								{importPickUpErrorData?.data?.unknown_headers.map((unknown) => (
-									<li className="list-row h-8 leading-none" key={unknown}>
-										{unknown}
-									</li>
-								))}
-							</ul>
 						</Collapse>
 					)}
 

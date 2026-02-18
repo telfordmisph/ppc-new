@@ -1,41 +1,45 @@
-import { router, usePage } from "@inertiajs/react";
-import { useEffect, useMemo, useState } from "react";
-import { FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import BulkErrors from "@/Components/BulkErrors";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import { createClickableCell } from "@/Components/tanStackTable/ClickableCell";
+import ReadOnlyColumns from "@/Components/tanStackTable/ReadOnlyColumn";
+import TanstackTable from "@/Components/tanStackTable/TanstackTable";
+import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 import { useF3PackagesStore } from "@/Store/f3PackageListStore";
+import { router, usePage } from "@inertiajs/react";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaPlus, FaSave } from "react-icons/fa";
+import { MdOutlineDelete } from "react-icons/md";
+
+const packageModalID = "package-selection-modal-f3-raw-package-multi-upsert";
 
 const F3RawPackageMultiUpsert = () => {
 	const toast = useToast();
 	const { raw_packages: serverRawPackages } = usePage().props;
 
-	const emptyPackage = {
-		raw_package: "",
-		lead_count: "",
-		package_name: "",
-		dimension: "",
-	};
+	const [selectedCell, setSelectedCell] = useState(null);
+	const [selectedEditItem, setSelectedEditItem] = useState([[]]);
 
 	const initialPackages = useMemo(() => {
 		if (serverRawPackages?.length) {
-			return serverRawPackages.map((p) => ({
+			return serverRawPackages.map((p, index) => ({
 				raw_package: p.raw_package ?? "",
 				lead_count: p.lead_count ?? "",
 				package_name: p.f3_package_name?.package_name ?? "",
 				dimension: p.dimension ?? "",
+				id: index,
 			}));
 		}
 
-		return [{ ...emptyPackage }];
+		return [];
 	}, [serverRawPackages]);
-
-	const [packages, setPackages] = useState(initialPackages);
 
 	const {
 		mutate,
 		isLoading: isMutateLoading,
 		errorMessage: mutateErrorMessage,
+		errorData: mutateErrorData,
 	} = useMutation();
 
 	useEffect(() => {
@@ -47,135 +51,146 @@ const F3RawPackageMultiUpsert = () => {
 	const packageNames = useF3PackagesStore((state) => state.data);
 	const isLoadingPackageNames = useF3PackagesStore((state) => state.isLoading);
 
-	const handleInputChange = (index, field, value) => {
-		setPackages((prev) =>
-			prev.map((part, i) => (i === index ? { ...part, [field]: value } : part)),
-		);
-	};
+	function handleEditedItemClick(row, value, column) {
+		const rootKey = column?.columnDef?.accessorKey?.split(".")[0];
+		setSelectedCell({ rootKey, row, value, column });
+		setSelectedEditItem([value]);
+	}
 
-	const handleAddRow = () => setPackages([...packages, { ...emptyPackage }]);
+	const columns = React.useMemo(
+		() => [
+			ReadOnlyColumns({
+				accessorKey: "id",
+				header: "ID",
+				options: { size: 60, enableHiding: false, meta: { hidden: true } },
+			}),
+			{
+				accessorKey: "raw_package",
+				header: "Raw Package",
+				size: 280,
+				type: "string",
+			},
+			{
+				accessorKey: "package_name",
+				accessorFn: (row) => row.package_name?.package_name ?? "",
+				header: "Package Name",
+				size: 150,
+				cell: createClickableCell({
+					modalID: packageModalID,
+					deletable: false,
+					handleCellClick: handleEditedItemClick,
+				}),
+			},
+			{
+				accessorKey: "dimension",
+				header: "Dimension",
+				size: 150,
+				type: "string",
+			},
+			{
+				accessorKey: "lead_count",
+				header: "Lead Count",
+				size: 150,
+				type: "number",
+			},
+		],
+		[],
+	);
 
-	const handleRemoveRow = (index) =>
-		setPackages(packages.filter((_, i) => i !== index));
-
-	const handleReset = () => setPackages(initialPackages);
+	const {
+		table,
+		data,
+		handleAddNewRow,
+		handleDeleteRow,
+		updateData,
+		handleResetChanges,
+	} = useEditableTable(initialPackages || [], columns, {
+		createEmptyRow: () => ({
+			raw_package: "",
+			package_name: "",
+			dimension: "",
+			LC: "",
+		}),
+		isMultipleSelection: true,
+	});
 
 	const handleUpsert = async (e) => {
 		e.preventDefault();
 
-		const url = route("api.f3.raw.package.store");
-		const method = "POST";
+		const payload = data.map((row) => {
+			const { package_name, ...rest } = row;
+			return {
+				...rest,
+				package_id: package_name?.id ?? null,
+			};
+		});
 
 		try {
-			await mutate(url, { method, body: packages });
-			toast.success("Packages created!");
+			await mutate(route("api.f3.raw.package.bulkUpdate"), {
+				method: "PATCH",
+				body: payload,
+			});
+
+			toast.success("Changes updated successfully!");
 			router.visit(route("f3.raw.package.index"));
-		} catch (err) {
-			console.error("Upsert failed:", err?.message);
-			toast.error(err?.message);
+		} catch (error) {
+			toast.error(error.message);
+			console.error(error);
 		}
+	};
+
+	const handleEditPackage = (selected) => {
+		if (selectedCell === null) return;
+
+		updateData(selectedCell?.row?.index, selectedCell?.rootKey, selected[0]);
+
+		document.getElementById(packageModalID)?.close();
+	};
+
+	const handleDelete = async () => {
+		const rowIds = Object.keys(table.getState().rowSelection);
+		handleDeleteRow(rowIds);
 	};
 
 	return (
 		<>
 			<h1 className="text-base font-bold mb-4">Add New F3 Raw Packages</h1>
-			<form onSubmit={handleUpsert}>
-				<div className="overflow-x-auto">
-					<table className="table table-zebra w-full">
-						<thead>
-							<tr>
-								<th className="w-10">#</th>
-								<th className="w-[200px]">Raw Package</th>
-								<th className="w-[20px]">Lead Count</th>
-								<th className="w-[200px]">Package Name</th>
-								<th className="w-[200px]">Dimension</th>
-								<th>Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							{packages.map((p, idx) => (
-								<tr key={idx}>
-									<th>{idx + 1}</th>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.raw_package}
-											onChange={(e) =>
-												handleInputChange(idx, "raw_package", e.target.value)
-											}
-											required
-										/>
-									</td>
-									<td>
-										<input
-											type="number"
-											className="input input-bordered w-full"
-											value={p.lead_count}
-											onChange={(e) =>
-												handleInputChange(idx, "lead_count", e.target.value)
-											}
-											required
-										/>
-									</td>
-									<td>
-										<MultiSelectSearchableDropdown
-											options={
-												packageNames?.map((pkg) => ({
-													value: pkg.package_name,
-													label: null,
-												})) || []
-											}
-											onChange={(value) =>
-												handleInputChange(idx, "package_name", value[0])
-											}
-											defaultSelectedOptions={
-												p.package_name ? [p.package_name] : []
-											}
-											isLoading={isLoadingPackageNames}
-											itemName="Package List"
-											prompt="Select packages"
-											contentClassName="w-52 h-50"
-											singleSelect
-										/>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.dimension}
-											onChange={(e) =>
-												handleInputChange(idx, "dimension", e.target.value)
-											}
-											required
-										/>
-									</td>
-									<td className="">
-										<button
-											type="button"
-											onClick={() => handleRemoveRow(idx)}
-											className="btn btn-error btn-sm"
-										>
-											<FaTimes />
-										</button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+			<MultiSelectSearchableDropdown
+				modalId={packageModalID}
+				options={
+					packageNames?.map((pkg) => ({
+						value: pkg.package_name,
+						label: null,
+						original: pkg,
+					})) || []
+				}
+				returnKey="original"
+				controlledSelectedOptions={selectedEditItem}
+				defaultSelectedOptions={[selectedEditItem]}
+				onChange={handleEditPackage}
+				buttonSelectorClassName="w-80 font-normal"
+				itemName="Package List"
+				isLoading={isLoadingPackageNames}
+				prompt="Select package"
+				debounceDelay={500}
+				contentClassName="w-52 h-120"
+				singleSelect
+				disableSelectedContainer
+				useModal={true}
+			/>
 
+			<form onSubmit={handleUpsert}>
 				<div className="flex gap-2 mt-4">
 					<button
 						type="button"
-						onClick={handleAddRow}
+						onClick={() => handleAddNewRow()}
 						className="btn btn-outline btn-accent"
 					>
 						<FaPlus /> Add Row
 					</button>
 					<button
 						type="button"
-						onClick={handleReset}
+						onClick={handleResetChanges}
 						className="btn btn-outline btn-error"
 					>
 						Reset
@@ -192,6 +207,20 @@ const F3RawPackageMultiUpsert = () => {
 						)}
 						Save All
 					</button>
+					<div className="px-2 w-full">
+						{<BulkErrors errors={mutateErrorData?.data || []} />}
+					</div>
+					<button
+						type="button"
+						className="btn btn-error btn-ghost btn-square"
+						disabled={Object.keys(table.getState().rowSelection).length === 0}
+						onClick={handleDelete}
+					>
+						<MdOutlineDelete className="w-full h-full" />
+					</button>
+				</div>
+				<div className="overflow-x-auto">
+					<TanstackTable table={table} />
 				</div>
 			</form>
 		</>

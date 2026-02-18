@@ -13,6 +13,7 @@ use App\Helpers\MergeAndAggregate;
 use Carbon\Carbon;
 use App\Models\PickUp;
 use App\Models\F3Pickup;
+use App\Services\BulkUpserter;
 
 class PickUpRepository
 {
@@ -233,20 +234,74 @@ class PickUpRepository
     ]));
   }
 
-  public function insertMany(array $data)
+  public function insertMany(array $data, ?int $importedBy = null)
   {
-    PickUp::insert($data);
+    $upserter = new BulkUpserter(
+      new PickUp(),
+      [
+        'LC' => 'required|integer',
+        'QTY' => 'required|integer',
+        'PARTNAME' => 'required',
+        'PACKAGE' => 'required',
+        'LOTID' => 'required',
+      ],
+      attributeNames: [
+        'LC' => 'LC',
+        'QTY' => 'QTY',
+        'PARTNAME' => 'PARTNAME',
+        'PACKAGE' => 'PACKAGE',
+        'LOTID' => 'LOTID',
+      ]
+    );
+
+    $result = $upserter->update($data, $importedBy);
+
+    if (!empty($result['errors'])) {
+      throw new \Exception(
+        'Some rows failed validation: ' . implode('; ', $result['errorMessages'])
+      );
+    }
+
+    return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
 
-  public function insertF3Many(array $data)
+  public function insertF3Many(array $data, ?int $importedBy = null)
   {
-    // PickUp::insert($data);
-    foreach ($data as $row) {
-      $pickup = PickUp::create($row);
+    $upserter = new BulkUpserter(
+      new PickUp(),
+      [
+        'LC' => 'required|integer',
+        'QTY' => 'required|integer',
+        'PARTNAME' => 'required',
+        'PACKAGE' => 'required',
+        'LOTID' => 'required',
+      ],
+      attributeNames: [
+        'LC' => 'LC',
+        'QTY' => 'QTY',
+        'PARTNAME' => 'PARTNAME',
+        'PACKAGE' => 'PACKAGE',
+        'LOTID' => 'LOTID',
+      ]
+    );
 
-      F3Pickup::create([
-        'ppc_pickup_id' => $pickup->id_pickup,
-      ]);
+    $result = $upserter->update($data, $importedBy);
+
+    if (!empty($result['errors'])) {
+      throw new \Exception(
+        'Some rows failed validation: ' . implode('; ', $result['errorMessages'])
+      );
     }
+
+    foreach ($result['inserted'] as $id) {
+      $pickup = PickUp::find($id);
+      if ($pickup) {
+        F3Pickup::create([
+          'ppc_pickup_id' => $pickup->id_pickup,
+        ]);
+      }
+    }
+
+    return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
 }

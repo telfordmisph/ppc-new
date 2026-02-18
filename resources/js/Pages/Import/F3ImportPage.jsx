@@ -1,6 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { MdWarning } from "react-icons/md";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
 import Modal from "@/Components/Modal";
@@ -9,6 +6,10 @@ import { F3_OUTS_HEADERS } from "@/Constants/ExcelHeaders";
 import { useMutation } from "@/Hooks/useMutation";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
+import { router } from "@inertiajs/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
@@ -106,6 +107,15 @@ const F3ImportPage = () => {
 		return [...map.values()];
 	}, [importF3Data?.data?.ignored_unknown_package]);
 
+	const handleF3RawPackageNavigate = () => {
+		router.visit(route("f3.raw.package.createManyPrefill"), {
+			method: "post",
+			data: {
+				raw_packages: uniquePackages ?? [],
+			},
+		});
+	};
+
 	return (
 		<ImportPageLayout pageName="F3 Wip & Outs">
 			<div className="grid grid-cols-1 w-full gap-4">
@@ -118,12 +128,9 @@ const F3ImportPage = () => {
 								<MdWarning className="inline w-4 h-4 mr-2" />
 								Some rows were not imported because their package is unknown
 								(see the ignored rows list below).
-								<a
-									href={route("f3.raw.package.createMany", {
-										raw_packages: uniquePackages ?? [],
-									})}
-									target="_blank"
-									rel="noopener noreferrer"
+								<button
+									type="button"
+									onClick={handleF3RawPackageNavigate}
 									className="mx-1 btn btn-outline btn-primary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
@@ -132,7 +139,7 @@ const F3ImportPage = () => {
 									</div>
 									Add the unknown packages now
 									<FaExternalLinkAlt className="inline w-4 h-4 ml-1" />
-								</a>
+								</button>
 								then you can try importing the file again.
 							</div>
 						)}

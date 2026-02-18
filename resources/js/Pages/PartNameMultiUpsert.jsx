@@ -1,26 +1,24 @@
+import BulkErrors from "@/Components/BulkErrors";
+import DropdownCell from "@/Components/tanStackTable/DropdownCell";
+import ReadOnlyColumns from "@/Components/tanStackTable/ReadOnlyColumn";
+import TanstackTable from "@/Components/tanStackTable/TanstackTable";
+import { useEditableTable } from "@/Hooks/useEditableTable";
 import { useMutation } from "@/Hooks/useMutation";
 import { useToast } from "@/Hooks/useToast";
 import { router, usePage } from "@inertiajs/react";
-import { useMemo, useState } from "react";
-import { FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import React, { useCallback, useMemo } from "react";
+import { FaPlus, FaSave } from "react-icons/fa";
+import { MdOutlineDelete } from "react-icons/md";
+
+const plOptions = ["PL1", "PL6"];
 
 const PartNameMultiInsert = () => {
 	const toast = useToast();
 	const { parts: serverParts } = usePage().props;
-	const emptyPart = {
-		Partname: "",
-		Focus_grp: "",
-		Factory: "",
-		PL: "PL1",
-		Packagename: "",
-		Leadcount: "",
-		Bodysize: "",
-		Packagecategory: "",
-	};
 
 	const initialPartnames = useMemo(() => {
 		if (serverParts?.length) {
-			return serverParts.map((p) => ({
+			return serverParts.map((p, index) => ({
 				Partname: p.Partname || "",
 				Focus_grp: p.Focus_grp || "",
 				Factory: p.Factory || "",
@@ -29,42 +27,120 @@ const PartNameMultiInsert = () => {
 				Leadcount: p.Leadcount || "",
 				Bodysize: p.Bodysize || "",
 				Packagecategory: p.Packagecategory || "",
+				id: index,
 			}));
 		}
 
-		return [{ ...emptyPart }];
+		return [];
 	}, [serverParts]);
-
-	const [parts, setParts] = useState(initialPartnames);
 
 	const {
 		mutate,
 		isLoading: isMutateLoading,
 		errorMessage: mutateErrorMessage,
+		errorData: mutateErrorData,
 	} = useMutation();
 
-	const handleInputChange = (index, field, value) => {
-		setParts((prev) =>
-			prev.map((part, i) => (i === index ? { ...part, [field]: value } : part)),
-		);
-	};
+	const handleCellChange = useCallback((rowIndex, columnId, value) => {
+		setData((prevData) => {
+			if (prevData[rowIndex][columnId] === value) {
+				return prevData;
+			}
+			const newData = [...prevData];
+			newData[rowIndex] = { ...newData[rowIndex], [columnId]: value };
 
-	const handleAddRow = () => setParts([...parts, { ...emptyPart }]);
-	const handleRemoveRow = (index) =>
-		setParts(parts.filter((_, i) => i !== index));
+			const rowId = newData[rowIndex].id;
 
-	const handleReset = () => {
-		setParts(initialPartnames);
-	};
+			setEditedRows((prev) => ({
+				...prev,
+				[rowId]: {
+					...prev[rowId],
+					[columnId]: value,
+				},
+			}));
+
+			return newData;
+		});
+	}, []);
+
+	const plColumn = React.useMemo(
+		() => ({
+			accessorKey: "PL",
+			header: "PL",
+			size: 200,
+			cell: React.memo(({ getValue, row, column }) => {
+				const value = getValue();
+
+				return (
+					<div className="w-full">
+						<DropdownCell
+							statusOptions={plOptions}
+							value={value}
+							rowIndex={row.index}
+							columnId={column.id}
+							onChange={handleCellChange}
+						/>
+					</div>
+				);
+			}),
+		}),
+		[],
+	);
+
+	const columns = React.useMemo(
+		() => [
+			ReadOnlyColumns({
+				accessorKey: "id",
+				header: "ID",
+				options: { size: 60, enableHiding: false, meta: { hidden: true } },
+			}),
+			{ accessorKey: "Partname", header: "Partname", type: "string" },
+			{ accessorKey: "Focus_grp", header: "Focus Group", type: "string" },
+			{ accessorKey: "Factory", header: "Factory", type: "string" },
+			plColumn,
+			{ accessorKey: "Packagename", header: "Packagename", type: "string" },
+			{ accessorKey: "Leadcount", header: "Leadcount", type: "string" },
+			{ accessorKey: "Bodysize", header: "Bodysize", type: "string" },
+			{
+				accessorKey: "Packagecategory",
+				header: "Package Category",
+				type: "string",
+			},
+		],
+		[],
+	);
+
+	const {
+		table,
+		data,
+		setData,
+		setEditedRows,
+		handleAddNewRow,
+		handleDeleteRow,
+		handleResetChanges,
+		editedRows,
+	} = useEditableTable(initialPartnames || [], columns, {
+		createEmptyRow: () => ({
+			Partname: "",
+			Focus_grp: "",
+			Factory: "",
+			PL: "PL1",
+			Packagename: "",
+			Leadcount: "",
+			Bodysize: "",
+			Packagecategory: "",
+		}),
+		isMultipleSelection: true,
+	});
 
 	const handleUpsert = async (e) => {
 		e.preventDefault();
 
-		const url = route("api.partname.store");
-		const method = "POST";
+		const url = route("api.partname.bulkUpdate");
+		const method = "PATCH";
 
 		try {
-			await mutate(url, { method, body: parts });
+			await mutate(url, { method, body: data });
 			toast.success("Parts created successfully!");
 			router.visit(route("partname.index"));
 		} catch (err) {
@@ -73,154 +149,31 @@ const PartNameMultiInsert = () => {
 		}
 	};
 
+	const handleDelete = async () => {
+		const rowIds = Object.keys(table.getState().rowSelection);
+		handleDeleteRow(rowIds);
+	};
+
 	return (
 		<>
-			<h1 className="text-base font-bold mb-4">Add New Parts</h1>
-			<form onSubmit={handleUpsert}>
-				<div className="overflow-x-auto">
-					<table className="table table-zebra w-full">
-						<thead>
-							<tr>
-								<th>#</th>
-								<th className="w-[220px]">Partname</th>
-								<th className="w-[120px]">Focus Group</th>
-								<th className="w-[100px]">Factory</th>
-								<th className="w-[120px]">PL</th>
-								<th>Package Name</th>
-								<th className="w-[30px]">Lead Count</th>
-								<th>Body Size</th>
-								<th>Package Category</th>
-								<th>Action</th>
-							</tr>
-						</thead>
-						<tbody>
-							{parts.map((p, idx) => (
-								<tr key={idx}>
-									<th>{idx + 1}</th>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Partname}
-											onChange={(e) =>
-												handleInputChange(idx, "Partname", e.target.value)
-											}
-											required
-										/>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Focus_grp}
-											onChange={(e) =>
-												handleInputChange(idx, "Focus_grp", e.target.value)
-											}
-										/>
-									</td>
-									<td>
-										<select
-											className="select select-bordered w-full"
-											value={p.Factory}
-											onChange={(e) =>
-												handleInputChange(idx, "Factory", e.target.value)
-											}
-											required
-										>
-											<option value="F1">F1</option>
-											<option value="F2">F2</option>
-											<option value="F3">F3</option>
-										</select>
-									</td>
-									<td>
-										<select
-											className="select select-bordered w-full"
-											value={p.PL}
-											onChange={(e) =>
-												handleInputChange(idx, "PL", e.target.value)
-											}
-											required
-										>
-											<option value="PL1">PL1</option>
-											<option value="PL6">PL6</option>
-										</select>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Packagename}
-											onChange={(e) =>
-												handleInputChange(idx, "Packagename", e.target.value)
-											}
-										/>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Leadcount}
-											onChange={(e) =>
-												handleInputChange(idx, "Leadcount", e.target.value)
-											}
-										/>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Bodysize}
-											onChange={(e) =>
-												handleInputChange(idx, "Bodysize", e.target.value)
-											}
-										/>
-									</td>
-									<td>
-										<input
-											type="text"
-											className="input input-bordered w-full"
-											value={p.Packagecategory}
-											onChange={(e) =>
-												handleInputChange(
-													idx,
-													"Packagecategory",
-													e.target.value,
-												)
-											}
-										/>
-									</td>
-									<td className="text-center">
-										<button
-											type="button"
-											onClick={() => handleRemoveRow(idx)}
-											className="btn btn-error btn-sm"
-										>
-											<FaTimes />
-										</button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+			<h1 className="text-base font-bold mb-4">Add New Partname</h1>
 
+			<form onSubmit={handleUpsert}>
 				<div className="flex gap-2 mt-4">
 					<button
 						type="button"
-						onClick={handleAddRow}
+						onClick={() => handleAddNewRow()}
 						className="btn btn-outline btn-accent"
 					>
 						<FaPlus /> Add Row
 					</button>
-
 					<button
 						type="button"
-						onClick={handleReset}
+						onClick={handleResetChanges}
 						className="btn btn-outline btn-error"
 					>
 						Reset
 					</button>
-
 					<button
 						type="submit"
 						className="btn btn-primary"
@@ -233,6 +186,20 @@ const PartNameMultiInsert = () => {
 						)}
 						Save All
 					</button>
+					<div className="px-2 w-full">
+						{<BulkErrors errors={mutateErrorData?.data || []} />}
+					</div>
+					<button
+						type="button"
+						className="btn btn-error btn-ghost btn-square"
+						disabled={Object.keys(table.getState().rowSelection).length === 0}
+						onClick={handleDelete}
+					>
+						<MdOutlineDelete className="w-full h-full" />
+					</button>
+				</div>
+				<div className="overflow-x-auto">
+					<TanstackTable table={table} />
 				</div>
 			</form>
 		</>

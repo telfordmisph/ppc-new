@@ -124,11 +124,6 @@ export default function F3List() {
 
 			const rowId = newData[rowIndex].id;
 
-			// setEditedRows((prevEdited) => ({
-			//     ...prevEdited,
-			//     [newData[rowIndex].id]: { ...newData[rowIndex] },
-			// }));
-
 			setEditedRows((prev) => ({
 				...prev,
 				[rowId]: {

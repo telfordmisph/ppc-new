@@ -1,13 +1,13 @@
 import clsx from "clsx";
-import { useState, useEffect, useMemo, memo, useRef } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
+import { BiSelectMultiple } from "react-icons/bi";
 import { FaTimes, FaTrash } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
-import { BiSelectMultiple } from "react-icons/bi";
-import { useId } from "react";
 import Pagination from "./Pagination";
 
 const MultiSelectSearchableDropdown = memo(
 	function MultiSelectSearchableDropdown({
+		modalId = "multiSelectSearchableDropdown-modal",
 		formFieldName,
 		options = [],
 		onChange,
@@ -17,7 +17,7 @@ const MultiSelectSearchableDropdown = memo(
 		contentClassName = "",
 		itemName = "options",
 		prompt = "",
-		debounceDelay = 200,
+		debounceDelay = 500,
 		singleSelect = false,
 		disableSearch = false,
 		disableTooltip = false,
@@ -32,11 +32,14 @@ const MultiSelectSearchableDropdown = memo(
 		links = null,
 		disableClearSelection = false,
 		currentPage = null,
+		customButtonLabel = null,
+		children,
 		goToPage = () => {},
 	}) {
 		const id = useId();
-		const popoverId = `popover-${id}`;
-		const anchorName = `--anchor-${id}`;
+		const wrapperRef = useRef(null);
+
+		const [open, setOpen] = useState(false);
 		const [selectedOptions, setSelectedOptions] = useState(
 			defaultSelectedOptions,
 		);
@@ -45,7 +48,6 @@ const MultiSelectSearchableDropdown = memo(
 
 		useEffect(() => {
 			if (controlledSelectedOptions.length > 0) {
-				console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 				setSelectedOptions(controlledSelectedOptions);
 			}
 		}, [controlledSelectedOptions]);
@@ -60,9 +62,9 @@ const MultiSelectSearchableDropdown = memo(
 
 		const getSelectedValues = (values) => {
 			if (returnKey === "value") return values;
-			return values.map(
-				(val) => options.find((opt) => opt.value === val)?.[returnKey],
-			);
+			return values.map((val) => {
+				return options.find((opt) => opt.value === val)?.[returnKey];
+			});
 		};
 
 		const handleChange = (e) => {
@@ -70,6 +72,7 @@ const MultiSelectSearchableDropdown = memo(
 			let updatedValues;
 			if (singleSelect) {
 				updatedValues = [value];
+				setOpen(false);
 			} else {
 				const isChecked = e.target.checked;
 				updatedValues = isChecked
@@ -101,6 +104,14 @@ const MultiSelectSearchableDropdown = memo(
 		const isClearSelectionEnabled = selectedOptions.length > 0;
 
 		const getButtonLabel = () => {
+			if (typeof customButtonLabel === "function") {
+				return customButtonLabel({
+					selectedOptions,
+				});
+			}
+
+			if (customButtonLabel) return customButtonLabel;
+
 			const count = selectedOptions.length;
 			if (count === 0) return prompt;
 			if (singleSelect || count === 1) return selectedOptions[0];
@@ -118,35 +129,6 @@ const MultiSelectSearchableDropdown = memo(
 					(option.label && option.label.toLowerCase().includes(search)),
 			);
 		}, [debouncedSearch, options, onSearchChange]);
-
-		const highlightMatch = (option) => {
-			const search = debouncedSearch.trim().toLowerCase();
-			const regex = new RegExp(`(${search})`, "i");
-
-			const highlightText = (text) =>
-				text.split(regex).map((part, i) =>
-					part.toLowerCase() === search ? (
-						<span key={i} className="text-primary font-medium">
-							{part}
-						</span>
-					) : (
-						<span key={i}>{part}</span>
-					),
-				);
-
-			if (option.label && option.label !== option.value) {
-				return (
-					<div>
-						<div className="w-10">{highlightText(option.value)}</div>
-						<div className="opacity-75 text-xs">
-							{highlightText(option.label)}
-						</div>
-					</div>
-				);
-			}
-
-			return <span className="text-value">{highlightText(option.value)}</span>;
-		};
 
 		const tooltipID = `${id}-${itemName}-tooltip`;
 
@@ -190,7 +172,7 @@ const MultiSelectSearchableDropdown = memo(
 			<>
 				{showSearchInput && searchBar()}
 
-				<div className="flex items-center mb-2 gap-2">
+				<div className="flex z-10 items-center mb-2 gap-2">
 					{!disableClearSelection && (
 						<button
 							type="button"
@@ -219,7 +201,9 @@ const MultiSelectSearchableDropdown = memo(
 				<div className={clsx("flex w-full", contentClassName)}>
 					<div className="overflow-y-auto w-full flex flex-col">
 						{filteredOptions.length === 0 ? (
-							<div className="p-2 text-sm text-gray-500">No matches found</div>
+							<div className="p-2 text-sm text-gray-500">
+								No matches found for {debouncedSearch}
+							</div>
 						) : (
 							filteredOptions.map((option) => (
 								<label
@@ -238,7 +222,17 @@ const MultiSelectSearchableDropdown = memo(
 												: "checkbox checkbox-sm checkbox-primary cursor-pointer",
 										)}
 									/>
-									<span className="ml-2">{highlightMatch(option)}</span>
+
+									<div className="ml-2 flex-1">
+										{typeof children === "function" ? (
+											children(option)
+										) : (
+											<div className="flex w-full justify-between">
+												<div>{option.value}</div>
+												<div>{option.label}</div>
+											</div>
+										)}
+									</div>
 								</label>
 							))
 						)}
@@ -253,6 +247,7 @@ const MultiSelectSearchableDropdown = memo(
 							) : (
 								selectedOptions.map((option) => (
 									<button
+										type="button"
 										key={option}
 										onClick={() => handleRemoveOption(option)}
 										onMouseDown={(e) => e.preventDefault()}
@@ -280,7 +275,16 @@ const MultiSelectSearchableDropdown = memo(
 
 		if (!useModal) {
 			return (
-				<>
+				<div
+					ref={wrapperRef}
+					className="dropdown"
+					onFocus={onFocus}
+					onBlur={(e) => {
+						if (!wrapperRef.current?.contains(e.relatedTarget)) {
+							setOpen(false);
+						}
+					}}
+				>
 					{!disableTooltip && (
 						<Tooltip
 							id={tooltipID}
@@ -299,55 +303,51 @@ const MultiSelectSearchableDropdown = memo(
 							</div>
 						</Tooltip>
 					)}
-					<button
-						type="button"
-						popoverTarget={popoverId}
+					<div
+						tabIndex={0}
+						role="button"
 						data-tooltip-id={tooltipID}
+						onClick={() => setOpen(true)}
+						onFocus={() => setOpen(true)}
 						className={clsx(
 							"btn border border-base-content/20",
 							buttonSelectorClassName,
 						)}
-						style={{
-							anchorName: anchorName,
-						}}
 					>
 						{getButtonLabel()}
-					</button>
-					<ul
-						className="dropdown menu w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
-						popover="auto"
-						id={popoverId}
-						style={{ positionAnchor: anchorName }}
-					>
-						{promptLabel()}
-						{isLoading ? (
-							<div className="flex justify-center gap-2 my-auto">
-								<div className="loading loading-spinner"></div>
-								<div>loading {itemName}</div>
-							</div>
-						) : (
-							content()
-						)}
-					</ul>
-				</>
+					</div>
+					{open && (
+						<>
+							<ul
+								tabIndex="-1"
+								className="dropdown-content menu z-50 w-100 flex flex-col bg-base-100 rounded-box p-2 shadow-sm"
+							>
+								{promptLabel()}
+								{isLoading ? (
+									<div className="flex justify-center gap-2 my-auto">
+										<div className="loading loading-spinner"></div>
+										<div>loading {itemName}</div>
+									</div>
+								) : (
+									content()
+								)}
+							</ul>
+						</>
+					)}
+				</div>
 			);
 		}
 
 		return (
-			<dialog
-				ref={modalRef}
-				onFocus={onFocus}
-				id="multiSelectSearchableDropdown-modal"
-				className="modal"
-			>
-				<div className="modal-box w-100">
+			<dialog ref={modalRef} onFocus={onFocus} id={modalId} className="modal">
+				<div className="modal-box w-full">
 					{selectedOptions.length > 0 && (
-						<div className="my-1 text-center">
-							currently selected{" "}
+						<div className="flex justify-center items-center gap-2 my-1 text-center">
+							<div>currently selected</div>
 							{selectedOptions.map((option) => (
 								<span
 									key={option}
-									className="border border-neutral-content/40 px-1 rounded-lg"
+									className="border bg-primary/75 text-primary-content border-neutral-content/40 px-1"
 								>
 									{option}
 								</span>
@@ -359,7 +359,7 @@ const MultiSelectSearchableDropdown = memo(
 						{searchBar()}
 						{isLoading ? (
 							<div className="h-120 flex justify-center items-center flex-col gap-2">
-								<div className="bg-red-500 loading loading-spinner"></div>
+								<div className="loading loading-spinner"></div>
 								<div>loading {itemName}</div>
 							</div>
 						) : (

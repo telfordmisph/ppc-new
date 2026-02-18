@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\PartName;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use App\Services\BulkUpserter;
 
 class PartNameController extends Controller
 {
@@ -126,6 +127,40 @@ class PartNameController extends Controller
         ]);
     }
 
+    public function bulkUpdate(Request $request)
+    {
+        $rows = $request->all();
+        $user = session('emp_data');
+
+        $columnRules = [
+            'Focus_grp' => 'nullable',
+            'Factory' => 'nullable',
+            'PL' => 'nullable',
+            'Partname' => 'nullable',
+            'Packagename' => 'nullable',
+            'Packagecategory' => 'nullable',
+            'Leadcount' => 'nullable',
+            'Bodysize' => 'nullable',
+        ];
+
+        $bulkUpdater = new BulkUpserter(new PartName(), $columnRules, [], []);
+
+        $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+
+        if (!empty($result['errors'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You have ' . count($result['errors']) . ' error/s',
+                'data' => $result['errors']
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Updated successfully',
+            'updated' => $result['updated']
+        ]);
+    }
 
     public function destroy($id)
     {
