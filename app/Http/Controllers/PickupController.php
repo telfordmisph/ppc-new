@@ -39,7 +39,7 @@ class PickupController extends Controller
           }
         });
       })
-      ->orderBy('Partname')
+      ->orderBy('DATE_CREATED', 'DESC')
       ->paginate($perPage)
       ->withQueryString();
 

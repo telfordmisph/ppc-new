@@ -812,6 +812,7 @@ class WipConstants
       'DATE RECEIVED'
     ],
     'packing_list_srf' => [
+      'packing_list_srf_#',
       'packing list srf#',
       'packing list srf',
       'srf number',
