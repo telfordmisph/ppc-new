@@ -27,7 +27,7 @@ const PartNameMultiInsert = () => {
 				Leadcount: p.Leadcount || "",
 				Bodysize: p.Bodysize || "",
 				Packagecategory: p.Packagecategory || "",
-				id: index,
+				id: `new-${index}`,
 			}));
 		}
 
@@ -67,7 +67,7 @@ const PartNameMultiInsert = () => {
 		() => ({
 			accessorKey: "PL",
 			header: "PL",
-			size: 200,
+			size: 100,
 			cell: React.memo(({ getValue, row, column }) => {
 				const value = getValue();
 
@@ -94,13 +94,38 @@ const PartNameMultiInsert = () => {
 				header: "ID",
 				options: { size: 60, enableHiding: false, meta: { hidden: true } },
 			}),
-			{ accessorKey: "Partname", header: "Partname", type: "string" },
-			{ accessorKey: "Focus_grp", header: "Focus Group", type: "string" },
-			{ accessorKey: "Factory", header: "Factory", type: "string" },
+			{
+				accessorKey: "Partname",
+				header: "Partname",
+				type: "string",
+				size: 150,
+			},
+			{
+				accessorKey: "Focus_grp",
+				header: "Focus Group",
+				type: "string",
+				size: 120,
+			},
+			{ accessorKey: "Factory", header: "Factory", type: "string", size: 100 },
 			plColumn,
-			{ accessorKey: "Packagename", header: "Packagename", type: "string" },
-			{ accessorKey: "Leadcount", header: "Leadcount", type: "string" },
-			{ accessorKey: "Bodysize", header: "Bodysize", type: "string" },
+			{
+				accessorKey: "Packagename",
+				header: "Packagename",
+				type: "string",
+				size: 150,
+			},
+			{
+				accessorKey: "Leadcount",
+				header: "Leadcount",
+				type: "string",
+				size: 100,
+			},
+			{
+				accessorKey: "Bodysize",
+				header: "Bodysize",
+				type: "string",
+				size: 120,
+			},
 			{
 				accessorKey: "Packagecategory",
 				header: "Package Category",

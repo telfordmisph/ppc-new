@@ -131,7 +131,6 @@ class PartNameController extends Controller
     {
         $rows = $request->all();
         $user = session('emp_data');
-
         $columnRules = [
             'Focus_grp' => 'nullable',
             'Factory' => 'nullable',

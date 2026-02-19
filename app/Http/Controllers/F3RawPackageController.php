@@ -89,6 +89,88 @@ class F3RawPackageController extends Controller
     ]);
   }
 
+  /**
+   * Handle creating or updating a F3RawPackage
+   *
+   * @param Request $request
+   * @param int|null $id
+   * @return \Illuminate\Http\JsonResponse
+   */
+  private function upsertF3RawPackage(Request $request, ?int $id = null)
+  {
+    $validated = $this->validateF3RawPackages($request);
+
+    $records = isset($validated[0]) ? $validated : [$validated];
+
+    DB::beginTransaction();
+
+    try {
+      $results = [];
+
+      foreach ($records as $index => $data) {
+
+        $package = F3PackageName::where('package_name', $data['package_name'])
+          ->firstOrFail();
+
+        $data['package_id'] = $package->id;
+        unset($data['package_name']);
+
+        $rawPackage = $data['raw_package'];
+        $rawPackageNormalized = str_replace(['-', '_'], '', $rawPackage);
+        $data['raw_package_normalized'] = $rawPackageNormalized;
+
+        $duplicateQuery = F3RawPackage::where('raw_package_normalized', $rawPackageNormalized);
+
+        if ($id) {
+          $duplicateQuery->where('id', '!=', $id);
+        }
+
+        if ($duplicateQuery->exists()) {
+          $rowIndex = $index + 1;
+          $row = count($records) === 1 ? '' : " (row {$rowIndex})";
+
+          throw new \Exception(
+            "The raw_package '{$rawPackage}' already exists{$row}."
+          );
+        }
+
+        if ($id && count($records) === 1) {
+          $f3RawPackage = F3RawPackage::findOrFail($id);
+          $f3RawPackage->update($data);
+        } else {
+          $f3RawPackage = F3RawPackage::create($data);
+        }
+
+        $results[] = $f3RawPackage->load('f3_package_name');
+      }
+
+      DB::commit();
+
+      return response()->json([
+        'message' => count($results) > 1
+          ? 'F3 raw packages processed successfully'
+          : 'F3 raw package processed successfully',
+        'data' => count($results) > 1 ? $results : $results[0],
+      ]);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+      DB::rollBack();
+      return response()->json([
+        'message' => 'Package name or F3 raw package not found.'
+      ], 422);
+    } catch (\Throwable $e) {
+      DB::rollBack();
+      return response()->json([
+        'message' => $e->getMessage(),
+        'error' => $e->getMessage()
+      ], 500);
+    }
+  }
+
+  public function store(Request $request)
+  {
+    return $this->upsertF3RawPackage($request);
+  }
+
   public function update(Request $request, $id)
   {
     return $this->upsertF3RawPackage($request, $id);

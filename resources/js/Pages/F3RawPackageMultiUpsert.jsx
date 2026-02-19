@@ -28,7 +28,7 @@ const F3RawPackageMultiUpsert = () => {
 				lead_count: p.lead_count ?? "",
 				package_name: p.f3_package_name?.package_name ?? "",
 				dimension: p.dimension ?? "",
-				id: index,
+				id: `new-${index}`,
 			}));
 		}
 

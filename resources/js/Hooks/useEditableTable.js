@@ -123,7 +123,6 @@ export function useEditableTable(initialData = [], columns, options = {}) {
 		const newRows = data.filter((row) => !rowIds.includes(row.id));
 		setData(newRows);
 
-		console.log("🚀 ~ handleDeleteRow ~ rowIds:", rowIds);
 		setEditedRows((prev) => {
 			const newEditedRows = {};
 			for (const rowId in prev) {

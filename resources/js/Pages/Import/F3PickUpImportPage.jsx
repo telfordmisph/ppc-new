@@ -1,6 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { FaExternalLinkAlt } from "react-icons/fa";
-import { MdWarning } from "react-icons/md";
 import Collapse from "@/Components/Collapse";
 import FileUploader from "@/Components/FileUploader";
 import Modal from "@/Components/Modal";
@@ -10,6 +7,10 @@ import { useDownloadFile } from "@/Hooks/useDownload";
 import { useMutation } from "@/Hooks/useMutation";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
+import { router } from "@inertiajs/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+import { MdWarning } from "react-icons/md";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
@@ -117,6 +118,15 @@ const F3PickUpImportPage = () => {
 		return [...map.values()];
 	}, [importF3PickUpData?.data?.ignored_unknown_partname]);
 
+	const handlePartnameNavigate = () => {
+		router.visit(route("partname.createManyPrefill"), {
+			method: "post",
+			data: {
+				parts: uniquePartnames ?? [],
+			},
+		});
+	};
+
 	return (
 		<ImportPageLayout pageName="F3 PickUp">
 			<div className="grid grid-cols-1 w-full gap-4">
@@ -136,12 +146,9 @@ const F3PickUpImportPage = () => {
 									{importF3PickUpData?.data?.ignored_unknown_partname?.length}{" "}
 									partname/s were not recognized.
 								</span>
-								<a
-									href={route("partname.createMany", {
-										parts: uniquePartnames ?? [],
-									})}
-									target="_blank"
-									rel="noopener noreferrer"
+								<button
+									type="button"
+									onClick={handlePartnameNavigate}
 									className="btn btn-outline btn-primary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
@@ -150,7 +157,7 @@ const F3PickUpImportPage = () => {
 									</div>
 									Add the unknown partnames now
 									<FaExternalLinkAlt className="inline w-4 h-4 ml-1" />
-								</a>
+								</button>
 							</div>
 						)}
 
