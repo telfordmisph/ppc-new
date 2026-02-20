@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\WipImportService;
+use App\Services\ImportService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class AutoImportController extends Controller
 {
-    protected WipImportService $wipImportService;
+    protected ImportService $importService;
 
-    public function __construct(WipImportService $WipImportService)
+    public function __construct(ImportService $importService)
     {
-        $this->wipImportService = $WipImportService;
+        $this->importService = $importService;
     }
 
     public function renderF1F2ImportPage()
@@ -41,7 +41,7 @@ class AutoImportController extends Controller
     {
         $empId = $request->get('emp_id');
 
-        $result = $this->wipImportService->ftpRootImportF1F2WIP($empId);
+        $result = $this->importService->ftpRootImportF1F2WIP($empId);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -55,7 +55,7 @@ class AutoImportController extends Controller
     {
         $empId = $request->get('emp_id');
 
-        $result = $this->wipImportService->ftpRootImportF1F2OUT($empId);
+        $result = $this->importService->ftpRootImportF1F2OUT($empId);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -72,7 +72,7 @@ class AutoImportController extends Controller
             'file' => 'required|file|mimes:csv|max:50000',
         ]);
         $file = $request->file('file');
-        $result = $this->wipImportService->importF1F2WIP($empId, $file);
+        $result = $this->importService->importF1F2WIP($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -90,7 +90,7 @@ class AutoImportController extends Controller
         ]);
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF1F2OUT($empId, $file);
+        $result = $this->importService->importF1F2OUT($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -112,7 +112,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importCapacity($empId, $file);
+        $result = $this->importService->importCapacity($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -129,13 +129,15 @@ class AutoImportController extends Controller
         $user = $request->user();
         $empId = $request->get('emp_id');
 
+        $isAllowDuplicate = filter_var($request->input('isAllowDuplicate', false), FILTER_VALIDATE_BOOLEAN);
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx|max:10240',
         ]);
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF1F2PickUp($empId, $file);
+        $result = $this->importService->importF1F2PickUp($empId, $file, $isAllowDuplicate);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -148,6 +150,7 @@ class AutoImportController extends Controller
     {
         $user = $request->user();
         $empId = $request->get('emp_id');
+        $isAllowDuplicate = filter_var($request->input('isAllowDuplicate', false), FILTER_VALIDATE_BOOLEAN);
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx|max:10240',
@@ -155,7 +158,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF3PickUp($empId, $file);
+        $result = $this->importService->importF3PickUp($empId, $file, $isAllowDuplicate);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -176,7 +179,7 @@ class AutoImportController extends Controller
 
         $file = $request->file('file');
 
-        $result = $this->wipImportService->importF3($empId, $file);
+        $result = $this->importService->importF3($empId, $file);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

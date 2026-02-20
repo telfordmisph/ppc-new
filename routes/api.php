@@ -29,11 +29,8 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::get('/distinct-packages', [WipController::class, 'getDistinctPackages'])->name('distinctPackages');
       Route::get('/overall-package', [WipController::class, 'getOverallWipByPackage'])->name('overallByPackage');
       Route::get('/filter-summary-trend', [WipController::class, 'getWIPStationTrend'])->name('filterSummaryTrend');
-      Route::get('/pickup', [WipController::class, 'getOverallPickUp'])->name('pickup');
-      Route::get('/pickup-summary-trend', [WipController::class, 'getPackagePickUpTrend'])->name('pickupSummaryTrend');
       Route::get('/residual', [WipController::class, 'getOverallResidual'])->name('residual');
       Route::get('/residual-summary', [WipController::class, 'getPackageResidualSummary'])->name('residualSummary');
-      Route::get('/package-pickup-summary', [WipController::class, 'getPackagePickUpSummary'])->name('packagePickupSummary');
       Route::get('/wip-lot-totals', [WipController::class, 'getWIPQuantityAndLotsTotal'])->name('wipLotTotals');
       Route::get('/body-size', [WipController::class, 'getWipAndLotsByBodySize'])->name('wipAndLotsByBodySize');
       // Route::get('/wip-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('wipLotTotalsNew');
@@ -64,6 +61,9 @@ Route::middleware([ApiAuthMiddleware::class])
         Route::delete('/bulk-delete', [PickupController::class, 'massGenocide'])
           ->name('massGenocide');
       });
+      Route::get('/pickup', [PickupController::class, 'getOverallPickUp'])->name('overall');
+      Route::get('/pickup-summary-trend', [PickupController::class, 'getPackagePickUpTrend'])->name('pickupSummaryTrend');
+      Route::get('/package-pickup-summary', [PickupController::class, 'getPackagePickUpSummary'])->name('packagePickupSummary');
     });
 
     Route::prefix('f3-raw-package')->name('api.f3.raw.package.')->group(function () {
@@ -168,10 +168,10 @@ Route::middleware([ApiAuthMiddleware::class])
 
     Route::prefix('download')->name('api.download.')->group(function () {
       Route::get('/factoryWipOutTrendRaw', [WipController::class, 'getWipOutTrendRawData'])->name('factoryWipOutTrendRaw');
-      Route::get('/factoryPickUpTrendRaw', [WipController::class, 'getPickUpTrendRawData'])->name('factoryPickUpTrendRaw');
+      Route::get('/factoryPickUpTrendRaw', [PickupController::class, 'getPickUpTrendRawData'])->name('factoryPickUpTrendRaw');
       Route::get('/downloadCapacityTemplate', [WipController::class, 'downloadCapacityTemplate'])->name('downloadCapacityTemplate');
-      Route::get('/downloadPickUpTemplate', [WipController::class, 'downloadPickUpTemplate'])->name('downloadPickUpTemplate');
-      Route::get('/downloadF3PickUpTemplate', [WipController::class, 'downloadF3PickUpTemplate'])->name('downloadF3PickUpTemplate');
+      Route::get('/downloadPickUpTemplate', [PickupController::class, 'downloadPickUpTemplate'])->name('downloadPickUpTemplate');
+      Route::get('/downloadF3PickUpTemplate', [PickupController::class, 'downloadF3PickUpTemplate'])->name('downloadF3PickUpTemplate');
     });
   });
 

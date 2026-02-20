@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; // for logging
+use Illuminate\Support\Facades\Log;
 
 class SessionMiddleware
 {
@@ -18,54 +18,45 @@ class SessionMiddleware
             'route'  => optional($request->route())->getActionName(),
         ]);
 
-
         $tokenFromQuery   = $request->query('key');
         $tokenFromSession = session('emp_data.token');
         $tokenFromCookie  = $request->cookie('sso_token');
 
         $token = $tokenFromQuery ?? $tokenFromSession ?? $tokenFromCookie;
 
-        $source = $tokenFromQuery ? 'query' : ($tokenFromSession ? 'session' : ($tokenFromCookie ? 'cookie' : 'none'));
-        Log::info("AuthMiddleware: token source = {$source}, token = {$token}");
-
         if (!$token) {
             return $this->redirectToLogin($request);
         }
 
-        $existing = session('emp_data');
-        if ($existing && $existing['token'] === $token) {
-            if ($tokenFromQuery) {
-                return redirect($request->url());
-            }
-            return $next($request);
-        }
+        $cacheKey = 'authify_user_' . $token;
 
-        $currentUser = DB::connection('authify')
-            ->table('authify_sessions')
-            ->where('token', $token)
-            ->first();
+        $user = cache()->remember($cacheKey, now()->addMinutes(10), function () use ($token) {
+            return DB::connection('authify')
+                ->table('authify_sessions')
+                ->where('token', $token)
+                ->first();
+        });
 
-        if (!$currentUser) {
+        if (!$user) {
             session()->forget('emp_data');
             return $this->redirectToLogin($request);
         }
 
+        Log::info("user: " . json_encode($user));
         session(['emp_data' => [
-            'token'         => $currentUser->token,
-            'emp_id'        => $currentUser->emp_id,
-            'emp_name'      => $currentUser->emp_name,
-            'emp_firstname' => $currentUser->emp_firstname,
-            'emp_jobtitle'  => $currentUser->emp_jobtitle,
-            'emp_dept'      => $currentUser->emp_dept,
-            'emp_prodline'  => $currentUser->emp_prodline,
-            'emp_station'   => $currentUser->emp_station,
-            'generated_at'  => $currentUser->generated_at,
+            'token'         => $user->token,
+            'emp_id'        => $user->emp_id,
+            'emp_name'      => $user->emp_name,
+            'emp_firstname' => $user->emp_firstname,
+            'emp_jobtitle'  => $user->emp_jobtitle,
+            'emp_dept'      => $user->emp_dept,
+            'emp_prodline'  => $user->emp_prodline,
+            'emp_station'   => $user->emp_station,
+            'generated_at'  => $user->generated_at,
         ]]);
 
-        // if ($tokenFromQuery) {
-        //     return redirect($request->url());
-        // }
-        if ($tokenFromQuery && (!$existing || $existing['token'] !== $token)) {
+        $request->attributes->set('auth_user', $user);
+        if ($request->query('key')) {
             return redirect($request->url());
         }
 

@@ -1,11 +1,11 @@
+import BarChart from "@/Components/Charts/OverallWIPBarChart";
+import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
+import { useWipStore } from "@/Store/overallDailyWipTrendStore";
 import { Head } from "@inertiajs/react";
 import clsx from "clsx";
 import { memo, useState } from "react";
 import { FaIndustry, FaMinus, FaTasks } from "react-icons/fa";
 import { FaArrowTrendDown, FaArrowTrendUp } from "react-icons/fa6";
-import BarChart from "@/Components/Charts/OverallWIPBarChart";
-import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
-import { useWipStore } from "@/Store/overallDailyWipTrendStore";
 
 const StatCard = memo(function StatCard({
 	icon,

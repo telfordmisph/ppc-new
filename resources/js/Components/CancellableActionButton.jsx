@@ -5,8 +5,8 @@ import { FaTimesCircle } from "react-icons/fa";
 const CancellableActionButton = ({
 	abort,
 	refetch,
-	loading,
-	disabled,
+	loading = false,
+	disabled = false,
 	loadingMessage = "Loading",
 	buttonText = "Apply Filter",
 	buttonClassName = "btn-primary",
@@ -23,12 +23,16 @@ const CancellableActionButton = ({
 				loading && isHovered && "ring-error ring-4",
 				buttonClassName,
 			)}
-			onClick={() => {
+			onClick={async () => {
 				if (disabled) return;
-				if (loading) {
-					abort();
-				} else {
-					refetch();
+				try {
+					if (loading) {
+							await abort();
+					} else {
+							await refetch();
+					}
+				} catch (err) {
+					console.error(err);
 				}
 			}}
 			disabled={disabled}

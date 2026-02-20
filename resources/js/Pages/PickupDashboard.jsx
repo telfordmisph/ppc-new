@@ -1,19 +1,15 @@
-import React, { useEffect } from "react";
+import CancellableActionButton from "@/Components/CancellableActionButton";
+import PickupBarChart from "@/Components/Charts/PickupBarChart";
+import FloatingLabelInput from "@/Components/FloatingLabelInput";
+import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
+import { useFetch } from "@/Hooks/useFetch";
+import { buildDateRange } from "@/Utils/formatDate";
+import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
+import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
 import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { useFetch } from "@/Hooks/useFetch";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import { buildDateRange } from "@/Utils/formatDate";
-import { TbFilter } from "react-icons/tb";
-import PickupBarChart from "@/Components/Charts/PickupBarChart";
-import clsx from "clsx";
 import { FaChartBar } from "react-icons/fa";
-import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
-import FloatingLabelInput from "@/Components/FloatingLabelInput";
-import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
-import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
-import CancellableActionButton from "@/Components/CancellableActionButton";
 
 const PickupDashboard = () => {
 	const [startDate, setStartDate] = useState(() => {
@@ -38,7 +34,7 @@ const PickupDashboard = () => {
 		errorMessage: overallPickupErrorMessage,
 		fetch: overallpickupFetch,
 		abort: overallPickupAbort,
-	} = useFetch(route("api.wip.pickup"), {
+	} = useFetch(route("api.pickup.overall"), {
 		params: {
 			dateRange: dateRange || "",
 		},
@@ -49,7 +45,7 @@ const PickupDashboard = () => {
 		isLoading: isPickupSummaryLoading,
 		errorMessage: pickupSummaryErrorMessage,
 		fetch: pickupSummaryFetch,
-	} = useFetch(route("api.wip.packagePickupSummary"), {
+	} = useFetch(route("api.pickup.packagePickupSummary"), {
 		auto: false,
 	});
 
@@ -119,7 +115,7 @@ const PickupDashboard = () => {
 				<WipOutTrendByPackage
 					isVisible
 					title="PickUp Trend by Packages"
-					dataAPI={route("api.wip.pickupSummaryTrend")}
+					dataAPI={route("api.pickup.pickupSummaryTrend")}
 					showLines={{
 						showQuantities: true,
 						showLots: true,

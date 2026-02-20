@@ -285,4 +285,46 @@ class PickUpRepository
 
     return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
+
+  public function detectDuplicates(array $rows)
+  {
+    $startDate = now()->subDay();
+    $endDate = now();
+
+    $query = PickUp::with(['addedBy:EMPLOYID,FIRSTNAME'])
+      ->whereBetween('DATE_CREATED', [$startDate, $endDate])
+      ->where(function ($q) use ($rows) {
+        foreach ($rows as $row) {
+          $q->orWhere(function ($q2) use ($row) {
+            $q2->whereRaw('LOWER(TRIM(PARTNAME)) = ?', [strtolower(trim($row['PARTNAME']))])
+              ->whereRaw('LOWER(TRIM(LOTID)) = ?', [strtolower(trim($row['LOTID']))])
+              ->whereRaw('LOWER(TRIM(PACKAGE)) = ?', [strtolower(trim($row['PACKAGE']))]);
+          });
+        }
+      })
+      ->select(
+        DB::raw('MIN(id_pickup) as id_pickup'),
+        'PARTNAME',
+        'LOTID',
+        'PACKAGE',
+        DB::raw('MAX(DATE_CREATED) as DATE_CREATED'),
+        'ADDED_BY'
+      )
+      ->groupBy('PARTNAME', 'LOTID', 'PACKAGE', 'ADDED_BY')
+      ->get();
+
+    return $query->map(function ($pickup) {
+      return [
+        'id_pickup' => $pickup->id_pickup,
+        'PARTNAME' => $pickup->PARTNAME,
+        'LOTID' => $pickup->LOTID,
+        'PACKAGE' => $pickup->PACKAGE,
+        'DATE_CREATED' => $pickup->DATE_CREATED,
+        'addedBy' => $pickup->addedBy ? [
+          'EMPLOYID' => $pickup->addedBy->EMPLOYID,
+          'FIRSTNAME' => $pickup->addedBy->FIRSTNAME,
+        ] : null,
+      ];
+    });
+  }
 }

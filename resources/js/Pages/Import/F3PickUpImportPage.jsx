@@ -13,6 +13,7 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
+import AlreadyExistsModal from "./AlreadyExistsPickupWarningModal";
 
 const F3PickUpImportPage = () => {
 	const {
@@ -24,6 +25,7 @@ const F3PickUpImportPage = () => {
 	const uploaderPickUpRef = useRef(null);
 	const manualPickUpImportRef = useRef(null);
 	const [selectedPickUpFile, setSelectedPickUpFile] = useState(null);
+	const alreadyExistsModalRef = useRef(null);
 
 	const pickUpLabel = "PickUPs";
 
@@ -43,14 +45,16 @@ const F3PickUpImportPage = () => {
 		errorData: importF3PickUpErrorData,
 		mutate: importF3PickUp,
 		data: importF3PickUpData,
+		cancel: importF3PickUpCancel,
 	} = useMutation();
 
-	const handleManualPickUpImport = () => {
+	const handleManualPickUpImport = async (allowDuplicate = false) => {
 		if (!selectedPickUpFile) {
 			return;
 		}
 		const formData = new FormData();
 		formData.append("file", selectedPickUpFile);
+		formData.append("isAllowDuplicate", allowDuplicate ? "1" : "0");
 		runAsyncToast({
 			action: async () => {
 				const result = await importF3PickUp(route("import.importF3PickUp"), {
@@ -83,15 +87,7 @@ const F3PickUpImportPage = () => {
 
 			errorMessage: importF3PickUpErrorMessage,
 		});
-
-		uploaderPickUpRef.current?.reset();
 	};
-
-	useEffect(() => {
-		if (importF3PickUpErrorMessage) {
-			setSelectedPickUpFile(null);
-		}
-	}, [importF3PickUpErrorMessage]);
 
 	const uniquePackages = useMemo(() => {
 		const map = new Map();
@@ -126,6 +122,12 @@ const F3PickUpImportPage = () => {
 			},
 		});
 	};
+
+	useEffect(() => {
+		if (importF3PickUpErrorData?.data?.already_exists?.length > 0) {
+			alreadyExistsModalRef.current?.open();
+		}
+	}, [importF3PickUpErrorData]);
 
 	return (
 		<ImportPageLayout pageName="F3 PickUp">
@@ -238,6 +240,15 @@ const F3PickUpImportPage = () => {
 							downloadClick={handleDownloadPickUpTemplate}
 							isDownloadLoading={isDownloadLoading}
 						/>
+						{importF3PickUpErrorData?.data?.already_exists?.length > 0 && 
+							<AlreadyExistsModal
+								ref={alreadyExistsModalRef}
+								data={importF3PickUpErrorData?.data?.already_exists ?? []}
+								onRefetch={() => handleManualPickUpImport(true)}
+								loading={isImportF3PickUpLoading}
+								abort={importF3PickUpCancel}
+							/>
+						}
 						<button
 							type="button"
 							className="btn btn-primary w-54"

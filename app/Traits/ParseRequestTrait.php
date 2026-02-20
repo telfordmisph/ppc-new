@@ -13,6 +13,11 @@ trait ParseRequestTrait
 {
   use ParseDateTrait;
 
+  public function parseDateRangeFromRequest(Request $request): array
+  {
+    return $this->parseDateRange($request->input('dateRange', '')) ?? '';
+  }
+
   protected function parsePeriodParams(Request $request, int $defaultLookBack = 20): array
   {
     $period = $request->input('period', 'daily');

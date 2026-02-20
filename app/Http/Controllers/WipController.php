@@ -21,8 +21,6 @@ class WipController extends Controller
   protected $f1f2WipRepo;
   protected $packageGroupRepo;
 
-  private const CATEGORY_FILTER = ['all', 'F1', 'F2', 'F3', 'PL1', 'PL6'];
-
   public function __construct(
     WipService $wipService,
     F1F2WipRepository $f2f2WipRepo,
@@ -33,14 +31,9 @@ class WipController extends Controller
     $this->f1f2WipRepo = $f2f2WipRepo;
   }
 
-  private function parseDateRangeFromRequest(Request $request): array
-  {
-    return $this->parseDateRange($request->input('dateRange', '')) ?? '';
-  }
-
   private function validateChartStatus(string $status): bool
   {
-    return in_array($status, self::CATEGORY_FILTER);
+    return in_array($status, WipConstants::SUMMARY_CATEGORY_FILTER);
   }
 
   // ------------------------
@@ -143,12 +136,6 @@ class WipController extends Controller
     );
   }
 
-  public function getOverallPickUp(Request $request)
-  {
-    $dates = $this->parseDateRangeFromRequest($request);
-    return $this->wipService->getOverallPickUp($dates['start'], $dates['end']);
-  }
-
   public function getOverallResidual(Request $request)
   {
     $dates = $this->parseDateRangeFromRequest($request);
@@ -168,36 +155,6 @@ class WipController extends Controller
     }
 
     return $this->wipService->getPackageResidualSummary($chartStatus, $dates['start'], $dates['end']);
-  }
-
-  public function getPackagePickUpSummary(Request $request)
-  {
-    $dates = $this->parseDateRangeFromRequest($request);
-    $chartStatus = $request->input('chartStatus', 'all') ?? 'all';
-
-    if (!$this->validateChartStatus($chartStatus)) {
-      return response()->json([
-        'status' => 'error',
-        'message' => 'Invalid chart status: ' . $chartStatus,
-      ], 400);
-    }
-
-    return $this->wipService->getPackagePickUpSummary($chartStatus, $dates['start'], $dates['end']);
-  }
-
-  public function getPackagePickUpTrend(Request $request)
-  {
-    $packageName = $this->parsePackageName($request);
-    $periodParams = $this->parsePeriodParams($request);
-    $workweekParams = $this->parseWorkweek($request);
-
-    return $this->wipService->getPackagePickUpTrend(
-      $packageName,
-      $periodParams['period'],
-      $periodParams['startDate'],
-      $periodParams['endDate'],
-      $workweekParams['workweek']
-    );
   }
 
   public function getOUTQuantityAndLotsTotal(Request $request)
@@ -275,44 +232,12 @@ class WipController extends Controller
     );
   }
 
-  public function getPickUpTrendRawData(Request $request)
-  {
-
-    $packageName = $this->parsePackageName($request);
-    $periodParams = $this->parsePeriodParams($request);
-    return $this->wipService->downloadPickUpRawXlsx(
-      $packageName,
-      $periodParams['startDate'],
-      $periodParams['endDate'],
-    );
-  }
-
   public function downloadCapacityTemplate()
   {
     $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
 
     $filePath = public_path('storage/excels/TSPI_Capacity.xlsx');
     $filename = "tspi_capacity_template_" . now()->format('Ymd_His_u') . ".xlsx";
-
-    ob_end_clean();
-    return response()->download($filePath, $filename, $headers);
-  }
-
-  public function downloadPickUpTemplate()
-  {
-    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    $filePath = public_path('storage/excels/pickup_template.xlsx');
-    $filename = "pickup_template_" . now()->format('Ymd_His_u') . ".xlsx";
-
-    ob_end_clean();
-    return response()->download($filePath, $filename, $headers);
-  }
-
-  public function downloadF3PickUpTemplate()
-  {
-    $headers = ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    $filePath = public_path('storage/excels/f3_pickup_template.xlsx');
-    $filename = "f3_pickup_template_" . now()->format('Ymd_His_u') . ".xlsx";
 
     ob_end_clean();
     return response()->download($filePath, $filename, $headers);

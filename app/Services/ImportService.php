@@ -14,7 +14,6 @@ use App\Traits\ParseDateTrait;
 use App\Constants\WipConstants;
 use App\Repositories\F3OutRepository;
 use App\Repositories\F3WipRepository;
-use App\Traits\Sanitize;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,10 +24,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\CellIterator;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 
-class WipImportService
+class ImportService
 {
   use ParseDateTrait;
-  use Sanitize;
   protected $packageCapacityService;
   protected $f1f2WipRepository;
   protected $importTraceRepository;
@@ -58,7 +56,7 @@ class WipImportService
   private const WIP_OUTS_LOCK_KEY = 'auto_import_wip_outs_lock';
   private const EXPECTED_DAILY_BACKEND_WIP_COLUMNS = 43;
   private const CHUNK_SIZE = 500;
-
+  private const maximumAlreadyExistsRowCount = 100;
   protected $sheetToArrayArgs = [
     null,  // nullValue
     true,  // calculateFormulas
@@ -399,7 +397,7 @@ class WipImportService
     return $rowData;
   }
 
-  public function importF1F2PickUp($importedBy = null, $file)
+  public function importF1F2PickUp($importedBy = null, $file, $isAllowDuplicate)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
     $this->excelValidator->errorOnMultipleSheet($spreadsheet);
@@ -420,6 +418,34 @@ class WipImportService
     $chunks = [];
     $rowsWithUnknownPartname = [];
     $successCount = 0;
+
+    $rows = [];
+    foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
+      $cellIterator = $row->getCellIterator();
+
+      $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
+      if (empty($rowData)) {
+        continue;
+      }
+
+      $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
+      $rows[] = $rowData;
+      if (count($rows) > self::maximumAlreadyExistsRowCount) {
+        array_shift($rows);
+      }
+    }
+
+    $alreadyExists = $this->pickUpRepository->detectDuplicates($rows);
+
+    if (!$alreadyExists->isEmpty() && !$isAllowDuplicate) {
+      return [
+        'status' => 'error',
+        'message' => 'Some rows already exist. Please decide if you want to import them anyway.',
+        'data' => [
+          'already_exists' => $alreadyExists,
+        ]
+      ];
+    }
 
     try {
       DB::beginTransaction();
@@ -475,7 +501,7 @@ class WipImportService
     }
   }
 
-  public function importF3PickUp($importedBy = null, $file)
+  public function importF3PickUp($importedBy = null, $file, $isAllowDuplicate)
   {
     $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
     $this->excelValidator->errorOnMultipleSheet($spreadsheet);
@@ -498,6 +524,7 @@ class WipImportService
     $successCount = 0;
     $hasUnknownRows = false;
 
+    $rows = [];
     foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
       $cellIterator = $row->getCellIterator();
 
@@ -507,9 +534,15 @@ class WipImportService
       }
 
       $rowData = $this->extractRowData($map_headers, $rowData, $found_headers);
-
       $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
       $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
+
+      $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
+      $rowData['PACKAGE'] = $f3RawPackage->package_name;
+      $rows[] = $rowData;
+      if (count($rows) > self::maximumAlreadyExistsRowCount) {
+        array_shift($rows);
+      }
 
       if (!$partnameID) {
         $rowData["Factory"] = "F3";
@@ -520,6 +553,20 @@ class WipImportService
         $ignoredRows[] = $rowData;
         $hasUnknownRows = true;
       }
+    }
+
+    Log::info("rows: " . print_r($rows, true));
+
+    $alreadyExists = $this->pickUpRepository->detectDuplicates($rows);
+
+    if (!$alreadyExists->isEmpty() && !$isAllowDuplicate) {
+      return [
+        'status' => 'error',
+        'message' => 'Some rows already exist. Please decide if you want to import them anyway.',
+        'data' => [
+          'already_exists' => $alreadyExists,
+        ]
+      ];
     }
 
     if ($hasUnknownRows) {

@@ -13,6 +13,7 @@ import { FaExternalLinkAlt } from "react-icons/fa";
 import { MdWarning } from "react-icons/md";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
+import AlreadyExistsModal from "./AlreadyExistsPickupWarningModal";
 
 const F1F2PickUpImportPage = () => {
 	const {
@@ -24,6 +25,7 @@ const F1F2PickUpImportPage = () => {
 	const uploaderPickUpRef = useRef(null);
 	const manualPickUpImportRef = useRef(null);
 	const [selectedPickUpFile, setSelectedPickUpFile] = useState(null);
+	const alreadyExistsModalRef = useRef(null);
 
 	const pickUpLabel = "PickUPs";
 
@@ -43,15 +45,17 @@ const F1F2PickUpImportPage = () => {
 		errorData: importPickUpErrorData,
 		mutate: importPickUp,
 		data: importPickUpData,
+		cancel: importPickUpCancel,
 	} = useMutation();
 
-	const handleManualPickUpImport = () => {
+	const handleManualPickUpImport = async (allowDuplicate = false) => {
 		if (!selectedPickUpFile) {
 			return;
 		}
 
 		const formData = new FormData();
 		formData.append("file", selectedPickUpFile);
+		formData.append("isAllowDuplicate", allowDuplicate ? "1" : "0");
 		runAsyncToast({
 			action: async () => {
 				const result = await importPickUp(route("import.importPickUp"), {
@@ -81,15 +85,7 @@ const F1F2PickUpImportPage = () => {
 			),
 			errorMessage: importPickUpErrorMessage,
 		});
-
-		uploaderPickUpRef.current?.reset();
 	};
-
-	useEffect(() => {
-		if (importPickUpErrorMessage) {
-			setSelectedPickUpFile(null);
-		}
-	}, [importPickUpErrorMessage]);
 
 	const uniquePartnames = useMemo(() => {
 		const map = new Map();
@@ -114,6 +110,12 @@ const F1F2PickUpImportPage = () => {
 			},
 		});
 	};
+
+	useEffect(() => {
+		if (importPickUpErrorData?.data?.already_exists?.length > 0) {
+			alreadyExistsModalRef.current?.open();
+		}
+	}, [importPickUpErrorData]);
 
 	return (
 		<ImportPageLayout pageName="F1/F2 PickUp">
@@ -198,6 +200,15 @@ const F1F2PickUpImportPage = () => {
 							downloadClick={handleDownloadPickUpTemplate}
 							isDownloadLoading={isDownloadLoading}
 						/>
+						{importPickUpErrorData?.data?.already_exists?.length > 0 && 
+							<AlreadyExistsModal
+								ref={alreadyExistsModalRef}
+								data={importPickUpErrorData?.data?.already_exists ?? []}
+								onRefetch={() => handleManualPickUpImport(true)}
+								loading={isImportPickUpLoading}
+								abort={importPickUpCancel}
+							/>
+						}
 						<button
 							type="button"
 							className="btn btn-primary w-54"

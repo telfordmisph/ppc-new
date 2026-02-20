@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\WipImportService;
+use App\Services\ImportService;
 
 class AutoImportWipCommand extends Command
 {
@@ -11,7 +11,7 @@ class AutoImportWipCommand extends Command
   protected $description = 'Automatically import WIP data from daily_backend_wip.csv';
   protected $importService;
 
-  public function __construct(WipImportService $importService)
+  public function __construct(ImportService $importService)
   {
     parent::__construct();
     $this->importService = $importService;

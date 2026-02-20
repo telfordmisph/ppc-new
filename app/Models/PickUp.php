@@ -19,6 +19,12 @@ class PickUp extends Model
     "QTY",
     "PACKAGE",
     "LC",
+    "ADDED_BY"
   ];
   public $timestamps = false;
+
+  public function addedBy()
+  {
+    return $this->belongsTo(Employee::class, 'ADDED_BY', 'EMPLOYID');
+  }
 }
