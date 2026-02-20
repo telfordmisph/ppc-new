@@ -5,11 +5,13 @@ import { MachineDraggable } from "@/Components/DnD/MachineDraggable";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
+import { createUndoStore } from "@/Store/undoStore";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { router, usePage } from "@inertiajs/react";
 import clsx from "clsx";
 import React, { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { FaRedo, FaUndo } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 
@@ -44,6 +46,8 @@ const bodySizePages = {
 
 const UNASSIGNED = "unassigned";
 
+const useUndoStore = createUndoStore({ draggables: new Map(), locations: {} });
+
 function PackageBodySizeCapacityList() {
 	const [hoveredDroppable, setHoveredDroppable] = useState(null);
 
@@ -54,19 +58,20 @@ function PackageBodySizeCapacityList() {
 		[bodySizes],
 	);
 
-	const initializeDraggables = useCallback(() => {
+	const initializeState = useCallback(() => {
 		const machineDraggables = new Map();
+		const initialLocations = {};
 
 		machines?.forEach((machine) => {
-			const capacityProfile = machine?.capacity_profiles ?? [];
+			const capacityProfiles = machine?.capacity_profiles ?? [];
 			const machineId = machine.id;
 
-			if (capacityProfile.length === 0) {
+			if (capacityProfiles.length === 0) {
 				const id = `machine-${machineId}`;
 
 				machineDraggables.set(id, {
-					id: id,
-					machineId: machineId,
+					id,
+					machineId,
 					profileId: null,
 					name: machine?.name ?? null,
 					value: 0,
@@ -74,57 +79,64 @@ function PackageBodySizeCapacityList() {
 					factory: null,
 				});
 
+				initialLocations[id] = null;
 				return;
 			}
 
-			capacityProfile.forEach((profile) => {
-				const profileID = profile.id;
+			capacityProfiles.forEach((profile) => {
+				const profileId = profile.id;
 				const factory = profile?.factory ?? null;
-				const id = `machine-${machineId}-${profileID}`;
+				const id = `machine-${machineId}-${profileId}`;
 
 				machineDraggables.set(id, {
 					id,
-					machineId: machineId,
-					profileId: profileID,
+					machineId,
+					profileId,
 					name: machine?.name ?? null,
 					value: Number(profile?.capacity) || 0,
 					bodySizeName: profile?.body_size?.name ?? null,
 					factory: typeof factory === "string" ? factory.toLowerCase() : null,
 				});
+
+				initialLocations[id] =
+					profile?.body_size?.name && factory
+						? `${profile.body_size.name}-${factory}`
+						: null;
 			});
-		});
+  });
 
-		return machineDraggables;
-	}, [machines]);
+  return {
+    draggables: machineDraggables,
+    locations: initialLocations,
+  };
+}, [machines]);
 
-	const initialDraggables = React.useMemo(() => {
-		return initializeDraggables();
-	}, [initializeDraggables]);
+	const { 
+		reset, 
+		present, 
+		past,
+		future,
+		update, 
+		undo,
+		redo,
+	} = useUndoStore();
+	const initialState = initializeState();
 
-	const [draggables, setDraggables] = useState(initialDraggables);
-	const [locations, setLocations] = useState({});
+	const canUndo = useUndoStore(state => state.past.length > 0);
+	const canRedo = useUndoStore(state => state.future.length > 0);
 
-	const initializedLocations = useCallback(() => {
-		setLocations((prev) => {
-			const next = { ...prev };
+	useEffect(() => {
+    if (machines?.length) {
+      reset(initialState);
+    }
+  }, [machines]);
 
-			for (const [id, item] of draggables) {
-				const { bodySizeName, factory } = item;
-
-				if (!bodySizeName || !factory) {
-					next[id] ??= null;
-				} else {
-					next[id] = `${bodySizeName}-${factory}`;
-				}
-			}
-
-			return next;
-		});
-	}, [draggables]);
+	
+	const draggables = present.draggables;
+	const locations = present.locations;
 
 	const handleReset = () => {
-		const newDraggables = initializeDraggables();
-		setDraggables(newDraggables);
+		const {draggables: newDraggables} = initializeState();
 
 		const nextLocations = {};
 		for (const [id, item] of newDraggables) {
@@ -132,14 +144,14 @@ function PackageBodySizeCapacityList() {
 			nextLocations[id] =
 				bodySizeName && factory ? `${bodySizeName}-${factory}` : null;
 		}
-		setLocations(nextLocations);
+		update((prev) => {
+			return {
+				...prev,
+				draggables: newDraggables,
+				locations: nextLocations,
+			};
+		})
 	};
-
-	// console.log("🚀 ~ PackageBodySizeCapacityList ~ draggables:", draggables);
-	// console.log("🚀 ~ PackageBodySizeCapacityList ~ locations:", locations);
-	// console.log("🚀 ~ PackageBodySizeCapacityList ~ machines:", machines);
-	// console.log("🚀 ~ containers:", containers);
-	// console.log("🚀 ~ containersOLD:", containersOLD);
 
 	const targetMin = 0;
 	const target = 100;
@@ -180,17 +192,6 @@ function PackageBodySizeCapacityList() {
 		? draggables.get(activeDraggableID)
 		: null;
 
-	const hasInitialized = React.useRef(false);
-
-	useEffect(() => {
-		if (hasInitialized.current) return;
-		if (!draggables.size) return;
-
-		hasInitialized.current = true;
-
-		initializedLocations();
-	}, [draggables, initializedLocations]);
-
 	function handleDragStart(event) {
 		setActiveDraggableID(event.active.id);
 	}
@@ -218,39 +219,40 @@ function PackageBodySizeCapacityList() {
 
 		if (!activeId) return;
 
-		setLocations((prev) => ({
-			...prev,
-			[activeId]: targetId === UNASSIGNED ? null : targetId,
-		}));
-
-		setDraggables((prev) => {
-			const item = prev.get(activeId);
+		update((prev) => {
+			const item = prev.draggables.get(activeId);
 			if (!item) return prev;
 
-			const next = new Map(prev);
-			next.set(activeId, {
-				...item,
-				bodySizeName: newBodySizeName,
-				factory: newFactory,
-			});
+			const newDraggables = new Map(prev.draggables);
+			const updatedItem = { ...item, bodySizeName: newBodySizeName, factory: newFactory };
+			newDraggables.set(activeId, updatedItem);
 
-			return next;
+			const newLocations = { ...prev.locations, [activeId]: targetId === UNASSIGNED ? null : targetId };
+
+			return {
+				draggables: newDraggables,
+				locations: newLocations,
+			};
 		});
-
+		
 		setActiveDraggableID(null);
 	}
 
 	const updateDraggable = useCallback((id, key, newValue) => {
-		setDraggables((prev) => {
-			const item = prev.get(id);
+		update((prev) => {
+			const item = prev.draggables.get(id);
 			if (!item) return prev;
 
-			const next = new Map(prev);
-			next.set(id, {
+			const nextDraggables = new Map(prev.draggables);
+			nextDraggables.set(id, {
 				...item,
 				[key]: key === "value" ? parseInt(newValue) || 0 : newValue,
 			});
-			return next;
+
+			return {
+				...prev,
+				draggables: nextDraggables,
+			};
 		});
 	}, []);
 
@@ -258,43 +260,42 @@ function PackageBodySizeCapacityList() {
 		const newId = `${original.id}-${Date.now()}`;
 		const combinedId = `${original.bodySizeName}-${original.factory}`;
 
-		setDraggables((prev) => {
-			const originalItem = prev.get(original.id);
+		update((prev) => {
+			const originalItem = prev.draggables.get(original.id);
 			if (!originalItem) return prev;
 
-			const newDraggables = new Map(prev);
-			newDraggables.set(newId, { ...originalItem, id: newId });
-			return newDraggables;
-		});
+			const nextDraggables = new Map(prev.draggables);
+			nextDraggables.set(newId, { ...originalItem, id: newId, isDuplicate: true });
 
-		setLocations((prev) => ({
-			...prev,
-			[newId]: combinedId,
-		}));
+			const nextLocations = {
+				...prev.locations,
+				[newId]: combinedId,
+			};
+
+			return {
+				draggables: nextDraggables,
+				locations: nextLocations,
+			};
+		});
 	}, []);
 
 	const unassignDraggable = useCallback((draggable) => {
 		const id = draggable.id;
 
-		setDraggables((prev) => {
-			const item = prev.get(id);
+		update((prev) => {
+			const item = prev.draggables.get(id);
 			if (!item) return prev;
 
-			const next = new Map(prev);
+			const nextDraggables = new Map(prev.draggables);
+			nextDraggables.set(id, { ...item, bodySizeName: null, factory: null });
 
-			next.set(id, {
-				...item,
-				bodySizeName: null,
-				factory: null,
-			});
+			const nextLocations = { ...prev.locations, [id]: null };
 
-			return next;
+			return {
+				draggables: nextDraggables,
+				locations: nextLocations,
+			};
 		});
-
-		setLocations((prev) => ({
-			...prev,
-			[id]: null,
-		}));
 	}, []);
 
 	const totalHiddenBodySize = Array.from(containers.entries()).reduce(
@@ -332,7 +333,7 @@ function PackageBodySizeCapacityList() {
 	} = useMutation(route("api.body-sizes.bulkUpdate"));
 
 	const handleSave = async () => {
-		const currentMachines = initializeDraggables();
+		const { draggables: currentMachines} = initializeState();
 
 		const isTheSame = (oldItem, newItem) => {
 			if (!oldItem) return false;
@@ -362,10 +363,6 @@ function PackageBodySizeCapacityList() {
 				expiredProfiles.push(updatedMachine.profileId);
 			}
 
-			// console.log("🚀 ~ handleSave ~ oldMachine:", oldMachine);
-			// console.log("🚀 ~ handleSave ~ newMachine:", updatedMachine);
-			// console.log("🚀 ~ handleSave ~ isUnchanged:", isUnchanged);
-			// console.log("🚀 ~ handleSave ~ isUnassigned:", isUnassigned);
 			if (isUnassigned) return;
 
 			const bodySize = containers.get(updatedMachine.bodySizeName) ?? null;
@@ -426,10 +423,26 @@ function PackageBodySizeCapacityList() {
 				<div className="flex gap-2">
 					<button
 						type="button"
+						className="btn btn-secondary disabled:opacity-50"
+						onClick={() => undo()}
+						disabled={!canUndo}
+					>
+						<FaUndo />
+					</button>
+					<button
+						type="button"
 						className="btn btn-secondary"
 						onClick={() => handleReset()}
 					>
 						Reset
+					</button>
+					<button
+						type="button"
+						className="btn btn-secondary disabled:opacity-50"
+						onClick={() => redo()}
+						disabled={!canRedo}
+					>
+						<FaRedo />
 					</button>
 
 					<CancellableActionButton
@@ -679,6 +692,7 @@ function PackageBodySizeCapacityList() {
 																				{
 																					"opacity-0":
 																						activeDraggableID === d.id,
+																						"border-pink-500": d?.isDuplicate,
 																				},
 																			)}
 																		>
