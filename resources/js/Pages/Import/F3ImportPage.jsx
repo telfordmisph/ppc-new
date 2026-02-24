@@ -124,10 +124,10 @@ const F3ImportPage = () => {
 						<h2 className="card-title">Upload Daily {f3Label}</h2>
 						<p>Upload latest data for F3 WIPs and OUTs.</p>
 						{uniquePackages.length > 0 && (
-							<div className="bg-warning text-warning-content p-2 rounded-lg">
+							<div className="bg-error text-error-content p-2 rounded-lg">
 								<MdWarning className="inline w-4 h-4 mr-2" />
-								Some rows were not imported because their package is unknown
-								(see the ignored rows list below).
+								FAILED TO IMPORT: Some packages are unknown (see the ignored
+								rows list below).
 								<button
 									type="button"
 									onClick={handleF3RawPackageNavigate}

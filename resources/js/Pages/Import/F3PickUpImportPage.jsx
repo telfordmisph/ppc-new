@@ -165,9 +165,9 @@ const F3PickUpImportPage = () => {
 
 						{importF3PickUpErrorData?.data?.ignored_unknown_package?.length >
 							0 && (
-							<div className="bg-warning items-center text-warning-content p-2 rounded-lg">
+							<div className="bg-error items-center text-error-content p-2 rounded-lg">
 								<MdWarning className="inline w-4 h-4 mr-2" />
-								Some rows' package is unknown, so the import has failed (see the
+								FAILED TO IMPORT: Some rows' package are unknown (see the
 								unknown package list below)
 								<a
 									href={route("f3.raw.package.createMany", {
@@ -240,7 +240,7 @@ const F3PickUpImportPage = () => {
 							downloadClick={handleDownloadPickUpTemplate}
 							isDownloadLoading={isDownloadLoading}
 						/>
-						{importF3PickUpErrorData?.data?.already_exists?.length > 0 && 
+						{importF3PickUpErrorData?.data?.already_exists?.length > 0 && (
 							<AlreadyExistsModal
 								ref={alreadyExistsModalRef}
 								data={importF3PickUpErrorData?.data?.already_exists ?? []}
@@ -248,7 +248,7 @@ const F3PickUpImportPage = () => {
 								loading={isImportF3PickUpLoading}
 								abort={importF3PickUpCancel}
 							/>
-						}
+						)}
 						<button
 							type="button"
 							className="btn btn-primary w-54"
