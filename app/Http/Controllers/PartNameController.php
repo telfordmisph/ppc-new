@@ -133,9 +133,9 @@ class PartNameController extends Controller
         $user = session('emp_data');
         $columnRules = [
             'Focus_grp' => 'nullable',
-            'Factory' => 'nullable',
+            'Factory' => 'required|string',
             'PL' => 'nullable',
-            'Partname' => 'nullable',
+            'Partname' => 'required|string',
             'Packagename' => 'nullable',
             'Packagecategory' => 'nullable',
             'Leadcount' => 'nullable',

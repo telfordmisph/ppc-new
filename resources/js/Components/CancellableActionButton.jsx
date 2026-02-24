@@ -27,9 +27,9 @@ const CancellableActionButton = ({
 				if (disabled) return;
 				try {
 					if (loading) {
-							await abort();
+						await abort();
 					} else {
-							await refetch();
+						await refetch();
 					}
 				} catch (err) {
 					console.error(err);
