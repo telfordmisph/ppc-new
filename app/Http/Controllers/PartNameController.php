@@ -142,9 +142,14 @@ class PartNameController extends Controller
             'Bodysize' => 'nullable',
         ];
 
+        $rows = array_map(function ($row) use ($user) {
+            $row['added_by'] = $user['emp_id'] ?? null;
+            return $row;
+        }, $rows);
+
         $bulkUpdater = new BulkUpserter(new PartName(), $columnRules, [], []);
 
-        $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+        $result = $bulkUpdater->update($rows);
 
         if (!empty($result['errors'])) {
             return response()->json([

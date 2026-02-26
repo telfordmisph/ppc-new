@@ -50,14 +50,14 @@ class BulkUpserter
    * @param int|null $modifiedBy Optional user id for tracking
    * @return array Result summary with updated ids and errors
    */
-  public function update(array $rows, ?string $modifiedBy = null): array
+  public function update(array $rows): array
   {
     $errors = [];
     $errorMessages = [];
     $insertedIds = [];
     $updatedIds = [];
 
-    DB::transaction(function () use ($rows, $modifiedBy, &$errors, &$updatedIds, &$insertedIds) {
+    DB::transaction(function () use ($rows, &$errors, &$updatedIds, &$insertedIds) {
       foreach ($rows as $row) {
         $id = $row['id'] ?? null;
         $fields = $row;
@@ -103,10 +103,6 @@ class BulkUpserter
         if ($validator->fails()) {
           $errors[$id] = $validator->errors()->messages();
           continue;
-        }
-
-        if ($modifiedBy !== null) {
-          $normalizedData['modified_by'] = $modifiedBy;
         }
 
         if ($isNew) {
