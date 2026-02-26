@@ -151,7 +151,7 @@ const F3PickUpImportPage = () => {
 								<button
 									type="button"
 									onClick={handlePartnameNavigate}
-									className="btn btn-outline btn-primary"
+									className="btn btn-secondary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
 										<div className="status status-secondary animate-ping"></div>
@@ -175,7 +175,7 @@ const F3PickUpImportPage = () => {
 									})}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="mx-1 btn btn-outline btn-primary"
+									className="mx-1 btn btn-secondary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
 										<div className="status status-secondary animate-ping"></div>

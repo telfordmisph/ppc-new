@@ -131,7 +131,7 @@ const F3ImportPage = () => {
 								<button
 									type="button"
 									onClick={handleF3RawPackageNavigate}
-									className="mx-1 btn btn-outline btn-primary"
+									className="mx-1 btn btn-secondary"
 								>
 									<div className="inline-grid *:[grid-area:1/1]">
 										<div className="status status-secondary animate-ping"></div>
