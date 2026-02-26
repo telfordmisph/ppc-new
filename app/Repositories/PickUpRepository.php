@@ -254,7 +254,12 @@ class PickUpRepository
       ]
     );
 
-    $result = $upserter->update($data, $importedBy);
+    $data = array_map(function ($data) use ($importedBy) {
+      $data['ADDED_BY'] = $importedBy;
+      return $data;
+    }, $data);
+
+    $result = $upserter->update($data);
 
     if (!empty($result['errors'])) {
       throw new \Exception(

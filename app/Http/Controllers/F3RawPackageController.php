@@ -70,9 +70,14 @@ class F3RawPackageController extends Controller
       'dimension' => 'nullable|string|max:50',
     ];
 
+    $rows = array_map(function ($row) use ($user) {
+      $row['added_by'] = $user['emp_id'] ?? null;
+      return $row;
+    }, $rows);
+
     $bulkUpdater = new BulkUpserter(new F3RawPackage(), $columnRules, [], []);
 
-    $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+    $result = $bulkUpdater->update($rows);
 
     if (!empty($result['errors'])) {
       return response()->json([

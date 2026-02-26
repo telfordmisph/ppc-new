@@ -84,9 +84,14 @@ class F3Controller extends Controller
     $rows = $request->all();
     $user = session('emp_data');
 
+    $rows = array_map(function ($row) use ($user) {
+      $row['modified_by'] = $user['emp_id'] ?? null;
+      return $row;
+    }, $rows);
+
     $bulkUpdater = new BulkUpserter(new F3(), self::columnRules, self::dateColumns, $this->columnHandlers);
 
-    $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+    $result = $bulkUpdater->update($rows);
 
     if (!empty($result['errors'])) {
       return response()->json([

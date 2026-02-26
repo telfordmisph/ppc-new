@@ -42,7 +42,7 @@ class BodySizeController extends Controller
 
     $bulkUpdater = new BulkUpserter(new BodySize(), $columnRules, [], []);
 
-    $result = $bulkUpdater->update($rows, $user['emp_id'] ?? null);
+    $result = $bulkUpdater->update($rows);
 
     if (!empty($result['errors'])) {
       return response()->json([
