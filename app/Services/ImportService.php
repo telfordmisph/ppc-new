@@ -538,7 +538,7 @@ class ImportService
       $partnameID = $this->partnameRepository->getIDByPartname($rowData['PARTNAME'] ?? null);
 
       $f3RawPackage = $this->f3RawPackageRepository->getByRawPackage($rowData['PACKAGE'] ?? null);
-      $rowData['PACKAGE'] = $f3RawPackage->package_name;
+      $rowData['PACKAGE'] = $f3RawPackage?->package_name;
       $rows[] = $rowData;
       if (count($rows) > self::maximumAlreadyExistsRowCount) {
         array_shift($rows);
