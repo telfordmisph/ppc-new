@@ -28,17 +28,23 @@ class SessionMiddleware
             return $this->redirectToLogin($request);
         }
 
-        $cacheKey = 'authify_user_' . $token;
+        $existing = session('emp_data');
+        if ($existing && $existing['token'] === $token) {
+            if ($tokenFromQuery) {
+                $url = $request->url();
+                return redirect($url)->withCookie(cookie('sso_token', $token, 60 * 24 * 7));
+            }
+            return $next($request);
+        }
 
-        $user = cache()->remember($cacheKey, now()->addMinutes(10), function () use ($token) {
-            return DB::connection('authify')
-                ->table('authify_sessions')
-                ->where('token', $token)
-                ->first();
-        });
+        $user = DB::connection('authify')
+            ->table('authify_sessions')
+            ->where('token', $token)
+            ->first();
 
         if (!$user) {
             session()->forget('emp_data');
+            setcookie('sso_token', '', time() - 3600, '/');
             return $this->redirectToLogin($request);
         }
 
@@ -55,12 +61,23 @@ class SessionMiddleware
             'generated_at'  => $user->generated_at,
         ]]);
 
+        session()->save();
+
+        $cookie = cookie('sso_token', $user->token, 60 * 24 * 7, '/', null, false, true);
+        $request->setUserResolver(fn() => (object) session('emp_data'));
+
         $request->attributes->set('auth_user', $user);
-        if ($request->query('key')) {
-            return redirect($request->url());
+        if ($tokenFromQuery) {
+            $url = $request->url();
+            $query = $request->query();
+            unset($query['key']);
+            if (!empty($query)) {
+                $url .= '?' . http_build_query($query);
+            }
+            return redirect($url)->withCookie($cookie);
         }
 
-        return $next($request);
+        return $next($request)->withCookie($cookie);
     }
 
     private function redirectToLogin(Request $request)
