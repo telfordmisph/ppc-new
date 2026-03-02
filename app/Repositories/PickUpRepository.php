@@ -234,7 +234,7 @@ class PickUpRepository
     ]));
   }
 
-  private function upsertPickup($data = null, $importedBy = null)
+  private function upsertPickup($data = null)
   {
     $upserter = new BulkUpserter(
       new PickUp(),
@@ -254,11 +254,6 @@ class PickUpRepository
       ]
     );
 
-    $data = array_map(function ($data) use ($importedBy) {
-      $data['ADDED_BY'] = $importedBy;
-      return $data;
-    }, $data);
-
     $result = $upserter->update($data);
 
     if (!empty($result['errors'])) {
@@ -270,15 +265,15 @@ class PickUpRepository
     return $result;
   }
 
-  public function insertMany(array $data, ?int $importedBy = null)
+  public function insertMany(array $data)
   {
-    $result = $this->upsertPickup($data, $importedBy);
+    $result = $this->upsertPickup($data);
     return ['status' => 'success', 'inserted' => $result['inserted'], 'updated' => $result['updated']];
   }
 
-  public function insertF3Many(array $data, ?int $importedBy = null)
+  public function insertF3Many(array $data)
   {
-    $result = $this->upsertPickup($data, $importedBy);
+    $result = $this->upsertPickup($data);
 
     $rows = collect($result['inserted'])
       ->map(fn($id) => [
