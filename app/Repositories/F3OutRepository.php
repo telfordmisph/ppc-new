@@ -40,7 +40,7 @@ class F3OutRepository
     $this->packageFilterService = $packageFilterService;
   }
 
-  public function baseF3OutQuery($joinPpc = false)
+  public function baseF3OutQuery(?string $joinPpc = null)
   {
     return $this->baseF3Query(joinPpc: $joinPpc, type: 'out');
   }
@@ -52,10 +52,13 @@ class F3OutRepository
     return $query;
   }
 
-  public function overallQty(?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate): int
+  public function overallQty(?string $joinPpc = null, bool $useWorkweek, $workweek, string $startDate, string $endDate): int
   {
-    $query = $this->overallByDate($joinPpc,  $useWorkweek, $workweek, $startDate, $endDate);
-    return $query->sum('f3.qty');
+    return $this->overallByDate($joinPpc, $useWorkweek, $workweek, $startDate, $endDate)
+      ->when($joinPpc, function ($query, $joinPpcValue) {
+        return $query->where('plref.production_line', $joinPpcValue);
+      })
+      ->sum('f3.qty') ?? 0;
   }
 
   public function overallQtyAndLotIdByPackage(?string $joinPpc, bool $useWorkweek, $workweek, string $startDate, string $endDate)

@@ -1,7 +1,6 @@
 import { clsx } from "clsx";
 import React, { useState } from "react";
 import { BiDuplicate } from "react-icons/bi";
-import { BsArrowDown } from "react-icons/bs";
 import { FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import getColorForMachine, {
@@ -84,11 +83,6 @@ const MachineDraggable = React.memo(function MachineDraggable({
           >
             <FaTrash size={20} />
           </button>
-        )}
-        {d?.isDuplicate && (
-          <div className="text-xs text-pink-500 flex items-center gap-1">
-            this is a copy <BsArrowDown />
-          </div>
         )}
       </div>
       
