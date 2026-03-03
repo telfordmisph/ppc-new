@@ -631,30 +631,31 @@ class ImportService
 
   public function importF3($importedBy = null, $file)
   {
-    $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
-    $this->excelValidator->errorOnMultipleSheet($spreadsheet);
-    $sheet = $spreadsheet->getActiveSheet();
-
-    $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);
-    if ($headersData['status'] === 'error') {
-      return $headersData;
-    }
-
-    $found_headers = $headersData['found_headers'];
-    $headerRowIndex = $headersData['headerRowIndex'];
-    $map_headers = $headersData['map_headers'];
-
-    $chunksWip = [];
-    $ignoredRows = [];
-    $successCount = 0;
-
     try {
+      $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
+      $this->excelValidator->errorOnMultipleSheet($spreadsheet);
+      $sheet = $spreadsheet->getActiveSheet();
+
+      $headersData = $this->excelValidator->getExcelCanonicalHeader($spreadsheet, WipConstants::IMPORT_F3_WIP_EXPECTED_HEADERS);
+      if ($headersData['status'] === 'error') {
+        return $headersData;
+      }
+
+      $found_headers = $headersData['found_headers'];
+      $headerRowIndex = $headersData['headerRowIndex'];
+      $map_headers = $headersData['map_headers'];
+      $lastColumn = $headersData['last_column'];
+
+      $chunksWip = [];
+      $ignoredRows = [];
+      $successCount = 0;
+
       DB::beginTransaction();
 
       $this->f3WipRepository->deleteTodayRecords();
 
       foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
-        $cellIterator = $row->getCellIterator();
+        $cellIterator = $row->getCellIterator(endColumn: $lastColumn);
 
         $rowData = $this->excelValidator->isEmptyExcelRow($cellIterator);
         if (empty($rowData)) {
@@ -720,7 +721,7 @@ class ImportService
       Log::error('Import failed: ' . $e->getMessage());
       return [
         'status' => 'error',
-        'message' => 'Import failed. Transaction rolled back.',
+        'message' => 'Import failed.' . ' Error: ' . $e->getMessage(),
         'error' => $e->getMessage()
       ];
     }

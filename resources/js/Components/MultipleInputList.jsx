@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 
 export default function MultiInputList({
@@ -18,6 +18,10 @@ export default function MultiInputList({
 			setInputValue("");
 		}
 	};
+
+	useEffect(() => {
+		setItems(selectedItems);
+	}, [selectedItems]);
 
 	const handleRemove = (index) => {
 		const newItems = items.filter((_, i) => i !== index);
@@ -47,6 +51,7 @@ export default function MultiInputList({
 					value={inputValue}
 					onChange={(e) => setInputValue(e.target.value)}
 					onKeyDown={handleKeyDown}
+					onBlur={handleAdd}
 					className="input w-50"
 					placeholder={`Enter ${ItemLabel || "item"}`}
 				/>

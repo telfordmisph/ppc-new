@@ -37,6 +37,13 @@ class BodySizeController extends Controller
 
     $rows = array_map(function ($row) use ($user) {
       $row['modified_by'] = $user['emp_id'] ?? null;
+
+      if (!empty($row['name']) && preg_match('/^(\d*\.?\d+)[xX](\d*\.?\d+)/', $row['name'], $m)) {
+        $a = (float) $m[1];
+        $b = (float) $m[2];
+        $row['name'] = min($a, $b) . 'x' . max($a, $b);
+      }
+
       return $row;
     }, $rows);
 

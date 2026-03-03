@@ -17,19 +17,18 @@ class PackageGroupRepository
     }
 
     DB::transaction(function () use ($groupId, $factory, $groupName, $packageNames) {
-      $results = DB::table('package_group_members')
+      $query = DB::table('package_group_members')
         ->join('package_groups', 'package_groups.id', '=', 'package_group_members.group_id')
         ->join('packages', 'packages.id', '=', 'package_group_members.package_id')
         ->where('package_groups.factory', $factory)
         ->whereIn('packages.package_name', $packageNames);
 
-      // Log::info(SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
+      if ($groupId) {
+        $query->where('package_groups.id', '!=', $groupId);
+      }
 
-      $results = $results->get();
-      // Log::info('results: ' . json_encode($results));
-
-      if (count($results) > 0) {
-        throw new \InvalidArgumentException('Invalid: Package(s) already in group.');
+      if ($query->exists()) {
+        throw new \InvalidArgumentException('Invalid: Package(s) already in another group.');
       }
 
       if ($groupId) {

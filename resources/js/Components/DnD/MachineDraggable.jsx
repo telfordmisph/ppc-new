@@ -5,7 +5,7 @@ import { BsArrowDown } from "react-icons/bs";
 import { FaTrash } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 import getColorForMachine, {
-	getBackgroundForMachine,
+  getBackgroundForMachine,
 } from "./getColorForMachine";
 
 const MachineDraggable = React.memo(function MachineDraggable({
@@ -43,7 +43,7 @@ const MachineDraggable = React.memo(function MachineDraggable({
         { "ring ring-accent": hovered && !isOverlay }
       )}
     >
-      <div className="shrink-0 text-xs pl-1 rounded opacity-75">
+      <div className="shrink-0 text-xs pl-3 rounded opacity-75">
         {d.name}
       </div>
       

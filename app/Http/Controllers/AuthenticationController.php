@@ -59,14 +59,12 @@ class AuthenticationController extends Controller
         session()->forget('emp_data');
         session()->flush();
 
-        Cookie::queue(
-            Cookie::forget('sso_token')
-        );
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         $redirectUrl = urlencode(route('dashboard'));
-        return redirect("http://192.168.1.27:8080/authify/public/logout?redirect={$redirectUrl}");
+        return redirect("http://192.168.1.27:8080/authify/public/logout?redirect={$redirectUrl}")
+            ->withCookie(cookie()->forget('sso_token'));
     }
 }

@@ -62,12 +62,10 @@ Route::prefix('partname')->name('partname.')->group(function () {
 });
 
 Route::prefix('package')->name('package.')->group(function () {
-    Route::get('/', [PackageController::class, 'index'])->name('index');
-
     Route::prefix('group')->name('group.')->group(function () {
         Route::get('/', [PackageGroupController::class, 'index'])->name('index');
-        Route::get('/{id}/edit', [PackageController::class, 'upsert'])->name('edit');
-        Route::get('/create', [PackageController::class, 'upsert'])->name('create');
+        Route::get('/{id}/edit', [PackageGroupController::class, 'upsert'])->name('edit');
+        Route::get('/create', [PackageGroupController::class, 'upsert'])->name('create');
     });
 });
 

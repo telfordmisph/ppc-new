@@ -164,8 +164,26 @@ class ExcelValidatorService
   public function getExcelCanonicalHeader(Spreadsheet $spreadsheet, array $expectedHeaders)
   {
     $sheet = $spreadsheet->getActiveSheet();
-    $highestColumn = $sheet->getHighestColumn();
-    $highestRow = $sheet->getHighestRow();
+
+    $highestRow = 1;
+    $highestColumn = 'A';
+
+    foreach ($sheet->getRowIterator() as $row) {
+      $cellIterator = $row->getCellIterator();
+      $cellIterator->setIterateOnlyExistingCells(true);
+
+      foreach ($cellIterator as $cell) {
+        $value = $cell->getValue();
+        if ($value !== null && $value !== '') {
+          $highestRow = max($highestRow, $row->getRowIndex());
+          $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($cell->getColumn());
+          $highestCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+          if ($col > $highestCol) {
+            $highestColumn = $cell->getColumn();
+          }
+        }
+      }
+    }
 
     if ($highestRow <= 1) {
       return [
@@ -191,13 +209,27 @@ class ExcelValidatorService
       }
     }
 
-    // fallback to first row if no header found
     if (!$headerRow) {
       $headerRow = $sheet->rangeToArray("A1:{$highestColumn}1", null, true, true, false)[0];
     }
 
     $result = $this->processHeaders($headerRow, $expectedHeaders);
     $result['headerRowIndex'] = $headerRowIndex;
+
+    $lastColumnIndex = max($result['map_headers']) + 1; // +1 because columnIndexFromString is 1-based
+    $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColumnIndex);
+    $result['last_column'] = $lastColumn;
+
+    $firstNonEmpty = array_key_first(array_filter($headerRow, fn($v) => $v !== null && $v !== ''));
+    $startColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($firstNonEmpty + 1);
+
+    if ($startColumn !== 'A') {
+      return [
+        'status' => 'error',
+        'errorType' => 'INVALID_START_COLUMN',
+        'message' => 'Headers must start at column A.',
+      ];
+    }
 
     return $result;
   }

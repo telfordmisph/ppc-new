@@ -207,15 +207,15 @@ class WipService
 
     $f1_total_out = $this->f1f2OutRepo->overallQty('F1', null, $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
     $f2_total_out = $this->f1f2OutRepo->overallQty('F2', null, $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
-    $f3_total_out = $this->f3OutRepo->overallQty(null, $useWorkweek, $workweek, $startDate, $endDate);
+    $f3_total_out = $this->f3OutRepo->overallQty(null, $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
 
     $total_f1_pl1 = $this->f1f2OutRepo->overallQty('F1', 'PL1', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
     $total_f1_pl6 = $this->f1f2OutRepo->overallQty('F1', 'PL6', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
     $total_f2_pl1 = $this->f1f2OutRepo->overallQty('F2', 'PL1', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
     $total_f2_pl6 = $this->f1f2OutRepo->overallQty('F2', 'PL6', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
 
-    $total_f3_pl1 = $this->f3OutRepo->overallQty('PL1', $useWorkweek, $workweek, $startDate, $endDate);
-    $total_f3_pl6 = $this->f3OutRepo->overallQty('PL6', $useWorkweek, $workweek, $startDate, $endDate);
+    $total_f3_pl1 = $this->f3OutRepo->overallQty('PL1', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
+    $total_f3_pl6 = $this->f3OutRepo->overallQty('PL6', $useWorkweek, $workweek, $startAddOneDay, $endAddOneDay);
 
     return response()->json([
       'f1_total_out' => $f1_total_out,
@@ -324,10 +324,13 @@ class WipService
 
   public function getAllOutTrendByPackage($workweeks, $packageName, $period, $startDate, $endDate)
   {
+    $startAddOneDay = Carbon::parse($startDate)->addDay()->format('Y-m-d H:i:s');
+    $endAddOneDay = Carbon::parse($endDate)->addDay()->format('Y-m-d H:i:s');
+
     $trends = [];
 
-    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
+    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
 
     $merged = $this->mergeTrendsByKey('dateKey', ['label'], $trends, $f1f2out, $f3out);
 
@@ -504,19 +507,19 @@ class WipService
 
     $f1_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startDate, $endDate);
+    $f3_total_out = $this->f3OutRepo->overallQtyAndLotIdByPackage(null, $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
 
     $overall = MergeAndAggregate::mergeAndAggregate([$f1_total_out, $f2_total_out, $f3_total_out], ['package']);
 
     $f1_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out_pl1 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startDate, $endDate);
+    $f3_total_out_pl1 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL1', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
 
     $overall_pl1 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl1, $f2_total_out_pl1, $f3_total_out_pl1], ['package']);
 
     $f1_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f1', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $f2_total_out_pl6 = $this->f1f2OutRepo->overallQtyAndLotIdByPackage('f2', 'PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
-    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startDate, $endDate);
+    $f3_total_out_pl6 = $this->f3OutRepo->overallQtyAndLotIdByPackage('PL6', $useWorkweek, $workweek, $startAddedOneDay, $endAddedOneDay);
     $overall_pl6 = MergeAndAggregate::mergeAndAggregate([$f1_total_out_pl6, $f2_total_out_pl6, $f3_total_out_pl6], ['package']);
 
     return response()->json([
@@ -1193,7 +1196,7 @@ class WipService
       ->format('Y-m-d H:i:s');
 
     $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks);
+    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
     // $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
 
     // Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
@@ -1229,6 +1232,9 @@ class WipService
 
   public function downloadAllFactoriesRawXlsx($packageName, $startDate, $endDate)
   {
+    $startAddedOneDay = Carbon::parse($startDate)->addDay()->format('Y-m-d H:i:s');
+    $endAddedOneDay = Carbon::parse($endDate)->addDay()->format('Y-m-d H:i:s');
+
     $sheets = [
       'F1 Wip' => fn() => $this->f1f2WipRepo
         ->getTrend('F1', $packageName, null, $startDate, $endDate, null, ['*'], false)
@@ -1243,15 +1249,15 @@ class WipService
         ->cursor(),
 
       'F1 Out' => fn() => $this->f1f2OutRepo
-        ->buildTrend(['F1'], $packageName, null, $startDate, $endDate, null, false)
+        ->buildTrend(['F1'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
         ->cursor(),
 
       'F2 Out' => fn() => $this->f1f2OutRepo
-        ->buildTrend(['F2'], $packageName, null, $startDate, $endDate, null, false)
+        ->buildTrend(['F2'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
         ->cursor(),
 
       'F3 Out' => fn() => $this->f3OutRepo
-        ->getOverallTrend($packageName, null, $startDate, $endDate, null, false)
+        ->getOverallTrend($packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
         ->cursor(),
     ];
 

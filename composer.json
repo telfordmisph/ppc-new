@@ -14,6 +14,7 @@
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^5.2",
         "predis/predis": "^3.2",
+        "rakutentech/laravel-request-docs": "^2.43",
         "tightenco/ziggy": "*"
     },
     "require-dev": {

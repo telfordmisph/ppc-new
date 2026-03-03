@@ -6,6 +6,7 @@ import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDro
 import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
 import { createUndoStore } from "@/Store/undoStore";
+import generateDistinctColors from "@/Utils/generateDistinctColors";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { router, usePage } from "@inertiajs/react";
 import clsx from "clsx";
@@ -48,6 +49,23 @@ const UNASSIGNED = "unassigned";
 
 const useUndoStore = createUndoStore({ draggables: new Map(), locations: {} });
 
+function assignColorsByName(names) {
+  const nameCounts = {};
+  for (const name of names) {
+    nameCounts[name] = (nameCounts[name] ?? 0) + 1;
+  }
+
+  const duplicatedNames = Object.keys(nameCounts).filter((n) => nameCounts[n] >= 1);
+  const colors = generateDistinctColors(duplicatedNames.length);
+
+  const nameColorMap = {};
+  duplicatedNames.forEach((name, i) => {
+    nameColorMap[name] = colors[i];
+  });
+
+  return nameColorMap;
+}
+
 function PackageBodySizeCapacityList() {
 	const [hoveredDroppable, setHoveredDroppable] = useState(null);
 
@@ -62,6 +80,8 @@ function PackageBodySizeCapacityList() {
 		const machineDraggables = new Map();
 		const initialLocations = {};
 
+		const colorsMap = assignColorsByName(machines.flatMap((m) => m.capacity_profiles.map(() => m.name)));
+
 		machines?.forEach((machine) => {
 			const capacityProfiles = machine?.capacity_profiles ?? [];
 			const machineId = machine.id;
@@ -74,6 +94,7 @@ function PackageBodySizeCapacityList() {
 					machineId,
 					profileId: null,
 					name: machine?.name ?? null,
+					color: colorsMap[machine.name],
 					value: 0,
 					bodySizeName: null,
 					factory: null,
@@ -93,6 +114,7 @@ function PackageBodySizeCapacityList() {
 					machineId,
 					profileId,
 					name: machine?.name ?? null,
+					color: colorsMap[machine.name],
 					value: Number(profile?.capacity) || 0,
 					bodySizeName: profile?.body_size?.name ?? null,
 					factory: typeof factory === "string" ? factory.toLowerCase() : null,
@@ -135,6 +157,16 @@ function PackageBodySizeCapacityList() {
 	const draggables = present.draggables;
 	const locations = present.locations;
 
+	const machineNameCount = React.useMemo(() => {
+		const counts = new Map();
+
+		for (const [, item] of draggables) {
+			counts.set(item.name, (counts.get(item.name) ?? 0) + 1);
+		}
+
+		return counts;
+	}, [draggables]);
+	
 	const handleReset = () => {
 		const {draggables: newDraggables} = initializeState();
 
@@ -266,7 +298,7 @@ function PackageBodySizeCapacityList() {
 
 			const nextDraggables = new Map(prev.draggables);
 			nextDraggables.set(newId, { ...originalItem, id: newId, isDuplicate: true });
-
+			
 			const nextLocations = {
 				...prev.locations,
 				[newId]: combinedId,
@@ -690,18 +722,26 @@ function PackageBodySizeCapacityList() {
 																			containerClassName={clsx(
 																				"h-7 w-full bg-base-100 border border-base-content/20",
 																				{
-																					"opacity-0":
-																						activeDraggableID === d.id,
-																						"border-pink-500": d?.isDuplicate,
+																					"opacity-0": activeDraggableID === d.id,
+																					"border-pink-500": d?.isDuplicate,
 																				},
 																			)}
 																		>
-																			<MachineDraggable
-																				d={d}
-																				updateDraggable={updateDraggable}
-																				dupeFunction={duplicateDraggable}
-																				unassignFunction={unassignDraggable}
-																			/>
+																			<div className="relative h-full">
+																					{machineNameCount.get(d.name) > 1 &&
+																						<div className="absolute top-0 left-0 w-2 mt-0.5 h-10/12"
+																						style={{
+																							backgroundColor: d.color ?? undefined,
+																						}}
+																					> 
+																					</div>}
+																					<MachineDraggable
+																						d={d}
+																						updateDraggable={updateDraggable}
+																						dupeFunction={duplicateDraggable}
+																						unassignFunction={unassignDraggable}
+																					/>
+																			</div>
 																		</Draggable>
 																	))
 																: null}
@@ -764,7 +804,7 @@ function PackageBodySizeCapacityList() {
 											data={{ draggable: d, bodySizeName: UNASSIGNED }}
 											containerClassName={clsx(
 												"w-40 h-8 border-base-content/20",
-												{ "opacity-0": activeDraggableID === d.id },
+												{ "opacity-0": activeDraggableID === d.id }
 											)}
 										>
 											<MachineDraggable
