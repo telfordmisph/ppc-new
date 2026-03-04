@@ -765,23 +765,30 @@ function PackageBodySizeCapacityList() {
 					adjustScale={false}
 					transition="transform 150ms cubic-bezier(0.2, 0, 0, 1)"
 				>
-					{activeDraggableID ? (
-						<div
-							className={clsx(
-								"h-8 w-full bg-base-100 ring-2 rounded-lg ring-accent",
-							)}
-							style={{
-								backgroundColor: draggables.get(activeDraggableID).color ?? undefined,
-								color: getReadableTextColor(draggables.get(activeDraggableID).color),
-							}}
-						>
-							<MachineDraggable
-								d={draggables.get(activeDraggableID)}
-								updateDraggable={updateDraggable}
-								isOverlay
-							/>
-						</div>
-					) : null}
+					{activeDraggableID ? (() => {
+							const active = draggables.get(activeDraggableID);
+							const hasDuplicate = (machineNameCount.get(active.name) ?? 0) > 1;
+
+							return (
+									<div
+											className={clsx("h-8 w-full ring-2 rounded-lg ring-accent", 
+												{
+													"bg-base-100": !hasDuplicate,
+												}
+											)}
+											style={{
+													backgroundColor: (hasDuplicate && active.color) ?? undefined,
+													color: (hasDuplicate && active.color) ? getReadableTextColor(active.color) : undefined,
+											}}
+									>
+											<MachineDraggable
+													d={active}
+													updateDraggable={updateDraggable}
+													isOverlay
+											/>
+									</div>
+							);
+					})() : null}
 				</DragOverlay>
 
 				<Tooltip
