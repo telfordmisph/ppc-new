@@ -7,6 +7,7 @@ import Tabs from "@/Components/Tabs";
 import { useMutation } from "@/Hooks/useMutation";
 import { createUndoStore } from "@/Store/undoStore";
 import generateDistinctColors from "@/Utils/generateDistinctColors";
+import getReadableTextColor from "@/Utils/getReadableTextColorBasedBG";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { router, usePage } from "@inertiajs/react";
 import clsx from "clsx";
@@ -711,7 +712,10 @@ function PackageBodySizeCapacityList() {
 
 														<div className="flex flex-col">
 															{innerDraggables.length > 0
-																? innerDraggables.map((d) => (
+																? innerDraggables.map((d) => {
+																	const hasDuplicate = (machineNameCount.get(d.name) ?? 0) > 1;
+
+																	return (
 																		<Draggable
 																			key={d.id}
 																			id={d.id}
@@ -720,21 +724,19 @@ function PackageBodySizeCapacityList() {
 																				bodySizeName: bodySizeNameId,
 																			}}
 																			containerClassName={clsx(
-																				"h-7 w-full bg-base-100 border border-base-content/20",
+																				"h-7 w-full border border-base-content/20",
 																				{
 																					"opacity-0": activeDraggableID === d.id,
 																					"border-pink-500": d?.isDuplicate,
+																					"bg-base-100": !hasDuplicate,
 																				},
 																			)}
+																			style={{
+																				backgroundColor: (hasDuplicate && d.color) ?? undefined,
+																				color: (hasDuplicate && d.color) ? getReadableTextColor(d.color) : undefined,
+																			}}
 																		>
 																			<div className="relative h-full">
-																					{machineNameCount.get(d.name) > 1 &&
-																						<div className="absolute top-0 left-0 w-2 mt-0.5 h-10/12"
-																						style={{
-																							backgroundColor: d.color ?? undefined,
-																						}}
-																					> 
-																					</div>}
 																					<MachineDraggable
 																						d={d}
 																						updateDraggable={updateDraggable}
@@ -743,7 +745,9 @@ function PackageBodySizeCapacityList() {
 																					/>
 																			</div>
 																		</Draggable>
-																	))
+
+																	)
+																	})
 																: null}
 														</div>
 													</div>
@@ -766,6 +770,10 @@ function PackageBodySizeCapacityList() {
 							className={clsx(
 								"h-8 w-full bg-base-100 ring-2 rounded-lg ring-accent",
 							)}
+							style={{
+								backgroundColor: draggables.get(activeDraggableID).color ?? undefined,
+								color: getReadableTextColor(draggables.get(activeDraggableID).color),
+							}}
 						>
 							<MachineDraggable
 								d={draggables.get(activeDraggableID)}

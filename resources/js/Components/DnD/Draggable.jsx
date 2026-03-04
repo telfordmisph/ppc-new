@@ -7,11 +7,12 @@ function Draggable(props) {
 		data: props.data,
 	});
 
-	const style = transform
-		? {
-				transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-			}
-		: undefined;
+	const style = {
+		...props.style,
+		...(transform && {
+			transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+		}),
+	};
 
 	return (
 		<div

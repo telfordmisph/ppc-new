@@ -105,7 +105,7 @@ class PackageBodySizeCapacityController extends Controller
 
     $bodySizes = $this->bodySizeService->getBodySizeWipAndLot($request);
 
-    return Inertia::render('PackageBodySizeCapacityList', [
+    return Inertia::render('BodySizeCapacity/PackageBodySizeCapacityList', [
       'profiles' => $profiles,
       'bodySizes' => $bodySizes,
       'machines' => $machines
