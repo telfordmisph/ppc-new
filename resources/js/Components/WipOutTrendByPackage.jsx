@@ -1,4 +1,5 @@
 import { periodOptions } from "@/Constants/periodOptions";
+import { plColumnGroups, plPreferredOrder } from "@/Constants/trendTableColumnOrder";
 import { useDownloadFile } from "@/Hooks/useDownload";
 import { useFetch } from "@/Hooks/useFetch";
 import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
@@ -143,6 +144,7 @@ const WipOutTrendByPackage = ({
 		params: params,
 		auto: false,
 	});
+		console.log("🚀 ~ WipOutTrendByPackage ~ overallByPackageWipData:", overallByPackageWipData)
 	
 	const handlePackageNamesChange = (selectedPackages) => {
 		setSelectedPackageNames(selectedPackages);
@@ -432,10 +434,18 @@ const WipOutTrendByPackage = ({
 						syncId={"dashboard-trend"}
 					/>
 					{isChartTableVisible && !isOveraByPackagellWipLoading && (
-						<TableChart
-							data={overallByPackageWipData?.data || []}
-							exclude={["dateKey"]}
-						/>
+						<>
+							<TableChart
+								data={overallByPackageWipData?.data || []}
+								exclude={["dateKey"]}
+							/>
+							<TableChart
+								data={overallByPackageWipData?.pl_data || []}
+								exclude={["dateKey"]}
+								preferredOrder={plPreferredOrder}
+								columnGroups={plColumnGroups}
+							/>
+						</>
 					)}
 				</div>
 			</div>

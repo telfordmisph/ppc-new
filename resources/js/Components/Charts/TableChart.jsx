@@ -1,41 +1,10 @@
+import { defaultColumnGroups, defaultTrend } from "@/Constants/trendTableColumnOrder";
 import {
 	flexRender,
 	getCoreRowModel,
 	useReactTable,
 } from "@tanstack/react-table";
 import { useMemo } from "react";
-
-const preferredOrder = [
-	"label",
-	"f1_total_wip",
-	"f2_total_wip",
-	"f3_total_wip",
-	"overall_total_wip",
-	"f1_total_lots",
-	"f2_total_lots",
-	"f3_total_lots",
-	"overall_total_lots",
-	"f1_total_outs",
-	"f2_total_outs",
-	"f3_total_outs",
-	"overall_total_outs",
-	"f1_capacity",
-	"f2_capacity",
-	"f3_capacity",
-	"overall_capacity",
-	"f1_utilization",
-	"f2_utilization",
-	"f3_utilization",
-	"overall_utilization",
-];
-
-const columnGroups = [
-	{ key: "wip", label: "WIP", match: "_total_wip" },
-	{ key: "lots", label: "Lots", match: "_total_lots" },
-	{ key: "outs", label: "Outs", match: "_total_outs" },
-	{ key: "capacity", label: "Capacity", match: "_capacity" },
-	{ key: "utilization", label: "Utilization", match: "_utilization" },
-];
 
 const formatValue = (val) => {
 	if (typeof val === "number") return val.toLocaleString();
@@ -48,7 +17,7 @@ const isNumericValue = (val) =>
 	typeof val === "number" ||
 	(typeof val === "string" && !Number.isNaN(val) && val.trim() !== "");
 
-const TableChart = ({ data = [] }) => {
+const TableChart = ({ data = [], preferredOrder = defaultTrend, columnGroups = defaultColumnGroups }) => {
 	if (!data.length) return null;
 
 	const visibleColumns = preferredOrder.filter((col) =>
