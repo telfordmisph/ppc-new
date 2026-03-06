@@ -205,7 +205,7 @@ class F1F2OutRepository
     return $query;
   }
 
-  public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks)
+  public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks, $pl = null)
   {
     $f1Trend = $this->buildTrend(
       ['F1'],
@@ -214,7 +214,11 @@ class F1F2OutRepository
       $startDate,
       $endDate,
       $workweeks
-    )->get();
+    )
+      ->when($pl, function ($q) use ($pl) {
+        $this->joinPL($q, joinPpc: $pl);
+      })
+      ->get();
 
     $f2Trend = $this->buildTrend(
       ['F2'],
@@ -223,18 +227,23 @@ class F1F2OutRepository
       $startDate,
       $endDate,
       $workweeks
-    )->get();
+    )
+      ->when($pl, function ($q) use ($pl) {
+        $this->joinPL($q, joinPpc: $pl);
+      })
+      ->get();
 
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
     $this->shiftOneDayBack($f1Trend, $period);
     $this->shiftOneDayBack($f2Trend, $period);
 
     $overallTrend = MergeAndAggregate::mergeAndAggregate([$f1Trend, $f2Trend], $periodGroupBy);
-    return WipTrendParser::parseTrendsByPeriod([
+
+    return [
       'f1_trend' => $f1Trend,
       'f2_trend' => $f2Trend,
       'overall_trend' => $overallTrend,
-    ]);
+    ];
   }
 
   public function deleteTodayRecords()

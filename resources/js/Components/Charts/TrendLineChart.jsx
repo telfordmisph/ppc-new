@@ -1,3 +1,4 @@
+import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 import { memo, useState } from "react";
 import {
 	CartesianGrid,
@@ -7,7 +8,6 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import formatAbbreviateNumber from "@/Utils/formatAbbreviateNumber";
 import BaseChart from "./BaseChart";
 
 const TrendLineChart = memo(function TrendLineChart({
@@ -15,8 +15,11 @@ const TrendLineChart = memo(function TrendLineChart({
 	xKey = "name",
 	isLoading = false,
 	errorMessage = null,
+	syncId = null,
 	lines = [],
 	height = 300,
+	leftAxisLabel = null,
+	rightAxisLabel = null,
 	leftAxisTickFormatter = (value) => formatAbbreviateNumber(value),
 	rightAxisTickFormatter = (value) => formatAbbreviateNumber(value),
 }) {
@@ -60,6 +63,7 @@ const TrendLineChart = memo(function TrendLineChart({
 							left: 20,
 							bottom: 20,
 						}}
+						syncId={syncId}
 					>
 						<CartesianGrid
 							stroke={"var(--color-base-content-dim)"}
@@ -67,11 +71,28 @@ const TrendLineChart = memo(function TrendLineChart({
 						/>
 						<XAxis dataKey={xKey} />
 
-						<YAxis tickFormatter={leftAxisTickFormatter} yAxisId="left" />
 						<YAxis
-							tickFormatter={rightAxisTickFormatter}
-							yAxisId="right"
-							orientation="right"
+								tickFormatter={leftAxisTickFormatter}
+								yAxisId="left"
+								label={leftAxisLabel ? {
+										value: leftAxisLabel,
+										angle: -90,
+										position: "insideLeft",
+										offset: -5,
+										style: { textAnchor: "middle", fill: "var(--color-base-content)", fontSize: 11 },
+								} : undefined}
+						/>
+						<YAxis
+								tickFormatter={rightAxisTickFormatter}
+								yAxisId="right"
+								orientation="right"
+								label={rightAxisLabel ? {
+										value: rightAxisLabel,
+										angle: 90,
+										position: "insideRight",
+										offset: 5,
+										style: { textAnchor: "middle", fill: "var(--color-base-content)", fontSize: 11 },
+								} : undefined}
 						/>
 
 						<Legend

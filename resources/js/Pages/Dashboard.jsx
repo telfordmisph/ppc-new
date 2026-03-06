@@ -94,12 +94,19 @@ export default function Dashboard({ tableData, tableFilters }) {
 					isVisible
 					title="Wip/Out/Capacity Trend by Packages"
 					dataAPI={route("api.wip.out.trend")}
-					showLines={{
+					showWIPLines={{
 						showQuantities: true,
 						showLots: false,
 						showOuts: true,
 						showCapacities: true,
 						showUtilization: true,
+					}}
+					showPLLines={{
+						showPLWip: true,
+						showPLOut: true,
+						showOuts: true,
+						showLots: false,
+						showQuantities: false,
 					}}
 					downloadRoute={"api.download.factoryWipOutTrendRaw"}
 				/>

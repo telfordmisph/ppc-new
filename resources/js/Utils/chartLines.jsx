@@ -4,7 +4,9 @@ export const visibleLines = (options = {}) => {
 	const {
 		showQuantities = true,
 		showLots = true,
-		showOuts = false,
+		showPLWip = false,
+		showPLOut = false,
+    showOuts = false,
 		showCapacities = false,
 		showUtilization = false,
 		showFactories = { f1: true, f2: true, f3: true, overall: true },
@@ -29,6 +31,53 @@ export const visibleLines = (options = {}) => {
 					r: r,
 					connectNulls: true,
 				});
+			}
+
+			if (showPLWip || showPLOut) {
+					['pl1', 'pl6'].forEach(pl => {
+							if (showPLWip) {
+									result.push({
+											dataKey: `${key}_${pl}_total_wip`,
+											yAxisId: "left",
+											stroke: colorVar[pl] ?? colorVar.wip,
+											fill: colorVar[pl] ?? colorVar.wip,
+											legendType: "circle",
+											dot: { r: 3 },
+											activeDot: { r: 5 },
+											connectNulls: true,
+									});
+							}
+
+							if (showPLOut) {
+									result.push({
+											dataKey: `${key}_${pl}_total_outs`,
+											yAxisId: "right",
+											stroke: colorVar[pl] ?? colorVar.out,
+											fill: colorVar[pl] ?? colorVar.out,
+											strokeDasharray: pl === 'pl6' ? "2 5" : "6 3",
+											strokeOpacity: 0.75,
+											legendType: "triangle",
+											dot: (props) => {
+													const { cx, cy, fill } = props;
+													const size = 8;
+													return (
+															<svg x={cx - size / 2} y={cy - size / 2} width={size} height={size} viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
+																	<polygon points="5,0 10,10 0,10" fill={fill} />
+															</svg>
+													);
+											},
+											activeDot: (props) => {
+													const { cx, cy, fill } = props;
+													return (
+															<svg key={`${cx}-${cy}`} x={cx - 6} y={cy - 6} width={12} height={12} viewBox="0 0 8 8">
+																	<polygon points="4,0 8,8 0,8" fill={fill} />
+															</svg>
+													);
+											},
+											connectNulls: true,
+									});
+							}
+					});
 			}
 
 			if (showQuantities) {

@@ -27,16 +27,28 @@
   --color-f1color-15: #ff766a;
   --color-f1color-30: #ff9b6a;
   --color-f1color-dim: #EE86B880;
+  --color-f1color-pl1: #FF6AB4;        /* shift hue → magenta */
+  --color-f1color-pl1-dim: #FF6AB480;
+  --color-f1color-pl6: #FF9B6A;        /* shift hue → orange */
+  --color-f1color-pl6-dim: #FF9B6A80;
 
   --color-f2color: #B987F5;
   --color-f2color-15: #d486f5;
   --color-f2color-30: #f086f5;
   --color-f2color-dim: #B987F580;
+  --color-f2color-pl1: #87B4F5;        /* shift hue → blue */
+  --color-f2color-pl1-dim: #87B4F580;
+  --color-f2color-pl6: #F587C8;        /* shift hue → pink */
+  --color-f2color-pl6-dim: #F587C880;
 
   --color-f3color: #A6BFF7;
   --color-f3color-15: #a5aaf7;
   --color-f3color-30: #b5a5f7;
   --color-f3color-dim: #A6BFF780;
+  --color-f3color-pl1: #A6EAF7;        /* shift hue → cyan */
+  --color-f3color-pl1-dim: #A6EAF780;
+  --color-f3color-pl6: #C4A6F7;        /* shift hue → violet */
+  --color-f3color-pl6-dim: #C4A6F780;
   
   --color-info: #5AA9FA;         
   --color-info-content: #192532; 

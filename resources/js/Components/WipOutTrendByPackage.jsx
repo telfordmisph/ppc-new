@@ -1,29 +1,28 @@
-import { useFetch } from "@/Hooks/useFetch";
-import React, { useEffect, useState, useMemo } from "react";
-import TrendLineChart from "./Charts/TrendLineChart";
-import FloatingLabelInput from "./FloatingLabelInput";
-import { FaEye, FaEyeSlash, FaFileDownload } from "react-icons/fa";
-import TableChart from "./Charts/TableChart";
 import { periodOptions } from "@/Constants/periodOptions";
+import { useDownloadFile } from "@/Hooks/useDownload";
+import { useFetch } from "@/Hooks/useFetch";
+import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import { visibleLines } from "@/Utils/chartLines";
+import formatDate from "@/Utils/formatDate";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import {
 	formatPeriodLabel,
 	formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
-import { useWorkweekStore } from "@/Store/workweekListStore";
 import clsx from "clsx";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
-import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
-import Tabs from "./Tabs";
-import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { visibleLines } from "@/Utils/chartLines";
-import { useDownloadFile } from "@/Hooks/useDownload";
-import { addDays, subDays, format } from "date-fns";
-import { MdFileDownload } from "react-icons/md";
+import { subDays } from "date-fns";
+import { useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
-import formatDate from "@/Utils/formatDate";
 import "react-datepicker/dist/react-datepicker.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import CancellableActionButton from "./CancellableActionButton";
+import TableChart from "./Charts/TableChart";
+import TrendLineChart from "./Charts/TrendLineChart";
+import FloatingLabelInput from "./FloatingLabelInput";
+import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
+import Tabs from "./Tabs";
 
 const test = ["F1", "F2", "F3", "Overall"];
 
@@ -31,7 +30,8 @@ const WipOutTrendByPackage = ({
 	isVisible,
 	title = "",
 	dataAPI = null,
-	showLines = {},
+	showWIPLines = {},
+	showPLLines = {},
 	noChartTable = false,
 	downloadRoute = null,
 }) => {
@@ -143,7 +143,7 @@ const WipOutTrendByPackage = ({
 		params: params,
 		auto: false,
 	});
-
+	
 	const handlePackageNamesChange = (selectedPackages) => {
 		setSelectedPackageNames(selectedPackages);
 		setSavedSelectedPackage(selectedPackages);
@@ -207,7 +207,21 @@ const WipOutTrendByPackage = ({
 					f3: selectedFactory === "F3",
 					overall: selectedFactory === "Overall",
 				},
-				...showLines,
+				...showWIPLines,
+			}),
+		[selectedFactory],
+	);
+
+	const plLines = useMemo(
+		() =>
+			visibleLines({
+				showFactories: {
+					f1: selectedFactory === "F1",
+					f2: selectedFactory === "F2",
+					f3: selectedFactory === "F3",
+					overall: selectedFactory === "Overall",
+				},
+				...showPLLines,
 			}),
 		[selectedFactory],
 	);
@@ -402,7 +416,20 @@ const WipOutTrendByPackage = ({
 						isLoading={isOveraByPackagellWipLoading}
 						errorMessage={overallByPackageWipErrorMessage}
 						lines={lines}
+						syncId={"dashboard-trend"}
+						leftAxisLabel="Quantity"
+    				rightAxisLabel="Util %"
 						rightAxisTickFormatter={(value) => `${value.toFixed(2)}%`}
+					/>
+					<TrendLineChart
+						data={overallByPackageWipData?.pl_data || []}
+						xKey={xAxis}
+						isLoading={isOveraByPackagellWipLoading}
+						errorMessage={overallByPackageWipErrorMessage}
+						lines={plLines}
+						leftAxisLabel="WIP"
+    				rightAxisLabel="OUT"
+						syncId={"dashboard-trend"}
 					/>
 					{isChartTableVisible && !isOveraByPackagellWipLoading && (
 						<TableChart

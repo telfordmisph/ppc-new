@@ -61,7 +61,8 @@ class WipConstants
         'wip' => ['SUM(wip.Qty)' => 'total_wip'],
         'wip-lot' => [
           'SUM(wip.Qty)' => 'total_wip',
-          'COUNT(wip.Lot_Id)' => 'total_lots'
+          'COUNT(wip.Lot_Id)' => 'total_lots',
+          'COUNT(wip.Lot_Id) as wip_total_lots',
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
@@ -69,7 +70,8 @@ class WipConstants
         'out' => ['SUM(out.qty)' => 'total_outs'],
         'out-lot' => [
           'SUM(out.qty)' => 'total_outs',
-          'COUNT(out.lot_id)' => 'total_lots'
+          'COUNT(out.lot_id)' => 'total_lots',
+          'COUNT(out.lot_Id) as out_total_lots',
         ],
         'dateColumn' => 'out.import_date',
       ],
@@ -79,7 +81,8 @@ class WipConstants
         'wip' => ['SUM(wip.Qty)' => 'total_wip'],
         'wip-lot' => [
           'SUM(wip.Qty)' => 'total_wip',
-          'COUNT(wip.Lot_Id)' => 'total_lots'
+          'COUNT(wip.Lot_Id)' => 'total_lots',
+          'COUNT(wip.Lot_Id) as wip_total_lots',
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
@@ -87,7 +90,8 @@ class WipConstants
         'out' => ['SUM(out.qty)' => 'total_outs'],
         'out-lot' => [
           'SUM(out.qty)' => 'total_outs',
-          'COUNT(out.lot_id)' => 'total_lots'
+          'COUNT(out.lot_id)' => 'total_lots',
+          'COUNT(out.lot_Id) as out_total_lots',
         ],
         'dateColumn' => 'out.import_date',
       ],
@@ -97,7 +101,9 @@ class WipConstants
         'wip' => ['SUM(wip.Qty)' => 'total_wip'],
         'wip-lot' => [
           'SUM(wip.Qty)' => 'total_wip',
-          'COUNT(wip.Lot_Id)' => 'total_lots'
+          'COUNT(wip.Lot_Id)' => 'total_lots',
+          'COUNT(wip.Lot_Id) as wip_total_lots',
+
         ],
         'dateColumn' => 'wip.Date_Loaded',
       ],
@@ -105,7 +111,8 @@ class WipConstants
         'out' => ['SUM(out.qty)' => 'total_outs'],
         'out-lot' => [
           'SUM(out.qty)' => 'total_outs',
-          'COUNT(out.lot_id)' => 'total_lots'
+          'COUNT(out.lot_id)' => 'total_lots',
+          'COUNT(out.lot_Id) as out_total_lots',
         ],
         'dateColumn' => 'out.import_date',
       ],
@@ -115,7 +122,8 @@ class WipConstants
         'wip' => ['SUM(f3.qty)' => 'total_wip'],
         'wip-lot' => [
           'SUM(f3.qty)' => 'total_wip',
-          'COUNT(f3.lot_number)' => 'total_lots'
+          'COUNT(f3.lot_number)' => 'total_lots',
+          'COUNT(f3.lot_number) as wip_total_lots'
         ],
         'dateColumn' => 'f3.date_loaded',
       ],
@@ -123,7 +131,8 @@ class WipConstants
         'out' => ['SUM(f3.qty)' => 'total_outs'],
         'out-lot' => [
           'SUM(f3.qty)' => 'total_outs',
-          'COUNT(f3.lot_number)' => 'total_lots'
+          'COUNT(f3.lot_number)' => 'total_lots',
+          'COUNT(f3.lot_number) as out_total_lots'
         ],
         'dateColumn' => 'f3.import_date',
       ],
@@ -133,7 +142,8 @@ class WipConstants
         'wip' => ['SUM(wip.qty)' => 'total_wip'],
         'wip-lot' => [
           'SUM(wip.qty)' => 'total_wip',
-          'COUNT(wip.lot_id)' => 'total_lots'
+          'COUNT(wip.lot_id)' => 'total_lots',
+          'COUNT(wip.lot_id) as wip_total_lots'
         ],
         'dateColumn' => 'wip.date_loaded',
       ],
@@ -141,7 +151,8 @@ class WipConstants
         'out' => ['SUM(out.qty)' => 'total_outs'],
         'out-lot' => [
           'SUM(out.qty)' => 'total_outs',
-          'COUNT(out.lot_id)' => 'total_lots'
+          'COUNT(out.lot_id)' => 'total_lots',
+          'COUNT(out.lot_id) as out_total_lots'
         ],
         'dateColumn' => 'out.import_date',
       ],

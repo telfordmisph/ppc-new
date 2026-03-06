@@ -36,9 +36,9 @@ class F3WipRepository
     $this->packageGroupRepo = $packageGroupRepo;
   }
 
-  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
+  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true, $joinPpc = null)
   {
-    $query = $this->baseF3Query();
+    $query = $this->baseF3Query($joinPpc);
 
     if ($aggregate) {
       $query = $this->applyTrendAggregation(

@@ -329,8 +329,10 @@ class WipService
 
     $trends = [];
 
-    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
+    $f1f2outTrend = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
+    $f1f2out = WipTrendParser::parseTrendsByPeriod($f1f2outTrend);
+    $f3outTrend = $this->f3OutRepo->getOverallTrend($packageName, $period, $startAddOneDay, $endAddOneDay, $workweeks);
+    $f3out = WipTrendParser::parseTrendsByPeriod($f3outTrend);
 
     $merged = $this->mergeTrendsByKey('dateKey', ['label'], $trends, $f1f2out, $f3out);
 
@@ -724,19 +726,6 @@ class WipService
       'total_wip' => $totalwip,
       'data' => $results,
     ]);
-  }
-
-  public function getBaseFactoryQuery()
-  {
-    $baseQuery = DB::table(self::F1F2_TABLE . ' as wip');
-    // ->selectRaw(
-    //   'wip.Package_Name, plref.production_line as PL, wip.Date_Loaded, Qty'
-    // );
-
-    $baseQuery = $this->f1f2WipRepo->joinPL($baseQuery);
-
-
-    return $baseQuery;
   }
 
   public function getWipAndLotsByBodySize($packageNames, $startDate, $endDate, $useWorkweek, $workweek)
@@ -1133,6 +1122,8 @@ class WipService
   public function getWipOutCapacitySummaryTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
+    $trendsPL1 = [];
+    $trendsPL6 = [];
 
     $prefixMap = [
       'f1_trend' => 'f1',
@@ -1145,64 +1136,119 @@ class WipService
       'overall_capacity_trend' => 'overall'
     ];
 
+    $prefixMapPL1 = [
+      'f1_trend_pl1' => 'f1_pl1',
+      'f2_trend_pl1' => 'f2_pl1',
+      'f3_trend_pl1' => 'f3_pl1',
+      'overall_trend_pl1' => 'overall_pl1',
+    ];
+
+    $prefixMapPL6 = [
+      'f1_trend_pl6' => 'f1_pl6',
+      'f2_trend_pl6' => 'f2_pl6',
+      'f3_trend_pl6' => 'f3_pl6',
+      'overall_trend_pl6' => 'overall_pl6',
+    ];
+
+    $keyRemapPL1 = [
+      'f1_trend' => 'f1_trend_pl1',
+      'f2_trend' => 'f2_trend_pl1',
+      'f3_trend' => 'f3_trend_pl1',
+      'overall_trend' => 'overall_trend_pl1',
+    ];
+
+    $keyRemapPL6 = [
+      'f1_trend' => 'f1_trend_pl6',
+      'f2_trend' => 'f2_trend_pl6',
+      'f3_trend' => 'f3_trend_pl6',
+      'overall_trend' => 'overall_trend_pl6',
+    ];
+
+    $remap = fn($arr, $keyMap) => collect($arr)
+      ->mapWithKeys(fn($val, $key) => [$keyMap[$key] ?? $key => $val])
+      ->all();
+
     $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Package_Name as package_name'];
-    $aggregateColumnsF1 = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip'];
-    $aggregateColumnsF2 = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip'];
+    $aggregateColumnsF1Wip = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip-lot'];
+    $aggregateColumnsF2Wip = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip-lot'];
 
-    $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1);
-    // Log::info($trends['f1_trend']->toSql());
-    Log::info("f1_trend query: " . SqlDebugHelper::prettify($trends['f1_trend']->toSql(), $trends['f1_trend']->getBindings()));
-
-    $trends['f1_trend'] = $trends['f1_trend']->get();
-
-    $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2);
-    // Log::info($trends['f2_trend']->toSql());
-    Log::info("f2_trend query: " . SqlDebugHelper::prettify($trends['f2_trend']->toSql(), $trends['f2_trend']->getBindings()));
-
-    $trends['f2_trend'] = $trends['f2_trend']->get();
-
+    $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1Wip)->get();
+    $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2Wip)->get();
     $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks)->get();
+
+    $query = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1Wip);
+    $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL1');
+    $trendsPL1['f1_trend_pl1'] = $query->get();
+
+    $query = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2Wip);
+    $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL1');
+    $trendsPL1['f2_trend_pl1'] = $query->get();
+
+    $query = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1Wip);
+    $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
+    $trendsPL6['f1_trend_pl6'] = $query->get();
+
+    $query = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2Wip);
+    $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
+    $trendsPL6['f2_trend_pl6'] = $query->get();
+
+    $trendsPL1['f3_trend_pl1'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, joinPpc: "PL1")
+      ->get();
+
+    $trendsPL6['f3_trend_pl6'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, joinPpc: "PL6")
+      ->get();
 
     $startDateCopy = is_object($startDate) ? clone $startDate : $startDate;
     foreach (WipConstants::FACTORIES as $factory) {
-      // TODO capacity won't show if there's no wip data for the package in that factory
-      // TODO cloning startDate works but it's a bit hacky, find a better way later
       $capacity = $this->capacityRepo->getCapacityTrend($packageName, $factory, $period, $startDateCopy, $endDate, $workweeks);
       $trends[strtolower($factory) . '_capacity_trend'] = $capacity;
     }
-
-    // $fakeCapacity = $this->capacityRepo->fakeCapacityTrend($period, $startDateCopy, $endDate);
-    // $trends['f1_capacity_trend'] = $fakeCapacity['f1_capacity_trend'];
-    // $trends['f2_capacity_trend'] = $fakeCapacity['f2_capacity_trend'];
-    // $trends['f3_capacity_trend'] = $fakeCapacity['f3_capacity_trend'];
-
-    // Log::info("trends: " . json_encode($trends));
 
     $periodGroupBy = WipConstants::PERIOD_GROUP_BY[$period];
     $trends['overall_capacity_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_capacity_trend'], $trends['f2_capacity_trend'], $trends['f3_capacity_trend']], $periodGroupBy);
     $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend'], $trends['f2_trend'], $trends['f3_trend']], $periodGroupBy);
 
-    // $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, periodFields: WipConstants::PERIOD_GROUP_BY[$period]);
+    $trendsPL1['overall_trend_pl1'] = MergeAndAggregate::mergeAndAggregate([$trendsPL1['f1_trend_pl1'], $trendsPL1['f2_trend_pl1'], $trendsPL1['f3_trend_pl1']], $periodGroupBy);
+    $trendsPL6['overall_trend_pl6'] = MergeAndAggregate::mergeAndAggregate([$trendsPL6['f1_trend_pl6'], $trendsPL6['f2_trend_pl6'], $trendsPL6['f3_trend_pl6']], $periodGroupBy);
+
     $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends, $prefixMap);
+    $pl1MergedTrends = WipTrendParser::parseTrendsByPeriod($trendsPL1, $prefixMapPL1);
+    $pl6MergedTrends = WipTrendParser::parseTrendsByPeriod($trendsPL6, $prefixMapPL6);
 
-    // Log::info("mergedTrends: " . json_encode($mergedTrends));
+    $startDatePlusOneDay = Carbon::parse($startDate)->addDay()->format('Y-m-d H:i:s');
+    $endDatePlusOneDay = Carbon::parse($endDate)->addDay()->format('Y-m-d H:i:s');
 
-    $startDatePlusOneDay = Carbon::parse($startDate)
-      ->addDay()
-      ->format('Y-m-d H:i:s');
+    $f1f2outTrend = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
+    $f3outTrend = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
 
-    $endDatePlusOneDay = Carbon::parse($endDate)
-      ->addDay()
-      ->format('Y-m-d H:i:s');
+    $f1f2outPl1Trend = $remap(
+      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL1"),
+      $keyRemapPL1
+    );
 
-    $f1f2out = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
-    $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
-    // $f3out = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
+    $f3outPL1Trend = $remap(
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL1"),
+      $keyRemapPL1
+    );
 
-    // Log::info("getWipOutCapacitySummaryTrend: f1f2out: " . json_encode($f1f2out));
-    // Log::info("getWipOutCapacitySummaryTrend: f3out: " . json_encode($f3out));
+    $f1f2outPl6Trend = $remap(
+      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL6"),
+      $keyRemapPL6
+    );
+    $f3outPL6Trend = $remap(
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL6"),
+      $keyRemapPL6
+    );
+
+    $f1f2out = WipTrendParser::parseTrendsByPeriod($f1f2outTrend);
+    $f3out = WipTrendParser::parseTrendsByPeriod($f3outTrend);
+    $f1f2outPl6 = WipTrendParser::parseTrendsByPeriod($f1f2outPl6Trend, $prefixMapPL6);
+    $f3outPL6 = WipTrendParser::parseTrendsByPeriod($f3outPL6Trend, $prefixMapPL6);
+    $f1f2outPl1 = WipTrendParser::parseTrendsByPeriod($f1f2outPl1Trend, $prefixMapPL1);
+    $f3outPL1 = WipTrendParser::parseTrendsByPeriod($f3outPL1Trend, $prefixMapPL1);
 
     $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends, $f1f2out, $f3out);
+    $plMerged = $this->mergeTrendsByKey('dateKey', ['label'], $pl1MergedTrends, $pl6MergedTrends, $f1f2outPl1, $f3outPL1, $f1f2outPl6, $f3outPL6);
 
     $dataWithUtilization = array_map(function ($item) {
       $f1_capacity = isset($item['f1_capacity']) ? (float)$item['f1_capacity'] : 0;
@@ -1225,6 +1271,7 @@ class WipService
 
     return response()->json([
       'data' => $dataWithUtilization,
+      'pl_data' => $plMerged,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);

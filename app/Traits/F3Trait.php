@@ -91,7 +91,7 @@ trait F3Trait
     return $query;
   }
 
-  public function baseF3Query($joinPpc = false, $type = 'wip')
+  public function baseF3Query($joinPpc = null, $type = 'wip')
   {
     $query = DB::table($this->table . ' as ' . $this->tableAlias);
     $query->leftJoin(self::RAW_PACKAGES . ' as raw', $this->tableAlias . '.package', '=', 'raw.id');
@@ -106,6 +106,10 @@ trait F3Trait
 
     if ($joinPpc) {
       $query->join(self::PPC_TABLE . ' as plref', 'f3_pkg.package_name', '=', 'plref.Package');
+
+      if ($joinPpc !== true) {
+        $query->where('plref.production_line', $joinPpc);
+      }
     }
 
     return $query;

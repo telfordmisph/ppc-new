@@ -115,37 +115,41 @@ class PickUpRepository
   public function getPackageSummary($chartStatus, $startDate, $endDate)
   {
     $query = DB::table(self::TABLE_NAME . ' as pickup')
-      ->selectRaw('PACKAGE, SUM(QTY) as total_wip, COUNT(DISTINCT LOTID) as total_lots')
-      ->where('DATE_CREATED', '>=', $startDate)
-      ->where('DATE_CREATED', '<', $endDate);
+      ->selectRaw('pickup.PACKAGE, SUM(pickup.QTY) as total_wip, COUNT(DISTINCT pickup.LOTID) as total_lots')
+      ->where('pickup.DATE_CREATED', '>=', $startDate)
+      ->where('pickup.DATE_CREATED', '<', $endDate);
 
     $chartStatus = strtoupper($chartStatus);
 
     if (in_array($chartStatus, ['F1', 'F2'])) {
-      $partNames = DB::table(self::PART_NAME_TABLE)
-        ->where('Factory', $chartStatus)
-        ->pluck('Partname');
-      $query->whereIn('pickup.PARTNAME', $partNames);
+      $query->whereIn('pickup.PARTNAME', function ($q) use ($chartStatus) {
+        $q->select('Partname')
+          ->from(self::PART_NAME_TABLE)
+          ->where('Factory', $chartStatus);
+      });
     } elseif ($chartStatus === 'F3') {
       $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
     } elseif (in_array($chartStatus, ['PL1', 'PL6'])) {
-      $partNames = DB::table(self::PART_NAME_TABLE)
-        ->where('PL', $chartStatus)
-        ->pluck('Partname');
-      $query->whereIn('pickup.PARTNAME', $partNames);
+      $query->whereIn('pickup.PARTNAME', function ($q) use ($chartStatus) {
+        $q->select('Partname')
+          ->from(self::PART_NAME_TABLE)
+          ->where('PL', $chartStatus);
+      });
     }
 
-    return $query->groupBy('pickup.PACKAGE')
+    return $query
+      ->groupBy('pickup.PACKAGE')
       ->orderByDesc('total_wip')
       ->get();
   }
 
-  public function getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
+  public function getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true, $pl = null)
   {
     $query = DB::table(self::TABLE_NAME . ' as pickup');
     $query = $this->filterByPackageName($query, $packageName);
 
     $factory = strtoupper($factory);
+
     if ($factory === 'F3') {
       $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
     } elseif (in_array($factory, ['F1', 'F2'])) {
@@ -153,6 +157,14 @@ class PickUpRepository
         ->where('Factory', $factory)
         ->pluck('Partname');
       $query->whereIn('pickup.PARTNAME', $partNames);
+    }
+
+    if ($pl) {
+      $query->whereIn('pickup.PARTNAME', function ($q) use ($pl) {
+        $q->select('Partname')
+          ->from(self::PART_NAME_TABLE)
+          ->where('PL', strtoupper($pl));
+      });
     }
 
     if ($aggregate) {
@@ -178,60 +190,104 @@ class PickUpRepository
   public function getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
+    $trendsPl1 = [];
+    $trendsPl6 = [];
+
+    $prefixMapPL1 = [
+      'f1_trend' => 'f1_pl1',
+      'f2_trend' => 'f2_pl1',
+      'f3_trend' => 'f3_pl1',
+      'overall_trend' => 'overall_pl1',
+    ];
+
+    $prefixMapPL6 = [
+      'f1_trend' => 'f1_pl6',
+      'f2_trend' => 'f2_pl6',
+      'f3_trend' => 'f3_pl6',
+      'overall_trend' => 'overall_pl6',
+    ];
 
     foreach (WipConstants::FACTORIES as $factory) {
       $key = strtolower($factory) . '_trend';
-
-      $query = $this->getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks);
-      $trends[$key] = $query;
+      $trends[$key]    = $this->getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks);
+      $trendsPl1[$key] = $this->getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, pl: 'PL1');
+      $trendsPl6[$key] = $this->getBaseTrend($factory, $packageName, $period, $startDate, $endDate, $workweeks, pl: 'PL6');
     }
 
     $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
 
-    $f1Sub = DB::query()
-      ->fromSub(clone($trends['f1_trend']), 'f1')
-      ->select([...$groupByOrderBy, ...self::aggregateColumn])
-      ->selectRaw("'F1' as factory, package");
+    // --- overall union ---
+    $f1Sub = DB::query()->fromSub(clone($trends['f1_trend']), 'f1')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F1' as factory, package");
+    $f2Sub = DB::query()->fromSub(clone($trends['f2_trend']), 'f2')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F2' as factory, package");
+    $f3Sub = DB::query()->fromSub(clone($trends['f3_trend']), 'f3')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F3' as factory, package");
 
-    $f2Sub = DB::query()
-      ->fromSub(clone($trends['f2_trend']), 'f2')
-      ->select([...$groupByOrderBy, ...self::aggregateColumn])
-      ->selectRaw("'F2' as factory, package");
-
-    $f3Sub = DB::query()
-      ->fromSub(clone($trends['f3_trend']), 'f3')
-      ->select([...$groupByOrderBy, ...self::aggregateColumn])
-      ->selectRaw("'F3' as factory, package");
-
-    $combined = $f1Sub
-      ->unionAll($f3Sub)
-      ->unionAll($f2Sub);
-
-    // TODO: bruh its overwriting
-
-    // $combined = $f3Sub;
-
-    $finalResults = DB::query()->fromSub($combined, 'wip_union')
-      ->select([...$groupByOrderBy, ...self::aggregateColumn, 'factory']);
+    $combined = $f1Sub->unionAll($f2Sub)->unionAll($f3Sub);
+    $finalResults = DB::query()->fromSub($combined, 'wip_union')->select([...$groupByOrderBy, ...self::aggregateColumn, 'factory']);
     foreach ([...$groupByOrderBy, 'factory'] as $col) {
       $finalResults->orderBy($col);
     }
 
+    // --- pl1 union ---
+    $f1Pl1Sub = DB::query()->fromSub(clone($trendsPl1['f1_trend']), 'f1')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F1' as factory, package");
+    $f2Pl1Sub = DB::query()->fromSub(clone($trendsPl1['f2_trend']), 'f2')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F2' as factory, package");
+    $f3Pl1Sub = DB::query()->fromSub(clone($trendsPl1['f3_trend']), 'f3')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F3' as factory, package");
 
-    $trends['f1_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend']->get()], $groupByOrderBy);
-    $trends['f2_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f2_trend']->get()], $groupByOrderBy);
-    $trends['f3_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f3_trend']->get()], $groupByOrderBy);
+    $combinedPl1 = $f1Pl1Sub->unionAll($f2Pl1Sub)->unionAll($f3Pl1Sub);
+    $finalPl1 = DB::query()->fromSub($combinedPl1, 'wip_union_pl1')->select([...$groupByOrderBy, ...self::aggregateColumn, 'factory']);
+    foreach ([...$groupByOrderBy, 'factory'] as $col) {
+      $finalPl1->orderBy($col);
+    }
 
+    // --- pl6 union ---
+    $f1Pl6Sub = DB::query()->fromSub(clone($trendsPl6['f1_trend']), 'f1')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F1' as factory, package");
+    $f2Pl6Sub = DB::query()->fromSub(clone($trendsPl6['f2_trend']), 'f2')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F2' as factory, package");
+    $f3Pl6Sub = DB::query()->fromSub(clone($trendsPl6['f3_trend']), 'f3')->select([...$groupByOrderBy, ...self::aggregateColumn])->selectRaw("'F3' as factory, package");
+
+    $combinedPl6 = $f1Pl6Sub->unionAll($f2Pl6Sub)->unionAll($f3Pl6Sub);
+    $finalPl6 = DB::query()->fromSub($combinedPl6, 'wip_union_pl6')->select([...$groupByOrderBy, ...self::aggregateColumn, 'factory']);
+    foreach ([...$groupByOrderBy, 'factory'] as $col) {
+      $finalPl6->orderBy($col);
+    }
+
+    // --- merge ---
+    $trends['f1_trend']      = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend']->get()], $groupByOrderBy);
+    $trends['f2_trend']      = MergeAndAggregate::mergeAndAggregate([$trends['f2_trend']->get()], $groupByOrderBy);
+    $trends['f3_trend']      = MergeAndAggregate::mergeAndAggregate([$trends['f3_trend']->get()], $groupByOrderBy);
     $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$finalResults->get()], $groupByOrderBy, ['factory']);
-    $mergedTrends = WipTrendParser::parseTrendsByPeriod($trends);
 
-    $merged = $this->mergeTrendsByKey('dateKey', ['label'], $mergedTrends);
+    $trendsPl1['f1_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl1['f1_trend']->get()], $groupByOrderBy);
+    $trendsPl1['f2_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl1['f2_trend']->get()], $groupByOrderBy);
+    $trendsPl1['f3_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl1['f3_trend']->get()], $groupByOrderBy);
+    $trendsPl1['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$finalPl1->get()], $groupByOrderBy, ['factory']);
 
-    return response()->json(array_merge([
-      'data' => $merged,
-      'status' => 'success',
-      'message' => 'Data retrieved successfully',
-    ]));
+    $trendsPl6['f1_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl6['f1_trend']->get()], $groupByOrderBy);
+    $trendsPl6['f2_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl6['f2_trend']->get()], $groupByOrderBy);
+    $trendsPl6['f3_trend']      = MergeAndAggregate::mergeAndAggregate([$trendsPl6['f3_trend']->get()], $groupByOrderBy);
+    $trendsPl6['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$finalPl6->get()], $groupByOrderBy, ['factory']);
+
+    $mergedTrends    = WipTrendParser::parseTrendsByPeriod($trends);
+    $mergedTrendsPl1 = WipTrendParser::parseTrendsByPeriod($trendsPl1, $prefixMapPL1);
+    $mergedTrendsPl6 = WipTrendParser::parseTrendsByPeriod($trendsPl6, $prefixMapPL6);
+
+    $merged = $this->mergeTrendsByKey(
+      'dateKey',
+      ['label'],
+      $mergedTrends,
+    );
+
+    $plMerged = $this->mergeTrendsByKey(
+      'dateKey',
+      ['label'],
+      $mergedTrendsPl1,
+      $mergedTrendsPl6
+    );
+
+    return response()->json([
+      'data'       => $merged,
+      'pl_data'    => $plMerged,
+      'status'     => 'success',
+      'message'    => 'Data retrieved successfully',
+    ]);
   }
 
   private function upsertPickup($data = null)

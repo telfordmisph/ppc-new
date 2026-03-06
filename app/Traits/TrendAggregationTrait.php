@@ -29,8 +29,7 @@ trait TrendAggregationTrait
 
     $aggSelects = collect($aggregateColumns)->map(function ($alias, $expr) {
       if (is_int($expr)) {
-        $expr = $alias;
-        $alias = Str::slug($expr, '_');
+        return str_contains($alias, ' as ') ? $alias : $alias . ' as ' . Str::slug($alias, '_');
       }
       return "$expr as $alias";
     })->implode(', ');

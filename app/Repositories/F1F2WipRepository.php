@@ -276,29 +276,6 @@ class F1F2WipRepository
         $query = $this->filterByPackageName($query, $packageName, [$factory]);
         break;
 
-      // case 'PL1':
-      // case 'PL6':
-      //   $query = DB::table(self::F1F2_TABLE . ' as wip')
-      //     ->selectRaw($selectColumns);
-      //   $query = $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, $factory);
-      //   $query->where(function ($sub) {
-      //     $this->f1f2WipRepo->f1Filters(
-      //       $sub,
-      //       WipConstants::REEL_TRANSFER_B3,
-      //       WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1,
-      //       'wip'
-      //     );
-      //     $sub->orWhere(fn($f2) => $this->f1f2WipRepo->applyF2Filters($f2, WipConstants::EWAN_PROCESS, 'wip'));
-      //   });
-      //   $query = $this->f1f2WipRepo->filterByPackageName($query, $packageName, [$factory]);
-      //   break;
-
-      // case 'F3':
-      //   $query = $this->f3WipRepo->baseF3Query()
-      //     ->selectRaw($selectColumns);
-      //   $query = $this->f3WipRepo->filterByPackageName($query, $packageName, [$factory]);
-      //   break;
-
       default:
         throw new \InvalidArgumentException("Unknown factory: $factory");
     }

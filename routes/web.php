@@ -72,7 +72,7 @@ Route::prefix('package')->name('package.')->group(function () {
 Route::prefix('f3-wip-out')->name('f3.')->group(function () {
     Route::prefix('list')->name('list.')->group(function () {
         Route::get('/', [F3Controller::class, 'index'])->name('index');
-        Route::get('/{id}/edit', [F3Controller::class, 'upsert'])->name('edit');
+        // Route::get('/{id}/edit', [F3Controller::class, 'upsert'])->name('edit');
     });
 });
 

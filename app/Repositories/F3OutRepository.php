@@ -69,9 +69,9 @@ class F3OutRepository
       ->get();
   }
 
-  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true)
+  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true, $pl = null)
   {
-    $query = $this->baseF3OutQuery();
+    $query = $this->baseF3OutQuery($pl);
 
     $data = $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks);
     $weekRange = $this->shiftRangeByOneDayForward($data['range']);
@@ -104,7 +104,7 @@ class F3OutRepository
       $trends['overall_trend'] = $results;
       $trends['f3_trend'] = $results;
 
-      return WipTrendParser::parseTrendsByPeriod($trends);
+      return $trends;
     } else {
       $query->whereBetween('f3.date_loaded', [$startDate, $endDate]);
 

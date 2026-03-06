@@ -122,6 +122,13 @@ const PickupDashboard = () => {
 						showOuts: false,
 						showCapacities: false,
 					}}
+					showPLLines={{
+						showPLWip: true,
+						showPLOut: false,
+						showOuts: false,
+						showLots: false,
+						showQuantities: false,
+					}}
 					downloadRoute={"api.download.factoryPickUpTrendRaw"}
 				/>
 			</div>
