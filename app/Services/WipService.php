@@ -1227,7 +1227,7 @@ class WipService
     );
 
     $f3outPL1Trend = $remap(
-      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL1"),
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, pl: "PL1"),
       $keyRemapPL1
     );
 
@@ -1236,7 +1236,7 @@ class WipService
       $keyRemapPL6
     );
     $f3outPL6Trend = $remap(
-      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL6"),
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, pl: "PL6"),
       $keyRemapPL6
     );
 
