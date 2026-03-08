@@ -419,34 +419,31 @@ const WipOutTrendByPackage = ({
 						errorMessage={overallByPackageWipErrorMessage}
 						lines={lines}
 						syncId={"dashboard-trend"}
-						leftAxisLabel="Quantity"
-    				rightAxisLabel="Util %"
-						rightAxisTickFormatter={(value) => `${value.toFixed(2)}%`}
+												rightAxisTickFormatter={(value) =>
+`${value.toFixed(2)}%`
+}
 					/>
 					<TrendLineChart
 						data={overallByPackageWipData?.pl_data || []}
 						xKey={xAxis}
+isXAxisHidden={true}
 						isLoading={isOveraByPackagellWipLoading}
 						errorMessage={overallByPackageWipErrorMessage}
 						lines={plLines}
-						leftAxisLabel="WIP"
-    				rightAxisLabel="OUT"
-						syncId={"dashboard-trend"}
+												syncId={"dashboard-trend"}
 					/>
 					{isChartTableVisible && !isOveraByPackagellWipLoading && (
-						<>
+						<TableChart
+        data={overallByPackageWipData?.pl_data || []}
+        exclude={["dateKey"]}
+        />
+      )}
+      {isChartTableVisible && !isOveraByPackagellWipLoading && (
 							<TableChart
 								data={overallByPackageWipData?.data || []}
 								exclude={["dateKey"]}
 							/>
-							<TableChart
-								data={overallByPackageWipData?.pl_data || []}
-								exclude={["dateKey"]}
-								preferredOrder={plPreferredOrder}
-								columnGroups={plColumnGroups}
-							/>
-						</>
-					)}
+												)}
 				</div>
 			</div>
 		</>
