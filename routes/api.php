@@ -33,6 +33,7 @@ Route::middleware([ApiAuthMiddleware::class])
       Route::get('/residual-summary', [WipController::class, 'getPackageResidualSummary'])->name('residualSummary');
       Route::get('/wip-lot-totals', [WipController::class, 'getWIPQuantityAndLotsTotal'])->name('wipLotTotals');
       Route::get('/body-size', [WipController::class, 'getWipAndLotsByBodySize'])->name('wipAndLotsByBodySize');
+      Route::get('/body-size-trend', [WipController::class, 'getWipAndLotsByBodySizeTrend'])->name('wipAndLotsByBodySizeTrend');
       // Route::get('/wip-lot-totals-new', [WipController::class, 'getWIPQuantityAndLotsTotalNew'])->name('wipLotTotalsNew');
     });
 

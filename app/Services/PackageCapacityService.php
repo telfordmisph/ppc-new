@@ -276,8 +276,10 @@ class PackageCapacityService
     $rows = $this->packageCapacityRepository->getPackageCapacity($package, $factory);
     $daily = $this->packageCapacityRepository->expandDaily($rows, $earliestStartDate, $endDate);
 
-    $daily = array_filter($daily, function ($d) use ($earliestStartDate) {
-      return Carbon::parse($d['day'])->gte($earliestStartDate);
+    $daily = array_filter($daily, function ($d) use ($earliestStartDate, $endDate) {
+      $day = Carbon::parse($d['day']);
+      return $day->gte(Carbon::parse($earliestStartDate)->startOfDay())
+        && $day->lte(Carbon::parse($endDate)->endOfDay());
     });
 
     // Log::info("earliestStartDate: " . $earliestStartDate);

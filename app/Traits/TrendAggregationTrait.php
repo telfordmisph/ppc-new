@@ -110,7 +110,11 @@ trait TrendAggregationTrait
         break;
     }
 
-    $query->groupBy(array_merge($groupByFields, $groupByOrderBy));
+    if (!empty($groupByFields)) {
+      $query->groupByRaw(implode(', ', $groupByFields));
+    }
+    $query->groupBy($groupByOrderBy);
+
     foreach ($groupByOrderBy as $col) {
       $query->orderBy($col);
     }
@@ -136,6 +140,7 @@ trait TrendAggregationTrait
     $merged = [];
 
     foreach (array_merge(...$arrays) as $item) {
+      $item = (array) $item;
       $key = $item[$keyField];
 
       if (!isset($merged[$key])) {

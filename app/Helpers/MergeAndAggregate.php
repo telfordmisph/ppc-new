@@ -54,10 +54,9 @@ class MergeAndAggregate
             continue;
           }
 
-          // Sum numeric fields
           if (isset($merged[$key][$field]) && is_numeric($merged[$key][$field]) && is_numeric($value)) {
             $merged[$key][$field] += $value;
-          } else {
+          } else if ($value !== null) {
             $merged[$key][$field] = $value;
           }
         }

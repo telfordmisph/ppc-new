@@ -78,22 +78,6 @@ const WipOutTrendByPackage = ({
 	const [startDate, setStartDate] = useState(savedStartDate);
 	const [endDate, setEndDate] = useState(savedEndDate);
 	
-	// useEffect(() => {
-		//     if (savedSelectedPackageNames?.length) setSelectedPackageNames(savedSelectedPackageNames);
-	//     if (savedWorkWeeks?.length) setSelectedWorkWeeks(savedWorkWeeks);
-	//     if (savedLookBack) setSelectedLookBack(savedLookBack);
-	//     if (savedOffset) setSelectedOffsetPeriod(savedOffset);
-	//     if (savedPeriod) setSelectedPeriod(savedPeriod);
-	//     if (savedFactory) setSelectedFactory(savedFactory);
-	// }, [
-	//     savedSelectedPackageNames,
-	//     savedWorkWeeks,
-	//     savedLookBack,
-	//     savedOffset,
-	//     savedPeriod,
-	//     savedFactory,
-	// ]);
-	
 	let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 	
 	const params = {
@@ -236,6 +220,13 @@ const WipOutTrendByPackage = ({
 		if (!start || !end) return;
 		setSavedStartDate(start);
 		setSavedEndDate(end);
+	};
+
+	const chartTitle = (suffix) => {
+		const packages = selectedPackageNames.length > 3
+    ? `${selectedPackageNames.slice(0, 3).join(", ")} +${selectedPackageNames.length - 3} more`
+    : selectedPackageNames.join(", ") || "All Packages";
+		return `${packages} · ${selectedFactory} ${suffix}`;
 	};
 	
 	return (
@@ -413,37 +404,25 @@ const WipOutTrendByPackage = ({
 		<div className="text-sm opacity-80">{fullLabel}</div>
 		<div className="w-full">
 		<TrendLineChart
-		data={overallByPackageWipData?.data || []}
-		xKey={xAxis}
-		isLoading={isOveraByPackagellWipLoading}
-		errorMessage={overallByPackageWipErrorMessage}
-		lines={lines}
-		syncId={"dashboard-trend"}
-		rightAxisTickFormatter={(value) =>
-`${value.toFixed(2)}%`
-		}
+			data={overallByPackageWipData?.data || []}
+			xKey={xAxis}
+			isLoading={isOveraByPackagellWipLoading}
+			errorMessage={overallByPackageWipErrorMessage}
+			lines={lines}
+			syncId={"dashboard-trend"}
+			title={chartTitle("WIP & Outs")}
+			rightAxisTickFormatter={(value) => `${value.toFixed(2)}%`}
 		/>
 		<TrendLineChart
-		data={overallByPackageWipData?.pl_data || []}
-		xKey={xAxis}
-		isXAxisHidden={true}
-		isLoading={isOveraByPackagellWipLoading}
-		errorMessage={overallByPackageWipErrorMessage}
-		lines={plLines}
-		syncId={"dashboard-trend"}
-		/>
-		{/* {isChartTableVisible && !isOveraByPackagellWipLoading && (
-			<TableChart
 			data={overallByPackageWipData?.pl_data || []}
-			exclude={["dateKey"]}
-			/>
-		)} */}
-		{isChartTableVisible && !isOveraByPackagellWipLoading && (
-			<TableChart
-			data={overallByPackageWipData?.data || []}
-			exclude={["dateKey"]}
-			/>
-		)}
+			xKey={xAxis}
+			isXAxisHidden={true}
+			isLoading={isOveraByPackagellWipLoading}
+			errorMessage={overallByPackageWipErrorMessage}
+			lines={plLines}
+			title={chartTitle("PL Overview")}
+			syncId={"dashboard-trend"}
+		/>
 		</div>
 		</div>
 		</>

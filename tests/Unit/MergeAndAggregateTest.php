@@ -125,54 +125,18 @@ class MergeAndAggregateTest extends TestCase
   public function testFactoryTrends()
   {
     $data1 = [
-      [
-        "year" => 2025,
-        "month" => 7,
-        "total_wip" => "1809399"
-      ],
-      [
-        "year" => 2025,
-        "month" => 8,
-        "total_wip" => "2113442"
-      ],
-      [
-        "year" => 2025,
-        "month" => 9,
-        "total_wip" => "1345601"
-      ],
-      [
-        "year" => 2025,
-        "month" => 10,
-        "total_wip" => "533872"
-      ],
-      [
-        "year" => 2025,
-        "month" => 11,
-        "total_wip" => "1019285"
-      ]
+      ["year" => 2025, "month" => 7,  "total_wip" => "1809399"],
+      ["year" => 2025, "month" => 8,  "total_wip" => "2113442"],
+      ["year" => 2025, "month" => 9,  "total_wip" => "1345601"],
+      ["year" => 2025, "month" => 10, "total_wip" => "533872"],
+      ["year" => 2025, "month" => 11, "total_wip" => "1019285"],
     ];
 
     $data2 = [
-      [
-        "year" => 2025,
-        "month" => 8,
-        "total_wip" => "10683521"
-      ],
-      [
-        "year" => 2025,
-        "month" => 9,
-        "total_wip" => "24319695"
-      ],
-      [
-        "year" => 2025,
-        "month" => 10,
-        "total_wip" => "6977840"
-      ],
-      [
-        "year" => 2025,
-        "month" => 11,
-        "total_wip" => "16466602"
-      ]
+      ["year" => 2025, "month" => 8,  "total_wip" => "10683521"],
+      ["year" => 2025, "month" => 9,  "total_wip" => "24319695"],
+      ["year" => 2025, "month" => 10, "total_wip" => "6977840"],
+      ["year" => 2025, "month" => 11, "total_wip" => "16466602"],
     ];
 
     $data3 = [];
@@ -180,33 +144,107 @@ class MergeAndAggregateTest extends TestCase
     $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2, $data3], ['year', 'month']);
 
     $expected = [
-      [
-        "year" => 2025,
-        "month" => 7,
-        "total_wip" => 1809399
-      ],
-      [
-        "year" => 2025,
-        "month" => 8,
-        "total_wip" => 2113442 + 10683521
-      ],
-      [
-        "year" => 2025,
-        "month" => 9,
-        "total_wip" => 1345601 + 24319695
-      ],
-      [
-        "year" => 2025,
-        "month" => 10,
-        "total_wip" => 533872 + 6977840
-      ],
-      [
-        "year" => 2025,
-        "month" => 11,
-        "total_wip" => 1019285 + 16466602
-      ]
+      ["year" => 2025, "month" => 7,  "total_wip" => 1809399],
+      ["year" => 2025, "month" => 8,  "total_wip" => 2113442 + 10683521],
+      ["year" => 2025, "month" => 9,  "total_wip" => 1345601 + 24319695],
+      ["year" => 2025, "month" => 10, "total_wip" => 533872 + 6977840],
+      ["year" => 2025, "month" => 11, "total_wip" => 1019285 + 16466602],
     ];
 
     $this->assertEquals($expected, $result);
+  }
+
+  // -------------------------------------------------------------------------
+  // Bug case: null from a later dataset overwrites a valid numeric value
+  // -------------------------------------------------------------------------
+
+  /**
+   * A later dataset has null for a field that an earlier dataset had a good value for.
+   * Current behavior: null overwrites the good value (BUG).
+   * Expected behavior: null should not overwrite an existing numeric value.
+   *
+   * Fix: change the else branch in mergeAndAggregate to:
+   *   } else if ($value !== null) { $merged[$key][$field] = $value; }
+   */
+  public function test_null_value_from_later_dataset_should_not_overwrite_good_value()
+  {
+    $data1 = [
+      ['day' => '2025-11-06', 'total_wip' => 500, 'total_lots' => 10],
+    ];
+
+    // dataset 2 has null for total_lots — e.g. F3 doesn't track lots
+    $data2 = [
+      ['day' => '2025-11-06', 'total_wip' => 200, 'total_lots' => null],
+    ];
+
+    $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
+
+    $this->assertEquals(700, $result[0]['total_wip']);
+
+    // This assertion FAILS with current implementation — null overwrites 10
+    // It passes after the fix: } else if ($value !== null) {
+    $this->assertEquals(
+      10,
+      $result[0]['total_lots'],
+      'null from a later dataset should not overwrite a valid value from an earlier dataset'
+    );
+  }
+
+  /**
+   * Confirm that a non-null string value from a later dataset still overwrites
+   * as expected — the fix should only block nulls, not all non-numeric values.
+   */
+  public function test_non_null_string_from_later_dataset_still_overwrites()
+  {
+    $data1 = [
+      ['day' => '2025-11-06', 'total_wip' => 100, 'label' => 'old label'],
+    ];
+
+    $data2 = [
+      ['day' => '2025-11-06', 'total_wip' => 50, 'label' => 'new label'],
+    ];
+
+    $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
+
+    $this->assertEquals(150, $result[0]['total_wip']);
+    $this->assertEquals('new label', $result[0]['label']);
+  }
+
+  /**
+   * Edge case: first dataset has null, second has a good value.
+   * The good value should win regardless of order.
+   */
+  public function test_good_value_from_later_dataset_overwrites_null_from_earlier()
+  {
+    $data1 = [
+      ['day' => '2025-11-06', 'total_wip' => 100, 'total_lots' => null],
+    ];
+
+    $data2 = [
+      ['day' => '2025-11-06', 'total_wip' => 50, 'total_lots' => 8],
+    ];
+
+    $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
+
+    $this->assertEquals(150, $result[0]['total_wip']);
+    $this->assertEquals(8, $result[0]['total_lots']);
+  }
+
+  public function test_field_present_in_only_one_dataset_is_preserved()
+  {
+    $data1 = [
+      ['day' => '2025-11-06', 'total_wip' => 100, 'f1_lots' => 5],
+    ];
+
+    // f1_lots not present, f2_lots only in data2
+    $data2 = [
+      ['day' => '2025-11-06', 'total_wip' => 50, 'f2_lots' => 8],
+    ];
+
+    $result = MergeAndAggregate::mergeAndAggregate([$data1, $data2], 'day');
+
+    $this->assertEquals(150, $result[0]['total_wip']);
+    $this->assertEquals(5,   $result[0]['f1_lots']); // preserved from data1
+    $this->assertEquals(8,   $result[0]['f2_lots']); // added from data2
   }
 }

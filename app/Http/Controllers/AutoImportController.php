@@ -70,9 +70,12 @@ class AutoImportController extends Controller
         $empId = $request->get('emp_id');
         $request->validate([
             'file' => 'required|file|mimes:csv|max:50000',
+            'import_date' => 'nullable|date',
         ]);
         $file = $request->file('file');
-        $result = $this->importService->importF1F2WIP($empId, $file);
+
+        $importDate = $request->get('import_date', now()->toDateString());
+        $result = $this->importService->importF1F2WIP($empId, $file, importDate: $importDate);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -87,10 +90,12 @@ class AutoImportController extends Controller
         $empId = $request->get('emp_id');
         $request->validate([
             'file' => 'required|file|mimes:csv|max:50000',
+            'import_date' => 'nullable|date',
         ]);
         $file = $request->file('file');
 
-        $result = $this->importService->importF1F2OUT($empId, $file);
+        $importDate = $request->get('import_date', now()->toDateString());
+        $result = $this->importService->importF1F2OUT($empId, $file, importDate: $importDate);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',
@@ -175,11 +180,12 @@ class AutoImportController extends Controller
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx|max:10240',
+            'import_date' => 'nullable|date',
         ]);
-
         $file = $request->file('file');
 
-        $result = $this->importService->importF3($empId, $file);
+        $importDate = $request->get('import_date', now()->toDateString());
+        $result = $this->importService->importF3($empId, $file, $importDate);
 
         return response()->json([
             'status' => $result['status'] ?? 'success',

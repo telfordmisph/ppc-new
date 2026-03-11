@@ -63,9 +63,10 @@ trait F3Trait
       ->get();
   }
 
-  public function deleteTodayRecords()
+  public function deleteTodayRecords($date = null)
   {
-    return F3::where('import_date', Carbon::today())->delete();
+    $date = $date ?? Carbon::today();
+    return F3::where('import_date', $date)->delete();
   }
 
   public function filterByPackageName($query, ?array $packageNames, $column = 'f3_pkg.package_name')
@@ -101,7 +102,7 @@ trait F3Trait
       $query->where($this->tableAlias . '.status', 'shipped');
     } else {
       // IQA, For Process, In-process, Hold, FVI, OQA, Boxing, OQA, QA Buy-off
-      $query->whereNotIn($this->tableAlias . '.status', ['shipped']);
+      $query->whereNotIn($this->tableAlias . '.status', ['shipped', 'shipback']);
     }
 
     if ($joinPpc) {

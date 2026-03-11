@@ -53,6 +53,7 @@ class CustomerDataWip extends Model
     'Stock_Position',
     'Assy_Site',
     'Bake_Time_Temp',
-    'imported_by'
+    'imported_by',
+    'import_date'
   ];
 }

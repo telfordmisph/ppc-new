@@ -1,11 +1,11 @@
-import { useRef, useState } from "react";
-import { FaExclamationTriangle } from "react-icons/fa";
-import { TbAlertCircle } from "react-icons/tb";
 import FileUploader from "@/Components/FileUploader";
 import Modal from "@/Components/Modal";
 import { useMutation } from "@/Hooks/useMutation";
 import { useImportTraceStore } from "@/Store/importTraceStore";
 import { runAsyncToast } from "@/Utils/runAsyncToast";
+import { useRef, useState } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
+import { TbAlertCircle } from "react-icons/tb";
 import ImportLabel from "../../Components/lastImportLabel";
 import ImportPageLayout from "../../Layouts/ImportPageLayout";
 
@@ -20,6 +20,9 @@ const F1F2ImportPage = () => {
 	const [isManualOuts, setIsManualOuts] = useState(false);
 	const [selectedWipFile, setSelectedWipFile] = useState(null);
 	const [selectedOutFile, setSelectedOutFile] = useState(null);
+
+	const [wipImportDate, setWipImportDate] = useState('');
+	const [outImportDate, setOutImportDate] = useState('');
 
 	const uploaderWIPRef = useRef(null);
 	const uploaderOUTRef = useRef(null);
@@ -100,6 +103,7 @@ const F1F2ImportPage = () => {
 
 		const formData = new FormData();
 		formData.append("file", selectedWipFile);
+		if (wipImportDate) formData.append("import_date", wipImportDate);
 		runAsyncToast({
 			action: () =>
 				importWip(route("import.manualImportWIP"), {
@@ -122,6 +126,7 @@ const F1F2ImportPage = () => {
 
 		const formData = new FormData();
 		formData.append("file", selectedOutFile);
+		if (outImportDate) formData.append("import_date", outImportDate);
 		runAsyncToast({
 			action: async () => {
 				const result = await importOuts(route("import.manualImportOUTS"), {
@@ -392,13 +397,37 @@ const F1F2ImportPage = () => {
 							existing entries for this date.
 						</p>
 
-						<div className="flex justify-end gap-2">
+						<div className="flex justify-end items-end gap-2">
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Import Date <span className="text-base-content/50">(leave blank to use today)</span></span>
+								</label>
+								<div className="flex gap-2 items-center">
+									<input
+										type="date"
+										className="input input-bordered"
+										value={wipImportDate}
+										max={new Date().toISOString().split('T')[0]}
+										onChange={(e) => setWipImportDate(e.target.value)}
+									/>
+									{wipImportDate && (
+										<button
+											type="button"
+											className="btn btn-ghost btn-sm"
+											onClick={() => setWipImportDate('')}
+										>
+											✕
+										</button>
+									)}
+								</div>
+							</div>
 							<button
 								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									manualWIPImportRef.current?.close();
 									handleManualWIPImport();
+									setWipImportDate('')
 								}}
 								disabled={isImportWipLoading}
 							>
@@ -411,7 +440,7 @@ const F1F2ImportPage = () => {
 							<button
 								type="button"
 								className="btn"
-								onClick={() => manualWIPImportRef.current?.close()}
+								onClick={() => {manualWIPImportRef.current?.close(), setWipImportDate('')}}
 								disabled={isImportWipLoading}
 							>
 								Cancel
@@ -432,13 +461,37 @@ const F1F2ImportPage = () => {
 							existing entries for this date.
 						</p>
 
-						<div className="flex justify-end gap-2">
+						<div className="flex justify-end items-end gap-2">
+							<div className="form-control">
+								<label className="label">
+									<span className="label-text">Import Date <span className="text-base-content/50">(leave blank to use today)</span></span>
+								</label>
+								<div className="flex gap-2 items-center">
+									<input
+										type="date"
+										className="input input-bordered"
+										value={outImportDate}
+										max={new Date().toISOString().split('T')[0]}
+										onChange={(e) => setOutImportDate(e.target.value)}
+									/>
+									{outImportDate && (
+										<button
+											type="button"
+											className="btn btn-ghost btn-sm"
+											onClick={() => setOutImportDate('')}
+										>
+											✕
+										</button>
+									)}
+								</div>
+							</div>
 							<button
 								type="button"
 								className="btn btn-soft btn-warning"
 								onClick={async () => {
 									manualOUTImportRef.current?.close();
 									handleManualOUTImport();
+									setOutImportDate('');
 								}}
 								disabled={isImportOutsLoading}
 							>
@@ -451,7 +504,7 @@ const F1F2ImportPage = () => {
 							<button
 								type="button"
 								className="btn"
-								onClick={() => manualOUTImportRef.current?.close()}
+								onClick={() => {manualOUTImportRef.current?.close(), setOutImportDate('')}}
 								disabled={isImportOutsLoading}
 							>
 								Cancel

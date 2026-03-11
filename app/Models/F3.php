@@ -34,6 +34,7 @@ class F3 extends Model
     'gap_analysis',
     'modified_by',
     'cycle_time',
+    'import_date',
   ];
 
   public function package()

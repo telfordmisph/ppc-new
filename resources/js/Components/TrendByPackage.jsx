@@ -1,32 +1,32 @@
-import { useFetch } from "@/Hooks/useFetch";
-import React, { memo, useEffect, useMemo, useState } from "react";
-import TrendLineChart from "./Charts/TrendLineChart";
-import FloatingLabelInput from "./FloatingLabelInput";
-import TogglerButton from "./TogglerButton";
-import {
-	TOGGLE_WIP_TOTAL_BUTTONS,
-	TOGGLE_OUT_TOTAL_BUTTONS,
-	TOGGLE_FACTORY_BUTTONS,
-} from "@/Constants/toggleButtons";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import TableChart from "./Charts/TableChart";
+import { FACTORY_COLORS } from "@/Constants/colors";
 import { periodOptions } from "@/Constants/periodOptions";
+import {
+	TOGGLE_FACTORY_BUTTONS,
+	TOGGLE_OUT_TOTAL_BUTTONS,
+	TOGGLE_WIP_TOTAL_BUTTONS,
+} from "@/Constants/toggleButtons";
+import { useFetch } from "@/Hooks/useFetch";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import capitalizeFirstLetter from "@/Utils/capitalizeFirstLetter";
+import { visibleLines as chartLines } from "@/Utils/chartLines";
+import formatDate from "@/Utils/formatDate";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import {
 	formatPeriodLabel,
 	formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
-import { visibleLines as chartLines } from "@/Utils/chartLines";
-import clsx from "clsx";
-import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
-import { useWorkweekStore } from "@/Store/workweekListStore";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { FACTORY_COLORS } from "@/Constants/colors";
-import DatePicker from "react-datepicker";
-import formatDate from "@/Utils/formatDate";
-import "react-datepicker/dist/react-datepicker.css";
 import { router } from "@inertiajs/react";
-import capitalizeFirstLetter from "@/Utils/capitalizeFirstLetter";
+import clsx from "clsx";
+import React, { memo, useEffect, useMemo, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import TableChart from "./Charts/TableChart";
+import TrendLineChart from "./Charts/TrendLineChart";
+import FloatingLabelInput from "./FloatingLabelInput";
+import MultiSelectSearchableDropdown from "./MultiSelectSearchableDropdown";
+import TogglerButton from "./TogglerButton";
 
 const TrendByPackage = memo(function TrendByPackage({
 	isVisible,
@@ -330,12 +330,6 @@ const TrendByPackage = memo(function TrendByPackage({
 					errorMessage={overallByPackageTrendErrorMessage}
 					lines={lines}
 				/>
-				{isChartTableVisible && !isOveraByPackagellTrendLoading && (
-					<TableChart
-						data={overallByPackageTrendData?.data || []}
-						exclude={["dateKey"]}
-					/>
-				)}
 			</div>
 		</div>
 	);

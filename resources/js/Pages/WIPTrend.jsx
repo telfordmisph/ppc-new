@@ -1,28 +1,28 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Head } from "@inertiajs/react";
-import clsx from "clsx";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
-import { useFetch } from "@/Hooks/useFetch";
-import formatDate from "@/Utils/formatDate";
+import CancellableActionButton from "@/Components/CancellableActionButton";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
 import TogglerButton from "@/Components/TogglerButton";
-import sortObjectArray from "@/Utils/sortObjectArray";
+import TrendByPackage from "@/Components/TrendByPackage";
 import {
 	TOGGLE_FACTORY_BUTTONS,
 	TOGGLE_PL_BUTTONS,
 } from "@/Constants/toggleButtons";
-import { sumByKey } from "@/Utils/sumByKey";
-import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
-import TrendByPackage from "@/Components/TrendByPackage";
-import { summaryLotsPLBars, summaryWipPLBarswip } from "@/Utils/chartBars";
+import { useFetch } from "@/Hooks/useFetch";
 import { useWorkweekStore } from "@/Store/workweekListStore";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { summaryLotsPLBars, summaryWipPLBarswip } from "@/Utils/chartBars";
 import { buildComputeFunction } from "@/Utils/computeTotals";
+import formatDate from "@/Utils/formatDate";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
+import { formatDataStatusMessage } from "@/Utils/formatStatusMessage";
+import sortObjectArray from "@/Utils/sortObjectArray";
+import { sumByKey } from "@/Utils/sumByKey";
+import { Head } from "@inertiajs/react";
+import clsx from "clsx";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import OverallQuantityTable from "./OverallQuantityTable";
-import CancellableActionButton from "@/Components/CancellableActionButton";
 
 const WIPTrend = () => {
 	const [startDate, setStartDate] = useState(null);

@@ -15,6 +15,7 @@ use App\Helpers\SqlDebugHelper;
 use App\Helpers\WipTrendParser;
 use App\Helpers\MergeAndAggregate;
 use App\Constants\WipConstants;
+use App\Traits\AlignByKeyTrait;
 use App\Traits\ApplyDateOrWorkWeekFilter;
 use App\Traits\NormalizeStringTrait;
 use App\Traits\ExportTrait;
@@ -32,6 +33,7 @@ class WipService
   use NormalizeStringTrait;
   use ExportTrait;
   use ApplyDateOrWorkWeekFilter;
+  use AlignByKeyTrait;
 
   protected $analogCalendarRepo;
   protected $capacityRepo;
@@ -728,17 +730,96 @@ class WipService
     ]);
   }
 
+  public function getWipAndLotsByBodySizeTrend($packageNames, $period, $startDate, $endDate, $useWorkweek, $workweek)
+  {
+    $canonicalClause = "CASE WHEN canonical_body_size REGEXP '^[0-9]+(\\.[0-9]+)?x[0-9]+(\\.[0-9]+)?' THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2) ELSE 'others/unknown' END AS size_bucket";
+
+    $f1AggregateColumns = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip-lot'];
+    $f2AggregateColumns = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip-lot'];
+    $f3AggregateColumns = WipConstants::FACTORY_AGGREGATES['F3']['wip']['wip-lot'];
+
+    $periodKeys = WipConstants::PERIOD_GROUP_BY[$period];
+    $periodGroupBy = ['label'];
+
+    function pivotByBucket($rows, array $periodKeys, string $period, array $valueKeys = ['total_wip', 'total_lots']): array
+    {
+      $grouped = [];
+
+      foreach ($rows as $row) {
+        $row     = (array) $row;
+
+        $dateKey = implode('|', array_map(fn($k) => $row[$k] ?? '', $periodKeys));
+        $bucket  = $row['size_bucket'];
+
+        if (!isset($grouped[$dateKey])) {
+          // $grouped[$dateKey] = array_intersect_key($row, array_flip($periodKeys));
+          $grouped[$dateKey]['label'] = match ($period) {
+            'daily'     => $row['day'],
+            'weekly'    => 'W' . $row['week'],
+            'monthly'   => date('M Y', mktime(0, 0, 0, $row['month'], 1, $row['year'])),
+            'quarterly' => 'Q' . $row['quarter'] . ' ' . $row['year'],
+            'yearly'    => (string) $row['year'],
+            default     => $dateKey,
+          };
+        }
+
+        foreach ($valueKeys as $key) {
+          $grouped[$dateKey]["{$bucket}_{$key}"] = $row[$key] ?? 0;
+        }
+      }
+
+      return array_values($grouped);
+    }
+
+    function addPrefix(array $items, string $prefix, array $exclude = []): array
+    {
+      return array_map(function ($item) use ($prefix, $exclude) {
+        $item = (array) $item;
+        $result = [];
+
+        foreach ($item as $key => $value) {
+          $result[in_array($key, $exclude) ? $key : "{$prefix}_{$key}"] = $value;
+        }
+
+        return $result;
+      }, $items);
+    }
+
+    $trends = [];
+
+    $trends['f1_trend'] = MergeAndAggregate::mergeAndAggregate([
+      pivotByBucket($this->f1f2WipRepo->getTrend("F1", $packageNames, $period, $startDate, $endDate, workweeks: $workweek, aggregateColumns: $f1AggregateColumns, additionalFields: [$canonicalClause])->get()->toArray(), $periodKeys, $period)
+    ], $periodGroupBy);
+    $trends['f2_trend'] = MergeAndAggregate::mergeAndAggregate([
+      pivotByBucket($this->f1f2WipRepo->getTrend("F2", $packageNames, $period, $startDate, $endDate, workweeks: $workweek, aggregateColumns: $f2AggregateColumns, additionalFields: [$canonicalClause])->get()->toArray(), $periodKeys, $period)
+    ], $periodGroupBy);
+    $trends['f3_trend'] = MergeAndAggregate::mergeAndAggregate([
+      pivotByBucket($this->f3WipRepo->getTrend($packageNames, $period, $startDate, $endDate, workweeks: $workweek, aggregateColumns: $f3AggregateColumns, additionalFields: [$canonicalClause])->get()->toArray(), $periodKeys, $period)
+    ], $periodGroupBy);
+
+    $trends['overall_trend'] = MergeAndAggregate::mergeAndAggregate([$trends['f1_trend'], $trends['f2_trend'], $trends['f3_trend']], $periodGroupBy);
+    $trends['f1_trend'] = addPrefix($trends['f1_trend'], 'f1', exclude: ['dateKey', 'label']);
+    $trends['f2_trend'] = addPrefix($trends['f2_trend'], 'f2', exclude: ['dateKey', 'label']);
+    $trends['f3_trend'] = addPrefix($trends['f3_trend'], 'f3', exclude: ['dateKey', 'label']);
+    $trends['overall_trend'] = addPrefix($trends['overall_trend'], 'overall', exclude: ['dateKey', 'label']);
+
+    $merged = $this->mergeTrendsByKey('label', [], $trends['f1_trend'], $trends['f2_trend'], $trends['f3_trend'], $trends['overall_trend']);
+
+    return response()->json([
+      'status' => 'success',
+      'message' => 'Highly optimized data retrieved successfully',
+      'data' => $merged
+    ]);
+  }
+
   public function getWipAndLotsByBodySize($packageNames, $startDate, $endDate, $useWorkweek, $workweek)
   {
-    $canonicalClause = "REGEXP '^[0-9]+(\\.[0-9]+)?x[0-9]+(\\.[0-9]+)?' 
-        THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2)
-        ELSE 'others/unknown'
-        END AS size_bucket,";
+    $canonicalClause = "REGEXP '^[0-9]+(\\.[0-9]+)?x[0-9]+(\\.[0-9]+)?' THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2) ELSE 'others/unknown' END AS size_bucket";
 
     $baseQueryF1 = DB::table((new CustomerDataWip)->getTable() . ' as wip')
       ->selectRaw("
         CASE WHEN canonical_body_size
-        " . $canonicalClause . "
+        " . $canonicalClause . ",
         SUM(qty) AS f1_total_wip,
         COUNT(DISTINCT lot_id) AS f1_total_lots
     ")
@@ -748,7 +829,7 @@ class WipService
     $baseQueryF2 = DB::table((new CustomerDataWip)->getTable() . ' as wip')
       ->selectRaw("
         CASE WHEN canonical_body_size
-        " . $canonicalClause . "
+        " . $canonicalClause . ",
         SUM(qty) AS f2_total_wip,
         COUNT(DISTINCT lot_id) AS f2_total_lots
     ")
@@ -758,7 +839,7 @@ class WipService
     $baseF3Query = $this->f3WipRepo->baseF3Query();
     $baseF3Query = $baseF3Query->selectRaw("
         CASE WHEN raw.canonical_body_size
-        " . $canonicalClause . "
+        " . $canonicalClause . ",
         SUM(f3.qty) AS f3_total_wip,
         COUNT(DISTINCT lot_number) AS f3_total_lots
     ")
@@ -1118,7 +1199,6 @@ class WipService
   {
     return $this->pickUpRepo->getPickUpTrend($packageName, $period, $startDate, $endDate, $workweeks);
   }
-
   public function getWipOutCapacitySummaryTrend($packageName, $period, $startDate, $endDate, $workweeks)
   {
     $trends = [];
@@ -1269,9 +1349,11 @@ class WipService
       return $item;
     }, $merged);
 
+    [$alignedDataWithUtilization, $alignedPlMerged] = $this->align('dateKey', ['label'], $dataWithUtilization, $plMerged);
+
     return response()->json([
-      'data' => $dataWithUtilization,
-      'pl_data' => $plMerged,
+      'data' => $alignedDataWithUtilization,
+      'pl_data' => $alignedPlMerged,
       'status' => 'success',
       'message' => 'Data retrieved successfully'
     ]);

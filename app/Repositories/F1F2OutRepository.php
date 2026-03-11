@@ -246,9 +246,10 @@ class F1F2OutRepository
     ];
   }
 
-  public function deleteTodayRecords()
+  public function deleteTodayRecords($date = null)
   {
-    return F1F2Out::where('import_date', Carbon::today())->delete();
+    $date = $date ?? Carbon::today();
+    return F1F2Out::where('import_date', $date)->delete();
   }
 
 

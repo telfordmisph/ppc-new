@@ -1,30 +1,35 @@
-import clsx from "clsx";
-import { useMemo } from "react";
-import { useFetch } from "@/Hooks/useFetch";
+import CancellableActionButton from "@/Components/CancellableActionButton";
+import StackedBarChart from "@/Components/Charts/StackedBarChart";
+import TrendLineChart from "@/Components/Charts/TrendLineChart";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
-import { useState } from "react";
+import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
+import Tabs from "@/Components/Tabs";
+import TogglerButton from "@/Components/TogglerButton";
+import { nonTrendPeriodOptions } from "@/Constants/periodOptions";
+import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
+import { useFetch } from "@/Hooks/useFetch";
+import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
+import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
+import { useWorkweekStore } from "@/Store/workweekListStore";
+import { summaryLotsPLBars, summaryWipPLBarswip } from "@/Utils/chartBars";
+import { visibleLines } from "@/Utils/chartLines";
+import { buildComputeFunction } from "@/Utils/computeTotals";
+import formatDate from "@/Utils/formatDate";
+import formatFriendlyDate from "@/Utils/formatFriendlyDate";
 import {
 	formatPeriodLabel,
 	formatPeriodTrendMessage,
 } from "@/Utils/formatStatusMessage";
-import { nonTrendPeriodOptions } from "@/Constants/periodOptions";
-import { useF1F2PackagesStore } from "@/Store/f1f2PackageListStore";
-import { useSelectedFilteredStore } from "@/Store/selectedFilterStore";
-import { Head } from "@inertiajs/react";
-import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
-import { useWorkweekStore } from "@/Store/workweekListStore";
-import formatFriendlyDate from "@/Utils/formatFriendlyDate";
-import DatePicker from "react-datepicker";
-import formatDate from "@/Utils/formatDate";
-import StackedBarChart from "@/Components/Charts/StackedBarChart";
-import "react-datepicker/dist/react-datepicker.css";
-import { TOGGLE_FACTORY_BUTTONS } from "@/Constants/toggleButtons";
-import { summaryLotsPLBars, summaryWipPLBarswip } from "@/Utils/chartBars";
-import { buildComputeFunction } from "@/Utils/computeTotals";
+import generateDistinctColors from "@/Utils/generateDistinctColors";
 import sortObjectArray from "@/Utils/sortObjectArray";
-import TogglerButton from "@/Components/TogglerButton";
-import CancellableActionButton from "@/Components/CancellableActionButton";
-import { Scatter } from "recharts";
+import { Head } from "@inertiajs/react";
+import clsx from "clsx";
+import { useMemo, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+const factoryFilter = ["F1", "F2", "F3", "Overall"];
+
 const BodySize = () => {
 	const {
 		packageNames: savedSelectedPackages,
@@ -54,6 +59,7 @@ const BodySize = () => {
 	const [selectedPeriod, setSelectedPeriod] = useState(savedPeriod);
 	const [selectedLookBack, setSelectedLookBack] = useState(savedLookBack);
 	const [selectedOffsetPeriod, setSelectedOffsetPeriod] = useState(savedOffset);
+	const [selectedFactoryFilterTrend, setSelectedFactoryFilterTrend] = useState("overall");
 
 	const [factoryVisibleBars, setFactoryVisibleBars] = useState({
 		f1: true,
@@ -86,6 +92,7 @@ const BodySize = () => {
 	};
 
 	const [selectedTotal, setSelectedTotal] = useState("wip");
+	const [selectedMetric, setSelectedMetric] = useState('total_wip');
 
 	const {
 		data: bodySizeWipData,
@@ -98,9 +105,26 @@ const BodySize = () => {
 		params: params,
 	});
 
+	const {
+		data: bodySizeTrend,
+		isLoading: isBodySizeTrendLoading,
+		errorMessage: bodySizeTrendErrorMessage,
+		fetch: bodySizeTrendFetch,
+		abort: bodySizeTrendAbort,
+	} = useFetch(route("api.wip.wipAndLotsByBodySizeTrend"), {
+		params: params,
+	});
+
+	const handleFactoryChange = (selectedFactory) => {
+		setSelectedFactoryFilterTrend(selectedFactory);
+	};
+
 	const handleSearch = () => {
 		bodySizeWipAbort();
 		bodySizeWipFetch();
+
+		bodySizeTrendAbort();
+		bodySizeTrendFetch();
 
 		setFullLabel(
 			formatPeriodTrendMessage(
@@ -172,6 +196,33 @@ const BodySize = () => {
 		setSavedStartDate(start);
 		setSavedEndDate(end);
 	};
+
+	const lineKeys = useMemo(() => {
+    const keys = new Map();
+    (bodySizeTrend?.data ?? []).forEach(row => {
+        Object.keys(row).forEach(key => {
+            if (key.startsWith(`${selectedFactoryFilterTrend.toLowerCase()}_`) && key.endsWith(`_${selectedMetric}`) && !keys.has(key)) {
+                keys.set(key, key);
+            }
+        });
+    });
+
+    const uniqueKeys = [...keys.keys()].sort();
+    const colors = generateDistinctColors(uniqueKeys.length);
+
+    return uniqueKeys.map((key, i) => ({
+        dataKey: key,
+        name: key
+            .replace(`${selectedFactoryFilterTrend.toLowerCase()}_`, '')
+            .replace(`_${selectedMetric}`, ''),
+        yAxisId: 'left',
+        stroke: colors[i],
+        fill: colors[i],
+        connectNulls: true,
+        type: 'basis',
+        dot: false,
+    }));
+}, [bodySizeTrend?.data, selectedFactoryFilterTrend, selectedMetric]);
 
 	const commonChartProps = ({ key, fillWip, fillLot }) => {
 		return {
@@ -265,6 +316,13 @@ const BodySize = () => {
 		() => bodySizeWipData?.data?.f3,
 		[bodySizeWipData],
 	);
+
+	const chartTitle = (suffix) => {
+		const packages = selectedPackageNames.length > 3
+    ? `${selectedPackageNames.slice(0, 3).join(", ")} +${selectedPackageNames.length - 3} more`
+    : selectedPackageNames.join(", ") || "All Packages";
+		return `${packages} · ${selectedFactoryFilterTrend} ${suffix}`;
+	};
 
 	return (
 		<>
@@ -418,6 +476,37 @@ const BodySize = () => {
 				{bodySizeWipErrorMessage ? bodySizeWipErrorMessage : ""}
 			</div>
 
+			<div className="flex gap-2 items-center">
+				<Tabs
+					options={factoryFilter}
+					selectedFactory={selectedFactoryFilterTrend}
+					handleFactoryChange={handleFactoryChange}
+				/>
+
+				<div className="flex gap-2">
+					{['total_wip', 'total_lots'].map(metric => (
+						<button
+							key={metric}
+							type="button"
+							className={clsx('btn btn-sm', selectedMetric === metric ? 'btn-primary' : 'btn-ghost')}
+							onClick={() => setSelectedMetric(metric)}
+						>
+							{metric === 'total_wip' ? 'WIP Qty' : 'Lots'}
+						</button>
+					))}
+				</div>
+			</div>
+
+			<TrendLineChart
+				data={bodySizeTrend?.data || []}
+				xKey={"label"}
+				height={400}
+				isLoading={isBodySizeTrendLoading}
+				errorMessage={bodySizeTrendErrorMessage}
+				title={chartTitle(`Body Size ${selectedMetric.replace("_", " ")}`)}
+				lines={lineKeys}
+			/>
+
 			<OverallChart
 				data={sortedAllPackageFilteredData || []}
 				selectedTotal={selectedTotal}
@@ -502,7 +591,6 @@ const OverallChart = ({
 				errorMessage={bodySizeWipErrorMessage}
 				visibleBars={factoryVisibleBars}
 			>
-				{/* <Scatter dataKey="f1_total_lots" fill="red" /> */}
 			</StackedBarChart>
 		</div>
 	);

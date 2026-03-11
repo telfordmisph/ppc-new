@@ -23,6 +23,7 @@ const F3ImportPage = () => {
 	const uploaderF3Ref = useRef(null);
 	const manualF3ImportRef = useRef(null);
 	const [selectedF3File, setSelectedF3File] = useState(null);
+	const [importDate, setImportDate] = useState('');
 
 	const f3Label = "F3 WIP & OUTS";
 
@@ -41,6 +42,7 @@ const F3ImportPage = () => {
 
 		const formData = new FormData();
 		formData.append("file", selectedF3File);
+		if (importDate) formData.append("import_date", importDate);
 		runAsyncToast({
 			action: async () => {
 				const result = await importF3(route("import.importF3"), {
@@ -160,13 +162,37 @@ const F3ImportPage = () => {
 									import progress (if any) will block this action.
 								</p>
 
-								<div className="flex justify-end gap-2">
+								<div className="flex justify-end items-end gap-2">
+									<div className="form-control">
+										<label className="label">
+											<span className="label-text">Import Date <span className="text-base-content/50">(leave blank to use today)</span></span>
+										</label>
+										<div className="flex gap-2 items-center">
+											<input
+												type="date"
+												className="input input-bordered"
+												value={importDate}
+												max={new Date().toISOString().split('T')[0]}
+												onChange={(e) => setImportDate(e.target.value)}
+											/>
+											{importDate && (
+												<button
+													type="button"
+													className="btn btn-ghost btn-sm"
+													onClick={() => setImportDate('')}
+												>
+													✕
+												</button>
+											)}
+										</div>
+									</div>
 									<button
 										type="button"
 										className="btn btn-soft btn-warning"
 										onClick={async () => {
 											manualF3ImportRef.current?.close();
 											handleManualF3Import();
+											setImportDate('')
 										}}
 										disabled={isImportF3Loading}
 									>
@@ -179,7 +205,7 @@ const F3ImportPage = () => {
 									<button
 										type="button"
 										className="btn"
-										onClick={() => manualF3ImportRef.current?.close()}
+										onClick={() => {manualF3ImportRef.current?.close(), setImportDate('')}}
 										disabled={isImportF3Loading}
 									>
 										Cancel

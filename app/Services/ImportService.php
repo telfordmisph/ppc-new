@@ -152,17 +152,18 @@ class ImportService
     return $this->processCsvImport($tempFile, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP']);
   }
 
-  public function importF1F2WIP($importedBy = null, $file, $extension = '.csv')
+  public function importF1F2WIP($importedBy = null, $file, $importDate = null, $extension = '.csv')
   {
     date_default_timezone_set('Asia/Manila');
     $path = $file->getPathname();
     $tmpPath = $path . $extension;
     rename($path, $tmpPath);
+    $importDate = $importDate ?? now()->toDateString();
 
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tmpPath);
 
-    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP']);
+    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP'], $importDate);
   }
 
   public function ftpRootImportF1F2OUT($importedBy = null): array
@@ -182,17 +183,18 @@ class ImportService
   }
 
 
-  public function importF1F2OUT($importedBy = null, $file, $extension = '.csv')
+  public function importF1F2OUT($importedBy = null, $file, $importDate = null, $extension = '.csv')
   {
     date_default_timezone_set('Asia/Manila');
     $path = $file->getPathname();
     $tmpPath = $path . $extension;
     rename($path, $tmpPath);
+    $importDate = $importDate ?? now()->toDateString();
 
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tmpPath);
 
-    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT']);
+    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT'], $importDate);
   }
 
   private function processCsvImport(
@@ -202,7 +204,8 @@ class ImportService
     array $expectedHeaders,
     $repository,
     string $lockKey,
-    callable $rowFormatter
+    callable $rowFormatter,
+    $importDate = null
   ): array {
     $headersData = $this->excelValidator->getExcelCanonicalHeaderSpout($filePath, $expectedHeaders);
 
@@ -228,7 +231,7 @@ class ImportService
       $reader->open($filePath);
       $currentRowIndex = 0;
 
-      $repository->deleteTodayRecords();
+      $repository->deleteTodayRecords($importDate);
 
       foreach ($reader->getSheetIterator() as $sheet) {
         foreach ($sheet->getRowIterator() as $row) {
@@ -243,6 +246,7 @@ class ImportService
 
           // custom formatting per type
           $rowData = $rowFormatter($rowData);
+          $rowData['import_date'] = $importDate;
 
           $chunk[] = $rowData;
 
@@ -629,7 +633,7 @@ class ImportService
     }
   }
 
-  public function importF3($importedBy = null, $file)
+  public function importF3($importedBy = null, $file, $importDate = null)
   {
     try {
       $spreadsheet = IOFactory::load($file->getPathname(), $this->flags);
@@ -652,7 +656,7 @@ class ImportService
 
       DB::beginTransaction();
 
-      $this->f3WipRepository->deleteTodayRecords();
+      $this->f3WipRepository->deleteTodayRecords($importDate);
 
       foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
         $cellIterator = $row->getCellIterator(endColumn: $lastColumn);
@@ -669,6 +673,7 @@ class ImportService
         $rowData['date_loaded'] = $this->parseDate($rowData['date_loaded'] ?? null);
         $rowData['actual_date_time'] = $this->parseDate($rowData['actual_date_time'] ?? null);
         $rowData['date_commit'] = $this->parseDate($rowData['date_commit'] ?? null);
+        $rowData['import_date'] = $importDate;
 
         $rowData['doable'] = $this->sanitizeInteger($rowData['doable'] ?? null);
         $rowData['qty'] = $this->sanitizeInteger($rowData['qty'] ?? null);

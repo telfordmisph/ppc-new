@@ -157,15 +157,15 @@ class F1F2WipRepository
 
     if ($joinPpc == 'PL1') {
       $query->where(function ($q) use ($partName) {
-        $q->Where('plref.production_line', 'PL1')
-          ->orwhereIn('wip.Part_Name', $partName);
+        $q->Where('plref.production_line', 'PL1');
+        // ->orwhereIn('wip.Part_Name', $partName);
       });
     }
 
     if ($joinPpc == 'PL6') {
       $query->where(function ($q) use ($partName) {
-        $q->where('plref.production_line', 'PL6')
-          ->whereNotIn('wip.Part_Name', $partName);
+        $q->where('plref.production_line', 'PL6');
+        // ->whereNotIn('wip.Part_Name', $partName);
       });
     }
 
@@ -215,9 +215,10 @@ class F1F2WipRepository
     return $query;
   }
 
-  public function deleteTodayRecords()
+  public function deleteTodayRecords($date = null)
   {
-    return CustomerDataWip::where('import_date', Carbon::today())->delete();
+    $date = $date ?? Carbon::today();
+    return CustomerDataWip::where('import_date', $date)->delete();
   }
 
   public function getTrend(
@@ -228,7 +229,8 @@ class F1F2WipRepository
     $endDate,
     $workweeks = "",
     $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Lot_Id as lot_id', 'wip.Package_Name as package_name'],
-    $aggregateColumns = null
+    $aggregateColumns = null,
+    $additionalFields = [],
   ) {
     $selectColumns = !empty($selectColumns) ? implode(', ', $selectColumns) : "1";
 
@@ -295,6 +297,7 @@ class F1F2WipRepository
       $endDate,
       column: WipConstants::FACTORY_AGGREGATES[$factory]['wip']['dateColumn'],
       aggregateColumns: $aggregateColumns,
+      additionalFields: $additionalFields,
       workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
     );
   }

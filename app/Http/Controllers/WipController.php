@@ -204,6 +204,21 @@ class WipController extends Controller
     );
   }
 
+  public function getWipAndLotsByBodySizeTrend(Request $request)
+  {
+    $packageName = $this->parsePackageName($request);
+    $periodParams = $this->parsePeriodParams($request);
+    $workweekParams = $this->parseWorkweek($request);
+    return $this->wipService->getWipAndLotsByBodySizeTrend(
+      $packageName,
+      $periodParams['period'],
+      $periodParams['startDate'],
+      $periodParams['endDate'],
+      $workweekParams['useWorkweek'],
+      $workweekParams['workweek'],
+    );
+  }
+
   public function getWipOutCapacitySummaryTrend(Request $request)
   {
 

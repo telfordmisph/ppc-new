@@ -36,19 +36,19 @@ class F3WipRepository
     $this->packageGroupRepo = $packageGroupRepo;
   }
 
-  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true, $joinPpc = null)
+  public function getTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true, $joinPpc = null, $aggregateColumns = ['SUM(f3.qty)' => 'total_wip'], $additionalFields = [])
   {
     $query = $this->baseF3Query($joinPpc);
 
     if ($aggregate) {
       $query = $this->applyTrendAggregation(
-
         $query,
         $period,
         $startDate,
         $endDate,
         'f3.date_loaded',
-        ['SUM(f3.qty)' => 'total_wip'],
+        $aggregateColumns,
+        additionalFields: $additionalFields,
         workRange: $this->analogCalendarRepo->getDatesByWorkWeekRange($workweeks)['range'],
       );
     } else {

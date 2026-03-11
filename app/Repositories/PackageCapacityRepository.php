@@ -75,8 +75,8 @@ class PackageCapacityRepository
     foreach ($rows as $r) {
       $from = Carbon::parse($r->effective_from);
       $to = $r->effective_to
-        ? Carbon::parse($r->effective_to)
-        : $end;
+        ? Carbon::parse($r->effective_to)->min(Carbon::parse($end))
+        : Carbon::parse($end);
 
       while ($from <= $to) {
         $result[] = [
