@@ -114,34 +114,38 @@ export default function F3List() {
 		auto: false,
 	});
 
-	const handleCellChange = useCallback((rowIndex, columnId, value) => {
-		setData((prevData) => {
-			if (prevData[rowIndex][columnId] === value) {
-				return prevData;
-			}
-			const newData = [...prevData];
-			newData[rowIndex] = { ...newData[rowIndex], [columnId]: value };
+	// const handleCellChange = (rowIndex, columnId, value) => {
+	// 	updateData(rowIndex, columnId, value);
+	// };
 
-			const rowId = newData[rowIndex].id;
+	// const handleCellChange = useCallback((rowIndex, columnId, value) => {
+	// 	setData((prevData) => {
+	// 		if (prevData[rowIndex][columnId] === value) {
+	// 			return prevData;
+	// 		}
+	// 		const newData = [...prevData];
+	// 		newData[rowIndex] = { ...newData[rowIndex], [columnId]: value };
 
-			setEditedRows((prev) => ({
-				...prev,
-				[rowId]: {
-					...prev[rowId],
-					[columnId]: value,
-				},
-			}));
+	// 		const rowId = newData[rowIndex].id;
 
-			return newData;
-		});
-	}, []);
+	// 		setEditedRows((prev) => ({
+	// 			...prev,
+	// 			[rowId]: {
+	// 				...prev[rowId],
+	// 				[columnId]: value,
+	// 			},
+	// 		}));
+
+	// 		return newData;
+	// 	});
+	// }, []);
 
 	const statusColumn = React.useMemo(
 		() => ({
 			accessorKey: "status",
 			header: "Status",
 			size: 200,
-			cell: React.memo(({ getValue, row, column }) => {
+			cell: React.memo(({ getValue, row, column, table }) => {
 				const value = getValue();
 				const isShipped = value === "SHIPPED";
 
@@ -152,7 +156,10 @@ export default function F3List() {
 							value={value}
 							rowIndex={row.index}
 							columnId={column.id}
-							onChange={handleCellChange}
+							onChange={(rowIndex, columnId, value) =>
+								table.options.meta.updateData(rowIndex, columnId, value)
+							}
+							// onChange={handleCellChange}
 							buttonClassname={
 								isShipped ? "text-neutral bg-green-300 rounded-none" : ""
 							}
@@ -204,13 +211,16 @@ export default function F3List() {
 				accessorKey: "date_received",
 				header: "Date Received",
 				size: 260,
-				cell: ({ getValue, row, column }) => (
+				cell: ({ getValue, row, column, table }) => (
 					<DateCell
 						dateType={"datetime"}
 						value={getValue()}
 						rowIndex={row.index}
 						columnId={column.id}
-						onChange={handleCellChange}
+						// onChange={handleCellChange}
+						onChange={(rowIndex, columnId, value) =>
+							table.options.meta.updateData(rowIndex, columnId, value)
+						}
 					/>
 				),
 			},
@@ -279,13 +289,16 @@ export default function F3List() {
 			{
 				accessorKey: "date_commit",
 				header: "Date Commit",
-				cell: ({ getValue, row, column }) => (
+				cell: ({ getValue, row, column, table }) => (
 					<DateCell
 						dateType={"date"}
 						value={getValue()}
 						rowIndex={row.index}
 						columnId={column.id}
-						onChange={handleCellChange}
+						// onChange={handleCellChange}
+						onChange={(rowIndex, columnId, value) =>
+							table.options.meta.updateData(rowIndex, columnId, value)
+						}
 						options={{
 							dateFormat: "yyyy-MM-dd",
 							showTimeSelect: false,
@@ -299,13 +312,16 @@ export default function F3List() {
 			{
 				accessorKey: "actual_date_time",
 				header: "Actual Date/Time",
-				cell: ({ getValue, row, column }) => (
+				cell: ({ getValue, row, column, table }) => (
 					<DateCell
 						dateType={"datetime"}
 						value={getValue()}
 						rowIndex={row.index}
 						columnId={column.id}
-						onChange={handleCellChange}
+						// onChange={handleCellChange}
+						onChange={(rowIndex, columnId, value) =>
+							table.options.meta.updateData(rowIndex, columnId, value)
+						}
 						options={{
 							dateFormat: "yyyy-MM-dd",
 							showTimeSelect: false,
@@ -509,6 +525,8 @@ export default function F3List() {
 		columnVisibility,
 		setColumnVisibility,
 	});
+
+	console.log("🚀 ~ F3List ~ editedRows:", editedRows);
 
 	const handleSaveClick = () => {
 		const computedChanges = getChanges();

@@ -9,6 +9,8 @@ use App\Http\Controllers\PackageCapacityController;
 use App\Http\Controllers\ImportTraceController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\PlPackageMasterController;
+use App\Http\Controllers\PlRuleController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\F3PackageNamesController;
 use App\Http\Controllers\F3Controller;
@@ -75,6 +77,16 @@ Route::middleware([ApiAuthMiddleware::class])
         Route::patch('/{id}', [F3RawPackageController::class, 'update'])->name('update');
         Route::delete('/{id}', [F3RawPackageController::class, 'destroy'])->name('delete');
       });
+    });
+
+    Route::prefix('pl-ref')->name('api.pl-ref.')->group(function () {
+      // Package Master
+      Route::patch('/master/bulk-update', [PlPackageMasterController::class, 'bulkUpdate'])->name('master.bulkUpdate');
+      Route::delete('/master/mass-delete', [PlPackageMasterController::class, 'massDelete'])->name('master.massDelete');
+
+      // PL Rules
+      Route::patch('/rules/bulk-update', [PlRuleController::class, 'bulkUpdate'])->name('rules.bulkUpdate');
+      Route::delete('/rules/mass-delete', [PlRuleController::class, 'massDelete'])->name('rules.massDelete');
     });
 
     Route::prefix('f3-wip-out')->name('api.f3.')->group(function () {

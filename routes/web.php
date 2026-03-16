@@ -10,6 +10,8 @@ use App\Http\Controllers\AutoImportController;
 use App\Http\Controllers\PackageGroupController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\MachineController;
+use App\Http\Controllers\PlPackageMasterController;
+use App\Http\Controllers\PlRuleController;
 use App\Http\Controllers\BodySizeController;
 use App\Http\Controllers\F3RawPackageController;
 use App\Http\Controllers\PackageCapacityController;
@@ -74,6 +76,11 @@ Route::prefix('f3-wip-out')->name('f3.')->group(function () {
         Route::get('/', [F3Controller::class, 'index'])->name('index');
         // Route::get('/{id}/edit', [F3Controller::class, 'upsert'])->name('edit');
     });
+});
+
+Route::prefix('pl-ref')->name('pl-ref.')->group(function () {
+    Route::get('/master', [PlPackageMasterController::class, 'index'])->name('master.index');
+    Route::get('/rules',  [PlRuleController::class,  'index'])->name('rules.index');
 });
 
 Route::prefix('f3')->name('f3.')->group(function () {

@@ -1,13 +1,15 @@
+import clsx from "clsx";
 import React from "react";
 
 const MaxItemDropdown = ({
 	maxItem,
 	changeMaxItemPerPage,
 	maxItems = [10, 25, 50, 100],
+	buttomClassName = "",
 }) => {
 	return (
 		<div className="dropdown dropdown-bottom">
-			<div tabIndex={0} className="m-1 btn">
+			<div tabIndex={0} className={clsx("m-1 btn", buttomClassName)}>
 				{`Show ${maxItem} items`}
 			</div>
 			<ul

@@ -159,6 +159,7 @@ class WipConstants
     ],
   ];
 
+  public const FOCUS_GROUP_F1_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI'];
   public const F2_OUT_FOCUS_GROUP_INCLUSION = ['CV', 'LT', 'LTCL', 'LTI'];
   // public const F2_OUT_FOCUS_GROUP_INCLUSION = ['CV1', 'DLT', 'WLT', 'SOF'];
   public const F1_OUT_FOCUS_GROUP_EXCLUSION = ['CV', 'CV1', 'LT', 'LTCL', 'LTI', 'DLT', 'WLT', 'SOF'];

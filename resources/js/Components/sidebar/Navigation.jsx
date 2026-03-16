@@ -9,6 +9,7 @@ import {
 	LuListChecks,
 	LuPackage,
 } from "react-icons/lu";
+import { MdConveyorBelt } from "react-icons/md";
 import { TbProgressCheck, TbResize, TbSettings } from "react-icons/tb";
 
 export default function NavLinks({ isCollapse = false }) {
@@ -75,6 +76,12 @@ export default function NavLinks({ isCollapse = false }) {
 				label="Maintenance"
 				icon={<TbSettings className="w-4 h-4" />}
 				links={[
+					{
+						href: route("pl-ref.master.index"),
+						label: "Production Line",
+						icon: <MdConveyorBelt className="w-4 h-4" />,
+						notification: false,
+					},
 					{
 						href: route("package.group.index"),
 						label: "Package Group",

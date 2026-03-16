@@ -106,10 +106,10 @@ trait F3Trait
     }
 
     if ($joinPpc) {
-      $query->join(self::PPC_TABLE . ' as plref', 'f3_pkg.package_name', '=', 'plref.Package');
+      // $query->join(self::PPC_TABLE . ' as plref', 'f3_pkg.package_name', '=', 'plref.Package');
 
       if ($joinPpc !== true) {
-        $query->where('plref.production_line', $joinPpc);
+        $query->where('f3.production_line', $joinPpc);
       }
     }
 

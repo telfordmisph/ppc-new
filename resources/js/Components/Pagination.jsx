@@ -14,7 +14,7 @@ const Pagination = ({
 	return (
 		<div
 			className={clsx(
-				"flex justify-between items-center w-full mt-4 sticky -bottom-8 inset-shadow-lg rounded-lg p-2",
+				"flex justify-between items-center w-full mt-4 sticky -bottom-8 inset-shadow-lg rounded-lg px-2",
 				contentClassName,
 			)}
 		>

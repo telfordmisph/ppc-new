@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\F3RawPackage;
 use App\Models\F3PackageName;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class F3RawPackageRepository
 {
@@ -77,6 +78,20 @@ class F3RawPackageRepository
   public function all()
   {
     return F3RawPackage::all();
+  }
+
+  public function getAllAsMap(): array
+  {
+    return DB::table('f3_raw_packages')
+      ->join('f3_package_names', 'f3_raw_packages.package_id', '=', 'f3_package_names.id')
+      ->select('f3_raw_packages.id', 'f3_package_names.package_name', 'f3_raw_packages.lead_count')
+      ->get()
+      ->keyBy('id')
+      ->map(fn($row) => [
+        'package_name' => $row->package_name,
+        'lead_count'   => $row->lead_count,
+      ])
+      ->toArray();
   }
 
   /**

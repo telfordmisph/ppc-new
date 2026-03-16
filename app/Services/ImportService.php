@@ -23,20 +23,11 @@ use PhpOffice\PhpSpreadsheet\Reader\IReader;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\CellIterator;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use App\Services\ProductionLineResolver;
 
 class ImportService
 {
   use ParseDateTrait;
-  protected $packageCapacityService;
-  protected $f1f2WipRepository;
-  protected $importTraceRepository;
-  protected $partnameRepository;
-  protected $f1f2WipOutRepository;
-  protected $f3WipRepository;
-  protected $pickUpRepository;
-  protected $f3OutRepository;
-  protected $excelValidator;
-  protected $f3RawPackageRepository;
   protected $csvReader;
   protected $flags = IReader::READ_DATA_ONLY | IReader::IGNORE_ROWS_WITH_NO_CELLS;
   protected $emptyCellFlags = CellIterator::TREAT_EMPTY_STRING_AS_EMPTY_CELL;
@@ -57,6 +48,24 @@ class ImportService
   private const EXPECTED_DAILY_BACKEND_WIP_COLUMNS = 43;
   private const CHUNK_SIZE = 500;
   private const maximumAlreadyExistsRowCount = 100;
+  protected $f1f2WipPlColumnMap = [
+    'package'     => 'Package_Name',
+    'focus_group' => 'Focus_Group',
+    'lead_count'  => 'Lead_Count',
+    'part_name'   => 'Part_Name',
+  ];
+  protected $f1f2OutPlColumnMap = [
+    'package'     => 'package',
+    'focus_group' => 'focus_group',
+    'part_name'   => 'part_name',
+  ];
+
+  protected $f3PlColumnMap = [
+    'package'     => '_package_name',
+    'lead_count'  => '_lead_count',
+    'part_name'   => 'part_number',
+  ];
+
   protected $sheetToArrayArgs = [
     null,  // nullValue
     true,  // calculateFormulas
@@ -67,28 +76,18 @@ class ImportService
   ];
 
   public function __construct(
-    F1F2WipRepository $f1f2WipRepository,
-    F1F2OutRepository $f1f2WipOutRepository,
-    PartnameRepository $partnameRepository,
-    PickUpRepository $pickUpRepository,
-    F3WipRepository $f3WipRepository,
-    F3OutRepository $f3OutRepository,
-    F3RawPackageRepository $f3RawPackageRepository,
-    ImportTraceRepository $importTraceRepository,
-    PackageCapacityService $packageCapacityService,
-    ExcelValidatorService $fileValidator
+    protected F1F2WipRepository $f1f2WipRepository,
+    protected F1F2OutRepository $f1f2WipOutRepository,
+    protected PartnameRepository $partnameRepository,
+    protected PickUpRepository $pickUpRepository,
+    protected F3WipRepository $f3WipRepository,
+    protected F3OutRepository $f3OutRepository,
+    protected F3RawPackageRepository $f3RawPackageRepository,
+    protected ImportTraceRepository $importTraceRepository,
+    protected PackageCapacityService $packageCapacityService,
+    protected ExcelValidatorService $excelValidator,
+    private ProductionLineResolver $resolver
   ) {
-    $this->partnameRepository = $partnameRepository;
-    $this->pickUpRepository = $pickUpRepository;
-    $this->f1f2WipRepository = $f1f2WipRepository;
-    $this->f1f2WipOutRepository = $f1f2WipOutRepository;
-    $this->f3WipRepository = $f3WipRepository;
-    $this->f3OutRepository = $f3OutRepository;
-    $this->f3RawPackageRepository = $f3RawPackageRepository;
-    $this->importTraceRepository = $importTraceRepository;
-    $this->packageCapacityService = $packageCapacityService;
-    $this->excelValidator = $fileValidator;
-
     $this->csvReader = new Csv();
   }
 
@@ -149,7 +148,7 @@ class ImportService
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tempFile);
 
-    return $this->processCsvImport($tempFile, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP']);
+    return $this->processCsvImport($tempFile, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP'], plColumnMap: $this->f1f2WipPlColumnMap);
   }
 
   public function importF1F2WIP($importedBy = null, $file, $importDate = null, $extension = '.csv')
@@ -158,12 +157,11 @@ class ImportService
     $path = $file->getPathname();
     $tmpPath = $path . $extension;
     rename($path, $tmpPath);
-    $importDate = $importDate ?? now()->toDateString();
 
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tmpPath);
 
-    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP'], $importDate);
+    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_WIP_EXPECTED_HEADERS, $this->f1f2WipRepository, self::WIP_QUANTITY_LOCK_KEY, [$this, 'rowFormatterWIP'], $importDate, plColumnMap: $this->f1f2WipPlColumnMap);
   }
 
   public function ftpRootImportF1F2OUT($importedBy = null): array
@@ -179,7 +177,7 @@ class ImportService
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tempFile);
 
-    return $this->processCsvImport($tempFile, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT']);
+    return $this->processCsvImport($tempFile, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT'], plColumnMap: $this->f1f2OutPlColumnMap);
   }
 
 
@@ -189,12 +187,37 @@ class ImportService
     $path = $file->getPathname();
     $tmpPath = $path . $extension;
     rename($path, $tmpPath);
-    $importDate = $importDate ?? now()->toDateString();
 
     $reader = ReaderEntityFactory::createCSVReader();
     $reader->open($tmpPath);
 
-    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT'], $importDate);
+    return $this->processCsvImport($tmpPath, $reader, $importedBy, WipConstants::IMPORT_MANUAL_F1F2_OUT_EXPECTED_HEADERS, $this->f1f2WipOutRepository, self::WIP_OUTS_LOCK_KEY, [$this, 'rowFormatterOUT'], $importDate, plColumnMap: $this->f1f2OutPlColumnMap);
+  }
+
+  private function resolveProductionLines(array $chunk, array $col): array
+  {
+    $combos = collect($chunk)
+      ->map(fn($row) => [
+        'package'    => $row[$col['package']],
+        'factory'    => ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]),
+        'lead_count' => isset($col['lead_count']) ? $row[$col['lead_count']] : null,
+        'part_name'  => $row[$col['part_name']],
+      ])
+      ->unique(fn($c) => "{$c['package']}|{$c['factory']}|{$c['lead_count']}|{$c['part_name']}")
+      ->values();
+
+    $resolved = $combos->mapWithKeys(fn($c) => [
+      "{$c['package']}|{$c['factory']}|{$c['lead_count']}|{$c['part_name']}"
+      => $this->resolver->resolve($c['package'], $c['factory'], $c['lead_count'], $c['part_name'])
+    ]);
+
+    return array_map(function ($row) use ($resolved, $col) {
+      $factory = ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]);
+      $leadCount = isset($col['lead_count']) ? $row[$col['lead_count']] : null;
+      $key = "{$row[$col['package']]}|{$factory}|{$leadCount}|{$row[$col['part_name']]}";
+      $row['production_line'] = $resolved->get($key);
+      return $row;
+    }, $chunk);
   }
 
   private function processCsvImport(
@@ -205,9 +228,11 @@ class ImportService
     $repository,
     string $lockKey,
     callable $rowFormatter,
-    $importDate = null
+    $importDate = null,
+    ?array $plColumnMap = null
   ): array {
     $headersData = $this->excelValidator->getExcelCanonicalHeaderSpout($filePath, $expectedHeaders);
+    $importDate = $importDate ?? now()->toDateString();
 
     if ($headersData['status'] === 'error') {
       return $headersData;
@@ -251,6 +276,9 @@ class ImportService
           $chunk[] = $rowData;
 
           if (count($chunk) >= self::CHUNK_SIZE) {
+            if ($plColumnMap) {
+              $chunk = $this->resolveProductionLines($chunk, $plColumnMap);
+            }
             $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
             $chunk = [];
           }
@@ -259,6 +287,9 @@ class ImportService
       }
 
       if (!empty($chunk)) {
+        if ($plColumnMap) {
+          $chunk = $this->resolveProductionLines($chunk, $plColumnMap);
+        }
         $this->insertChunk($chunk, fn($c) => $repository->insertManyCustomers($c), $successCount);
       }
 
@@ -658,6 +689,8 @@ class ImportService
 
       $this->f3WipRepository->deleteTodayRecords($importDate);
 
+      $packageNameMap = $this->f3RawPackageRepository->getAllAsMap();
+
       foreach ($sheet->getRowIterator($headerRowIndex + 1) as $row) {
         $cellIterator = $row->getCellIterator(endColumn: $lastColumn);
 
@@ -691,8 +724,22 @@ class ImportService
         $chunksWip[] = $rowData;
 
         if (count($chunksWip) >= self::CHUNK_SIZE) {
+          $chunk = array_map(function ($row) use ($packageNameMap) {
+            $meta = $packageNameMap[$row['package']] ?? null;
+            $row['_package_name'] = $meta['package_name'] ?? null;
+            $row['_lead_count']   = $meta['lead_count'] ?? null;
+            return $row;
+          }, $chunksWip);
+
+          $chunk = $this->resolveProductionLines($chunk, $this->f3PlColumnMap);
+
+          $chunk = array_map(function ($row) {
+            unset($row['_package_name'], $row['_lead_count']);
+            return $row;
+          }, $chunk);
+
           $this->insertChunk(
-            $chunksWip,
+            $chunk,
             fn($chunks) => $this->f3WipRepository->insertManyF3($chunks),
             $successCount
           );
@@ -701,8 +748,22 @@ class ImportService
       }
 
       if (!empty($chunksWip)) {
+        $chunk = array_map(function ($row) use ($packageNameMap) {
+          $meta = $packageNameMap[$row['package']] ?? null;
+          $row['_package_name'] = $meta['package_name'] ?? null;
+          $row['_lead_count']   = $meta['lead_count'] ?? null;
+          return $row;
+        }, $chunksWip);
+
+        $chunk = $this->resolveProductionLines($chunk, $this->f3PlColumnMap);
+
+        $chunk = array_map(function ($row) {
+          unset($row['_package_name'], $row['_lead_count']);
+          return $row;
+        }, $chunk);
+
         $this->insertChunk(
-          $chunksWip,
+          $chunk,
           fn($chunks) => $this->f3WipRepository->insertManyF3($chunks),
           $successCount
         );

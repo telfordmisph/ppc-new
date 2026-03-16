@@ -77,20 +77,20 @@ class F1F2OutRepository
 
   public function joinPL($query, $partName = [], $joinPpc = '')
   {
-    $query->join(self::PPC_TABLE . ' as plref', 'out.package', '=', 'plref.Package');
+    // $query->join(self::PPC_TABLE . ' as plref', 'out.package', '=', 'plref.Package');
 
     if ($joinPpc == 'PL1') {
-      $query->where(function ($q) use ($partName) {
-        $q->Where('plref.production_line', 'PL1')
-          ->orwhereIn('out.part_name', $partName);
-      });
+      // $query->where(function ($q) use ($partName) {
+      $query->Where('out.production_line', 'PL1');
+      // ->orwhereIn('out.part_name', $partName);
+      // });
     }
 
     if ($joinPpc == 'PL6') {
-      $query->where(function ($q) use ($partName) {
-        $q->where('plref.production_line', 'PL6')
-          ->whereNotIn('out.part_name', $partName);
-      });
+      // $query->where(function ($q) use ($partName) {
+      $query->where('out.production_line', 'PL6');
+      // ->whereNotIn('out.part_name', $partName);
+      // });
     }
 
     return $query;

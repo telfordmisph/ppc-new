@@ -153,20 +153,14 @@ class F1F2WipRepository
 
   public function joinPL($query, $partName = [], $joinPpc = ''): Builder
   {
-    $query->join(self::PPC_TABLE . ' as plref', 'wip.Package_Name', '=', 'plref.Package');
+    // $query->join(self::PPC_TABLE . ' as plref', 'wip.Package_Name', '=', 'plref.Package');
 
     if ($joinPpc == 'PL1') {
-      $query->where(function ($q) use ($partName) {
-        $q->Where('plref.production_line', 'PL1');
-        // ->orwhereIn('wip.Part_Name', $partName);
-      });
+      $query->Where('wip.production_line', 'PL1');
     }
 
     if ($joinPpc == 'PL6') {
-      $query->where(function ($q) use ($partName) {
-        $q->where('plref.production_line', 'PL6');
-        // ->whereNotIn('wip.Part_Name', $partName);
-      });
+      $query->where('wip.production_line', 'PL6');
     }
 
     return $query;

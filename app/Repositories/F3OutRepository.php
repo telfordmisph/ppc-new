@@ -56,7 +56,7 @@ class F3OutRepository
   {
     return $this->overallByDate($joinPpc, $useWorkweek, $workweek, $startDate, $endDate)
       ->when($joinPpc, function ($query, $joinPpcValue) {
-        return $query->where('plref.production_line', $joinPpcValue);
+        return $query->where('f3.production_line', $joinPpcValue);
       })
       ->sum('f3.qty') ?? 0;
   }

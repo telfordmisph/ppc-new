@@ -27,5 +27,6 @@ class F1F2Out extends Model
     'process_group',
     'ramp_time',
     'import_date',
+    'production_line',
   ];
 }

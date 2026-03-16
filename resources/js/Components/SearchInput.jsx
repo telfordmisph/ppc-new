@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FaSearch } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const SearchInput = React.memo(function SearchInput({
 	inputClassName = "",
@@ -27,6 +28,15 @@ const SearchInput = React.memo(function SearchInput({
 				value={searchInput}
 				onChange={(e) => setSearchInput(e.target.value)}
 			/>
+			{searchInput && (
+				<button
+					type="button"
+					onClick={() => setSearchInput("")}
+					className="ml-2 opacity-50 hover:opacity-100"
+				>
+					<MdClose />
+				</button>
+			)}
 		</label>
 	);
 });

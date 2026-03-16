@@ -54,6 +54,7 @@ class CustomerDataWip extends Model
     'Assy_Site',
     'Bake_Time_Temp',
     'imported_by',
-    'import_date'
+    'import_date',
+    'production_line',
   ];
 }
