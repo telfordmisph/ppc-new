@@ -542,44 +542,32 @@ class WipService
 
   public function getWIPQuantityAndLotsTotal($useWorkweek, $workweek, $startDate = null, $endDate = null, $includePL = true)
   {
-    // NOTE: might be suitable to have another filtration here (for production line & factory)
-    // current solution: client-side grouping for production line
-    // -----------------------------
-    //  BASE QUERY SETUP
-    // -----------------------------
-    $baseQuery = DB::table(self::F1F2_TABLE . ' as wip')
+    $f1Query = DB::table(self::F1F2_TABLE . ' as wip')
       ->selectRaw(
         $includePL
-          ? 'wip.Package_Name, wip.production_line as PL, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) as total_lots'
-          : 'wip.Package_Name, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) as total_lots'
-      );
+          ? 'wip.Package_Name, wip.production_line as PL, SUM(wip.Qty) AS f1_total_wip, COUNT(DISTINCT wip.Lot_Id) as f1_total_lots'
+          : 'wip.Package_Name, SUM(wip.Qty) AS f1_total_wip, COUNT(DISTINCT wip.Lot_Id) as f1_total_lots'
+      )
+      ->where(fn($q) => $this->f1f2WipRepo->f1Filters($q, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip'))
+      ->groupBy('wip.Package_Name', 'wip.production_line');
+    $f1Query = $this->applyDateOrWorkweekWipFilter($f1Query, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
 
-    $baseQuery = $this->applyDateOrWorkweekWipFilter($baseQuery, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
-    $baseQuery = $baseQuery->groupBy($includePL ? ['Package_Name', 'wip.production_line'] : ['Package_Name']);
+    $f2Query = DB::table(self::F1F2_TABLE . ' as wip')
+      ->selectRaw(
+        $includePL
+          ? 'wip.Package_Name, wip.production_line as PL, SUM(wip.Qty) AS f2_total_wip, COUNT(DISTINCT wip.Lot_Id) as f2_total_lots'
+          : 'wip.Package_Name, SUM(wip.Qty) AS f2_total_wip, COUNT(DISTINCT wip.Lot_Id) as f2_total_lots'
+      )
+      ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, WipConstants::EWAN_PROCESS, 'wip'))
+      ->groupBy('wip.Package_Name', 'wip.production_line');
+    $f2Query = $this->applyDateOrWorkweekWipFilter($f2Query, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
 
-    // -----------------------------
-    //  F1 QUERIES
-    // -----------------------------
-    $f1Query = (clone $baseQuery)
-      ->where(fn($q) => $this->f1f2WipRepo->f1Filters($q, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip'));
-
-    Log::info("F1 query: " . SqlDebugHelper::prettify($f1Query->toSql(), $f1Query->getBindings()));
-
-    // -----------------------------
-    //  F2 QUERIES
-    // -----------------------------
-    $f2Query = (clone $baseQuery)
-      ->where(fn($q) => $this->f1f2WipRepo->applyF2Filters($q, WipConstants::EWAN_PROCESS, 'wip'));
-
-    // -----------------------------
-    //  F3 QUERIES
-    // -----------------------------
-    $f3Query = $this->f3WipRepo->baseF3Query($includePL);
+    $f3Query = $this->f3WipRepo->baseF3Query();
     $f3Query = $this->applyDateOrWorkweekWipFilter($f3Query, 'f3.date_loaded', $useWorkweek, $workweek, $startDate, $endDate);
     $f3Query = $f3Query->selectRaw(
       $includePL
-        ? 'f3_pkg.package_name as Package_Name, f3.production_line as PL, SUM(f3.qty) AS total_wip, COUNT(DISTINCT f3.lot_number) AS total_lots'
-        : 'f3_pkg.package_name as Package_Name, SUM(f3.qty) AS total_wip, COUNT(DISTINCT f3.lot_number) AS total_lots'
+        ? 'f3_pkg.package_name as Package_Name, f3.production_line as PL, SUM(f3.qty) AS f3_total_wip, COUNT(DISTINCT f3.lot_number) AS f3_total_lots'
+        : 'f3_pkg.package_name as Package_Name, SUM(f3.qty) AS f3_total_wip, COUNT(DISTINCT f3.lot_number) AS f3_total_lots'
     );
     if ($includePL) {
       $f3Query->groupBy('f3_pkg.package_name', 'f3.production_line');
@@ -587,143 +575,16 @@ class WipService
       $f3Query->groupBy('f3_pkg.package_name');
     }
 
-    // =====================================================================
-    //  SECTION 1: RESULTS (PACKAGE TOTALS)
-    // =====================================================================
+    $results = MergeAndAggregate::mergeAndAggregate([$f1Query->get(), $f2Query->get(), $f3Query->get()], ['Package_Name', 'PL']);
 
-    $joinCondition = $includePL
-      ? fn($join, $prefix, $suffix) => $join->on("$prefix.Package_Name", '=', "$suffix.Package_Name")->on("$prefix.PL", '=', "$suffix.PL")
-      : fn($join, $prefix, $suffix) => $join->on("$prefix.Package_Name", '=', "$suffix.Package_Name");
-
-    // f1 LEFT JOIN others
-    $f1Left = DB::table(DB::raw("({$f1Query->toSql()}) as f1"))
-      ->mergeBindings($f1Query)
-      ->leftJoin(DB::raw("({$f2Query->toSql()}) as f2"), fn($join) => $joinCondition($join, 'f1', 'f2'))
-      ->mergeBindings($f2Query)
-      ->leftJoin(DB::raw("({$f3Query->toSql()}) as f3"), fn($join) => $joinCondition($join, 'f1', 'f3'))
-      ->mergeBindings($f3Query)
-      ->select(
-        'f1.Package_Name as Package_Name',
-        $includePL ? 'f1.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
-        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
-        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
-        DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
-        DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
-        DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
-      );
-
-    Log::info("f1Left: " . SqlDebugHelper::prettify($f1Left->toSql(), $f1Left->getBindings()));
-
-    // f2 LEFT JOIN others
-    $f2Left = DB::table(DB::raw("({$f2Query->toSql()}) as f2"))
-      ->mergeBindings($f2Query)
-      ->leftJoin(DB::raw("({$f1Query->toSql()}) as f1"), fn($join) => $joinCondition($join, 'f2', 'f1'))
-      ->mergeBindings($f1Query)
-      ->leftJoin(DB::raw("({$f3Query->toSql()}) as f3"), fn($join) => $joinCondition($join, 'f2', 'f3'))
-      ->mergeBindings($f3Query)
-      ->select(
-        'f2.Package_Name as Package_Name',
-        $includePL ? 'f2.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
-        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
-        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
-        DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
-        DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
-        DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
-      );
-
-    // f3 LEFT JOIN others
-    $f3Left = DB::table(DB::raw("({$f3Query->toSql()}) as f3"))
-      ->mergeBindings($f3Query)
-      ->leftJoin(DB::raw("({$f1Query->toSql()}) as f1"), fn($join) => $joinCondition($join, 'f3', 'f1'))
-      ->mergeBindings($f1Query)
-      ->leftJoin(DB::raw("({$f2Query->toSql()}) as f2"), fn($join) => $joinCondition($join, 'f3', 'f2'))
-      ->mergeBindings($f2Query)
-      ->select(
-        'f3.Package_Name as Package_Name',
-        $includePL ? 'f3.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
-        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
-        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
-        DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
-        DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
-        DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
-      );
-
-    $lfcspQuery = DB::table(self::F1F2_TABLE . ' as wip')
-      ->selectRaw(
-        $includePL
-          ? "'LFCSP' AS Package_Name, 'PL1' AS PL, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
-          : "'LFCSP' AS Package_Name, SUM(wip.Qty) AS total_wip, COUNT(DISTINCT wip.Lot_Id) AS total_lots"
-      )
-      ->whereIn('wip.Part_Name', WipConstants::SPECIAL_PART_NAMES);
-    $lfcspQuery = $this->f1f2WipRepo->f1Filters($lfcspQuery, WipConstants::REEL_TRANSFER_B3, WipConstants::REEL_TRANSFER_EXCLUDED_STATIONS_F1, 'wip');
-
-    $lfcspQuery = $lfcspQuery->groupBy($includePL ? [DB::raw("'LFCSP'"), DB::raw("'PL1'")] : [DB::raw("'LFCSP'")]);
-    // ->orderByDesc('total_wip');
-    $lfcspQuery = $this->applyDateOrWorkweekWipFilter($lfcspQuery, 'wip.Date_Loaded', $useWorkweek, $workweek, $startDate, $endDate);
-
-    $lfcspLeft = DB::table(DB::raw("({$lfcspQuery->toSql()}) as f1"))
-      ->mergeBindings($lfcspQuery)
-      ->leftJoin(DB::raw("({$f2Query->toSql()}) as f2"), fn($join) => $joinCondition($join, 'f1', 'f2'))
-      ->mergeBindings($f2Query)
-      ->leftJoin(DB::raw("({$f3Query->toSql()}) as f3"), fn($join) => $joinCondition($join, 'f1', 'f3'))
-      ->mergeBindings($f3Query)
-      ->select(
-        'f1.Package_Name as Package_Name',
-        $includePL ? 'f1.PL as PL' : DB::raw("'N/A' as PL"),
-        DB::raw('COALESCE(f1.total_wip, 0) as f1_total_wip'),
-        DB::raw('COALESCE(f2.total_wip, 0) as f2_total_wip'),
-        DB::raw('COALESCE(f3.total_wip, 0) as f3_total_wip'),
-        DB::raw('COALESCE(f1.total_lots, 0) as f1_total_lots'),
-        DB::raw('COALESCE(f2.total_lots, 0) as f2_total_lots'),
-        DB::raw('COALESCE(f3.total_lots, 0) as f3_total_lots')
-      );
-
-    $results = DB::table(DB::raw("(
-      {$f1Left->toSql()}
-      UNION ALL
-      {$f2Left->toSql()}
-      UNION ALL
-      {$f3Left->toSql()}
-      UNION ALL
-      {$lfcspLeft->toSql()}
-      ) as fulljoin"))
-      ->mergeBindings($f1Left)
-      ->mergeBindings($f2Left)
-      ->mergeBindings($f3Left)
-      ->mergeBindings($lfcspLeft)
-      ->select(
-        'Package_Name',
-        $includePL ? 'PL' : DB::raw("'N/A' as PL"),
-        DB::raw('MAX(f1_total_wip) as f1_total_wip'),
-        DB::raw('MAX(f2_total_wip) as f2_total_wip'),
-        DB::raw('MAX(f3_total_wip) as f3_total_wip'),
-        DB::raw('(MAX(f1_total_wip) + MAX(f2_total_wip) + MAX(f3_total_wip)) as total_wip'),
-        DB::raw('MAX(f1_total_lots) as f1_total_lots'),
-        DB::raw('MAX(f2_total_lots) as f2_total_lots'),
-        DB::raw('MAX(f3_total_lots) as f3_total_lots'),
-        DB::raw('(MAX(f1_total_lots) + MAX(f2_total_lots) + MAX(f3_total_lots)) as total_lots')
-      )
-      ->groupBy($includePL ? ['Package_Name', 'PL'] : ['Package_Name'])
-      ->orderByDesc('total_wip');
-
-    Log::info("results: " . SqlDebugHelper::prettify($results->toSql(), $results->getBindings()));
-
-    $results = $results->get();
-
-    $totalwip = $results->sum('total_wip');
-
-    // =====================================================================
-    //  RESPONSE
-    // =====================================================================
-    return response()->json([
-      'status' => 'success',
-      'message' => 'Highly optimized data retrieved successfully',
-      'total_wip' => $totalwip,
-      'data' => $results,
-    ]);
+    return response()->json(
+      [
+        'status' => 'success',
+        'message' => 'Highly optimized data retrieved successfully',
+        // 'total_wip' => $totalwip,
+        'data' => $results,
+      ]
+    );
   }
 
   public function getWipAndLotsByBodySizeTrend($packageNames, $period, $startDate, $endDate, $useWorkweek, $workweek)
