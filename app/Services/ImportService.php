@@ -64,6 +64,7 @@ class ImportService
     'package'     => '_package_name',
     'lead_count'  => '_lead_count',
     'part_name'   => 'part_number',
+    'factory_override' => 'F3',
   ];
 
   protected $sheetToArrayArgs = [
@@ -199,7 +200,9 @@ class ImportService
     $combos = collect($chunk)
       ->map(fn($row) => [
         'package'    => $row[$col['package']],
-        'factory'    => ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]),
+        'factory' => isset($col['factory_override'])
+          ? $col['factory_override']
+          : ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]),
         'lead_count' => isset($col['lead_count']) ? $row[$col['lead_count']] : null,
         'part_name'  => $row[$col['part_name']],
       ])
@@ -212,7 +215,9 @@ class ImportService
     ]);
 
     return array_map(function ($row) use ($resolved, $col) {
-      $factory = ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]);
+      $factory = isset($col['factory_override'])
+        ? $col['factory_override']
+        : ProductionLineResolver::factoryFromFocusGroup($row[$col['focus_group']]);
       $leadCount = isset($col['lead_count']) ? $row[$col['lead_count']] : null;
       $key = "{$row[$col['package']]}|{$factory}|{$leadCount}|{$row[$col['part_name']]}";
       $row['production_line'] = $resolved->get($key);
