@@ -17,7 +17,7 @@ import { FaPlus } from "react-icons/fa6";
 import { MdOutlineDelete } from "react-icons/md";
 
 const ppcPages = {
-	"Package Master": route("pl-ref.master.index"),
+	"PL Reference": route("pl-ref.master.index"),
 	"PL Rules": route("pl-ref.rules.index"),
 };
 
@@ -25,7 +25,7 @@ const PL_OPTIONS = ["PL1", "PL6", null];
 const BOOL_OPTIONS = ["true", "false"];
 
 function PpcPackageMasterPage() {
-	const [selectedPage, setSelectedPage] = useState("Package Master");
+	const [selectedPage, setSelectedPage] = useState("PL Reference");
 
 	const handleSelectPage = (name) => {
 		setSelectedPage(name);
