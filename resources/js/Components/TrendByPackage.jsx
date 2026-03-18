@@ -71,7 +71,7 @@ const TrendByPackage = memo(function TrendByPackage({
 	const [startDate, setStartDate] = useState(savedStartDate);
 	const [endDate, setEndDate] = useState(savedEndDate);
 
-	let dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+	const dateRange = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 
 	const {
 		data: workWeekData,

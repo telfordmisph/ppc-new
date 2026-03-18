@@ -1,7 +1,7 @@
 import CancellableActionButton from "@/Components/CancellableActionButton";
 import PickupBarChart from "@/Components/Charts/PickupBarChart";
 import FloatingLabelInput from "@/Components/FloatingLabelInput";
-import WipOutTrendByPackage from "@/Components/WipOutTrendByPackage";
+import PickupTrendByPackage from "@/Components/PickupTrendByPackage";
 import { useFetch } from "@/Hooks/useFetch";
 import { buildDateRange } from "@/Utils/formatDate";
 import formatDateToLocalInput from "@/Utils/formatDateToLocalInput";
@@ -112,7 +112,7 @@ const PickupDashboard = () => {
 			<Head title="Pickup Dashboard" />
 
 			<div>
-				<WipOutTrendByPackage
+				<PickupTrendByPackage
 					isVisible
 					title="PickUp Trend by Packages"
 					dataAPI={route("api.pickup.pickupSummaryTrend")}

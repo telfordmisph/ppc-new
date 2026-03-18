@@ -11,7 +11,17 @@ const HoveredBar = memo(function HoveredBar({
 	radius = 4,
 }) {
 	const [isHovered, setIsHovered] = useState(false);
-	const { fill, x, y, width, height, payload, dataKey } = barProps || {};
+	const {
+		fill,
+		fillOpacity,
+		patternId,
+		x,
+		y,
+		width,
+		height,
+		payload,
+		dataKey,
+	} = barProps || {};
 
 	const handleClick = (e) => {
 		if (onClick) onClick({ event: e, data: payload, dataKey });
@@ -42,7 +52,8 @@ const HoveredBar = memo(function HoveredBar({
 				x={x}
 				y={y}
 				radius={radius}
-				fill={fill}
+				fill={patternId ? `url(#${patternId})` : fill}
+				fillOpacity={fillOpacity ?? 1}
 				strokeWidth={isHovered ? strokeWidth * 2 : 0}
 			/>
 

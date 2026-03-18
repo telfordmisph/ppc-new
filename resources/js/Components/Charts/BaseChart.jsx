@@ -1,13 +1,13 @@
-import { ResponsiveContainer, Tooltip } from "recharts";
 import { DARK_THEME_NAME } from "@/Constants/colors";
 import { useThemeStore } from "@/Store/themeStore";
+import { ResponsiveContainer, Tooltip } from "recharts";
 import BarChartSkeleton from "./BarChartSkeleton";
 
 const CustomTooltip = ({ active, payload, label }) => {
 	if (!active || !payload?.length) return null;
 
 	return (
-		<div className="flex flex-col gap-1 border border-base-content/20 rounded-lg pb-2 shadow-xs shadow-accent border-opacity-30 bg-base-300">
+		<div className="flex flex-col gap-1 border z-50 border-base-content/20 rounded-lg pb-2 shadow-xs shadow-accent border-opacity-30 bg-base-200">
 			<div className="px-2 pt-2 font-semibold rounded-t-lg">{label}</div>
 			{payload.map((item, index) => {
 				const baseColor = item.color;

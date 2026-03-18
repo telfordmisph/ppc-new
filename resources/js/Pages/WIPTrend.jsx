@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import CancellableActionButton from "@/Components/CancellableActionButton";
 import StackedBarChart from "@/Components/Charts/StackedBarChart";
 import MultiSelectSearchableDropdown from "@/Components/MultiSelectSearchableDropdown";
@@ -20,6 +18,7 @@ import sortObjectArray from "@/Utils/sortObjectArray";
 import { sumByKey } from "@/Utils/sumByKey";
 import { Head } from "@inertiajs/react";
 import clsx from "clsx";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import OverallQuantityTable from "./OverallQuantityTable";
@@ -276,6 +275,10 @@ const WIPTrend = () => {
 				compute,
 			}),
 		[filteredData, sortKeys, compute],
+	);
+	console.log(
+		"🚀 ~ WIPTrend ~ sortedAllPackageFilteredData:",
+		sortedAllPackageFilteredData,
 	);
 
 	const handleShowTrendByPackage = useCallback(({ data, _ }) => {

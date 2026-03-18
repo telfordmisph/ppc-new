@@ -69,7 +69,7 @@ class F3OutRepository
       ->get();
   }
 
-  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregate = true, $pl = null)
+  public function getOverallTrend($packageNames, $period, $startDate, $endDate, $workweeks, $aggregateColumns = ['SUM(f3.qty)' => 'total_outs'], $aggregate = true, $pl = null)
   {
     $query = $this->baseF3OutQuery($pl);
 
@@ -83,7 +83,7 @@ class F3OutRepository
         $startDate,
         $endDate,
         'f3.date_loaded',
-        ['SUM(f3.qty)' => 'total_outs'], // aggregate by outs
+        aggregateColumns: $aggregateColumns,
         workRange: $weekRange,
       );
 

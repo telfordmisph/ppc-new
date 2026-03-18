@@ -173,7 +173,7 @@ class F1F2OutRepository
     return null;
   }
 
-  public function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks, $aggregate = true)
+  public function buildTrend($factories, $packageName, $period, $startDate, $endDate, $workweeks, $aggregateColumns = WipConstants::FACTORY_AGGREGATES['F1F2']['out']['out-lot'], $aggregate = true)
   {
     $query = DB::table(self::F1F2_OUTS_TABLE . ' as out');
     $query = $this->filterByPackageName($query, $packageName, $factories);
@@ -192,10 +192,9 @@ class F1F2OutRepository
         $startDate,
         $endDate,
         'out.import_date',
-        // ['SUM(out.qty)' => 'total_outs'],
 
         // continue not yet tested
-        WipConstants::FACTORY_AGGREGATES['F1F2']['out']['out-lot'],
+        aggregateColumns: $aggregateColumns,
         workRange: $weekRange,
       );
     } else {
@@ -205,7 +204,7 @@ class F1F2OutRepository
     return $query;
   }
 
-  public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks, $pl = null)
+  public function getOverallTrend($packageName, $period, $startDate, $endDate, $workweeks, $aggregateColumns = null, $pl = null)
   {
     $f1Trend = $this->buildTrend(
       ['F1'],
@@ -213,7 +212,8 @@ class F1F2OutRepository
       $period,
       $startDate,
       $endDate,
-      $workweeks
+      $workweeks,
+      ...($aggregateColumns !== null ? ['aggregateColumns' => $aggregateColumns] : [])
     )
       ->when($pl, function ($q) use ($pl) {
         $this->joinPL($q, joinPpc: $pl);
@@ -226,7 +226,8 @@ class F1F2OutRepository
       $period,
       $startDate,
       $endDate,
-      $workweeks
+      $workweeks,
+      ...($aggregateColumns !== null ? ['aggregateColumns' => $aggregateColumns] : [])
     )
       ->when($pl, function ($q) use ($pl) {
         $this->joinPL($q, joinPpc: $pl);

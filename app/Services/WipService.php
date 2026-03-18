@@ -1108,10 +1108,71 @@ class WipService
     $selectColumns = ['wip.Date_Loaded as date_loaded', 'wip.Qty as qty', 'wip.Package_Name as package_name'];
     $aggregateColumnsF1Wip = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip-lot'];
     $aggregateColumnsF2Wip = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip-lot'];
+    $aggregateColumnsOut = WipConstants::FACTORY_AGGREGATES['F1F2']['out']['out-lot'];
+    $aggregateColumnsF3Wip = WipConstants::FACTORY_AGGREGATES['F3']['wip']['wip-lot'];
+    $aggregateColumnsF3Out = WipConstants::FACTORY_AGGREGATES['F3']['out']['out-lot'];
+
+    $additionalF3WipAggregate = [
+      'SUM(CASE WHEN f3.qty >= 10000 THEN f3.qty ELSE 0 END) as big_total_wip',
+      'SUM(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.qty ELSE 0 END) as medium_total_wip',
+      'SUM(CASE WHEN f3.qty < 5000 THEN f3.qty ELSE 0 END) as small_total_wip',
+      'COUNT(CASE WHEN f3.qty >= 10000 THEN f3.lot_number END) as big_wip_total_lots',
+      'COUNT(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.lot_number END) as medium_wip_total_lots',
+      'COUNT(CASE WHEN f3.qty < 5000 THEN f3.lot_number END) as small_wip_total_lots',
+
+      'COUNT(CASE WHEN f3.qty >= 10000 THEN f3.lot_number END) as big_total_lots',
+      'COUNT(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.lot_number END) as medium_total_lots',
+      'COUNT(CASE WHEN f3.qty < 5000 THEN f3.lot_number END) as small_total_lots',
+    ];
+
+    $additionalF3OutAggregate = [
+      'SUM(CASE WHEN f3.qty >= 10000 THEN f3.qty ELSE 0 END) as big_total_outs',
+      'SUM(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.qty ELSE 0 END) as medium_total_outs',
+      'SUM(CASE WHEN f3.qty < 5000 THEN f3.qty ELSE 0 END) as small_total_outs',
+      'COUNT(CASE WHEN f3.qty >= 10000 THEN f3.lot_number END) as big_out_total_lots',
+      'COUNT(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.lot_number END) as medium_out_total_lots',
+      'COUNT(CASE WHEN f3.qty < 5000 THEN f3.lot_number END) as small_out_total_lots',
+
+      'COUNT(CASE WHEN f3.qty >= 10000 THEN f3.lot_number END) as big_total_lots',
+      'COUNT(CASE WHEN f3.qty BETWEEN 5000 AND 9999 THEN f3.lot_number END) as medium_total_lots',
+      'COUNT(CASE WHEN f3.qty < 5000 THEN f3.lot_number END) as small_total_lots',
+    ];
+
+    $additionalF1F2WipAggregate = [
+      'SUM(CASE WHEN wip.Qty >= 10000 THEN wip.Qty ELSE 0 END) as big_total_wip',
+      'SUM(CASE WHEN wip.Qty BETWEEN 5000 AND 9999 THEN wip.Qty ELSE 0 END) as medium_total_wip',
+      'SUM(CASE WHEN wip.Qty < 5000 THEN wip.Qty ELSE 0 END) as small_total_wip',
+      'COUNT(CASE WHEN wip.Qty >= 10000 THEN wip.Lot_Id END) as big_wip_total_lots',
+      'COUNT(CASE WHEN wip.Qty BETWEEN 5000 AND 9999 THEN wip.Lot_Id END) as medium_wip_total_lots',
+      'COUNT(CASE WHEN wip.Qty < 5000 THEN wip.Lot_Id END) as small_wip_total_lots',
+
+      'COUNT(CASE WHEN wip.Qty >= 10000 THEN wip.Lot_Id END) as big_total_lots',
+      'COUNT(CASE WHEN wip.Qty BETWEEN 5000 AND 9999 THEN wip.Lot_Id END) as medium_total_lots',
+      'COUNT(CASE WHEN wip.Qty < 5000 THEN wip.Lot_Id END) as small_total_lots',
+    ];
+
+    $additionalF1F2OutAggregate = [
+      'SUM(CASE WHEN out.qty >= 10000 THEN out.qty ELSE 0 END) as big_total_outs',
+      'SUM(CASE WHEN out.qty BETWEEN 5000 AND 9999 THEN out.qty ELSE 0 END) as medium_total_outs',
+      'SUM(CASE WHEN out.qty < 5000 THEN out.qty ELSE 0 END) as small_total_outs',
+      'COUNT(CASE WHEN out.qty >= 10000 THEN out.lot_id END) as big_out_total_lots',
+      'COUNT(CASE WHEN out.qty BETWEEN 5000 AND 9999 THEN out.lot_id END) as medium_out_total_lots',
+      'COUNT(CASE WHEN out.qty < 5000 THEN out.lot_id END) as small_out_total_lots',
+
+      'COUNT(CASE WHEN out.qty >= 10000 THEN out.lot_id END) as big_total_lots',
+      'COUNT(CASE WHEN out.qty BETWEEN 5000 AND 9999 THEN out.lot_id END) as medium_total_lots',
+      'COUNT(CASE WHEN out.qty < 5000 THEN out.lot_id END) as small_total_lots',
+    ];
+
+    $aggregateColumnsF1Wip = array_merge($aggregateColumnsF1Wip, $additionalF1F2WipAggregate);
+    $aggregateColumnsF2Wip = array_merge($aggregateColumnsF2Wip, $additionalF1F2WipAggregate);
+    $aggregateColumnsOut = array_merge($aggregateColumnsOut, $additionalF1F2OutAggregate);
+    $aggregateColumnsF3Out = array_merge($aggregateColumnsF3Out, $additionalF3OutAggregate);
+    $aggregateColumnsF3Wip = array_merge($aggregateColumnsF3Wip, $additionalF3WipAggregate);
 
     $trends['f1_trend'] = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1Wip)->get();
     $trends['f2_trend'] = $this->f1f2WipRepo->getTrend('F2', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF2Wip)->get();
-    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks)->get();
+    $trends['f3_trend'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, aggregateColumns: $aggregateColumnsF3Wip)->get();
 
     $query = $this->f1f2WipRepo->getTrend('F1', $packageName, $period, $startDate, $endDate, workweeks: $workweeks, selectColumns: $selectColumns, aggregateColumns: $aggregateColumnsF1Wip);
     $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL1');
@@ -1129,10 +1190,10 @@ class WipService
     $this->f1f2WipRepo->joinPL($query, WipConstants::SPECIAL_PART_NAMES, 'PL6');
     $trendsPL6['f2_trend_pl6'] = $query->get();
 
-    $trendsPL1['f3_trend_pl1'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, joinPpc: "PL1")
+    $trendsPL1['f3_trend_pl1'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, aggregateColumns: $aggregateColumnsF3Wip, joinPpc: "PL1")
       ->get();
 
-    $trendsPL6['f3_trend_pl6'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, joinPpc: "PL6")
+    $trendsPL6['f3_trend_pl6'] = $this->f3WipRepo->getTrend($packageName, $period, $startDate, $endDate, $workweeks, aggregateColumns: $aggregateColumnsF3Wip, joinPpc: "PL6")
       ->get();
 
     $startDateCopy = is_object($startDate) ? clone $startDate : $startDate;
@@ -1155,25 +1216,25 @@ class WipService
     $startDatePlusOneDay = Carbon::parse($startDate)->addDay()->format('Y-m-d H:i:s');
     $endDatePlusOneDay = Carbon::parse($endDate)->addDay()->format('Y-m-d H:i:s');
 
-    $f1f2outTrend = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
-    $f3outTrend = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks);
+    $f1f2outTrend = $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsOut);
+    $f3outTrend = $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsF3Out);
 
     $f1f2outPl1Trend = $remap(
-      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL1"),
+      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsOut, pl: "PL1"),
       $keyRemapPL1
     );
 
     $f3outPL1Trend = $remap(
-      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, pl: "PL1"),
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsF3Out, pl: "PL1"),
       $keyRemapPL1
     );
 
     $f1f2outPl6Trend = $remap(
-      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, "PL6"),
+      $this->f1f2OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsOut, pl: "PL6"),
       $keyRemapPL6
     );
     $f3outPL6Trend = $remap(
-      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, pl: "PL6"),
+      $this->f3OutRepo->getOverallTrend($packageName, $period, $startDatePlusOneDay, $endDatePlusOneDay, $workweeks, aggregateColumns: $aggregateColumnsF3Out, pl: "PL6"),
       $keyRemapPL6
     );
 
@@ -1209,10 +1270,10 @@ class WipService
     [$alignedDataWithUtilization, $alignedPlMerged] = $this->align('dateKey', ['label'], $dataWithUtilization, $plMerged);
 
     return response()->json([
-      'data' => $alignedDataWithUtilization,
-      'pl_data' => $alignedPlMerged,
-      'status' => 'success',
-      'message' => 'Data retrieved successfully'
+      'data'           => $alignedDataWithUtilization,
+      'pl_data'        => $alignedPlMerged,
+      'status'         => 'success',
+      'message'        => 'Data retrieved successfully',
     ]);
   }
 
@@ -1235,15 +1296,15 @@ class WipService
         ->cursor(),
 
       'F1 Out' => fn() => $this->f1f2OutRepo
-        ->buildTrend(['F1'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
+        ->buildTrend(['F1'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, aggregate: false)
         ->cursor(),
 
       'F2 Out' => fn() => $this->f1f2OutRepo
-        ->buildTrend(['F2'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
+        ->buildTrend(['F2'], $packageName, null, $startAddedOneDay, $endAddedOneDay, null, aggregate: false)
         ->cursor(),
 
       'F3 Out' => fn() => $this->f3OutRepo
-        ->getOverallTrend($packageName, null, $startAddedOneDay, $endAddedOneDay, null, false)
+        ->getOverallTrend($packageName, null, $startAddedOneDay, $endAddedOneDay, null, aggregate: false)
         ->cursor(),
     ];
 
