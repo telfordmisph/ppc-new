@@ -204,7 +204,7 @@ const TrendByPackage = memo(function TrendByPackage({
 									setSavedSelectedPeriod(option.value);
 								}}
 							>
-								<a>{option.label} fad</a>
+								<a>{option.label}</a>
 							</li>
 						))}
 					</ul>
