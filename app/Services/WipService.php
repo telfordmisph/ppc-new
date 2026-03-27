@@ -589,7 +589,8 @@ class WipService
 
   public function getWipAndLotsByBodySizeTrend($packageNames, $period, $startDate, $endDate, $useWorkweek, $workweek)
   {
-    $canonicalClause = "CASE WHEN canonical_body_size REGEXP '^[0-9]+(\\.[0-9]+)?x[0-9]+(\\.[0-9]+)?' THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2) ELSE 'others/unknown' END AS size_bucket";
+    // $canonicalClause = "CASE WHEN canonical_body_size REGEXP '^[0-9]+(\\.[0-9]+)?x[0-9]+(\\.[0-9]+)?' THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2) ELSE 'others/unknown' END AS size_bucket";
+    $canonicalClause = "CASE WHEN canonical_body_size REGEXP '^[0-9]+(\\.[0-9]+){0,1}x[0-9]+(\\.[0-9]+){0,1}' THEN SUBSTRING_INDEX(LOWER(canonical_body_size), 'x', 2) ELSE 'others/unknown' END AS size_bucket";
 
     $f1AggregateColumns = WipConstants::FACTORY_AGGREGATES['F1']['wip']['wip-lot'];
     $f2AggregateColumns = WipConstants::FACTORY_AGGREGATES['F2']['wip']['wip-lot'];
