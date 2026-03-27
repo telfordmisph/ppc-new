@@ -9,6 +9,125 @@ use Illuminate\Support\Facades\Log;
 
 trait TrendAggregationTrait
 {
+  // public function applyTrendAggregation(
+  //   Builder $query,
+  //   string $period = 'daily',
+  //   $startDate,
+  //   $endDate,
+  //   string $column = 'Date_Loaded',
+  //   array $aggregateColumns = [
+  //     'SUM(Qty)' => 'total_wip',
+  //     'COUNT(DISTINCT Lot_Id)' => 'total_lots'
+  //   ],
+  //   array $additionalFields = [],
+  //   array $workRange = [],
+  // ): Builder {
+  //   $query = clone $query;
+  //   $query->select([]);
+
+  //   $groupByOrderBy = WipConstants::PERIOD_GROUP_BY[$period];
+
+  //   $aggSelects = collect($aggregateColumns)->map(function ($alias, $expr) {
+  //     if (is_int($expr)) {
+  //       return str_contains($alias, ' as ') ? $alias : $alias . ' as ' . Str::slug($alias, '_');
+  //     }
+  //     return "$expr as $alias";
+  //   })->implode(', ');
+
+  //   $extraFields = !empty($additionalFields) ? implode(', ', $additionalFields) . ', ' : '';
+  //   $groupByFields = collect($additionalFields)->map(fn($f) => preg_split('/\s+as\s+/i', $f)[0])->toArray();
+
+  //   switch (strtolower($period)) {
+  //     case 'daily':
+  //       $query->selectRaw("
+  //               $extraFields
+  //               Date($column) as day,
+  //               $aggSelects
+  //           ");
+
+  //       break;
+
+  //     case 'weekly':
+  //       $query->where(function ($q) use ($column, $workRange) {
+  //         foreach ($workRange as $range) {
+  //           $q->orWhere(function ($query) use ($column, $range) {
+  //             $query->where($column, '>=', $range->startDate)
+  //               ->where($column, '<', $range->endDate);
+  //           });
+  //         };
+  //       });
+
+  //       $case = implode(' ', array_map(function ($range) use ($column) {
+  //         return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
+  //       }, $workRange));
+
+  //       $weekCase = implode(' ', array_map(function ($range) use ($column) {
+  //         return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN '{$range->workweek}'";
+  //       }, $workRange));
+
+  //       $query->selectRaw("
+  //             $extraFields
+  //             CASE 
+  //                 $case
+  //                 ELSE NULL
+  //             END as workweek,
+  //             CASE 
+  //                 $weekCase
+  //                 ELSE NULL
+  //             END as week,
+  //             $aggSelects
+  //         ");
+
+  //       break;
+
+  //     case 'monthly':
+  //       $query->selectRaw("
+  //               $extraFields
+  //               YEAR($column) as year,
+  //               MONTH($column) as month,
+  //               $aggSelects
+  //           ");
+
+  //       break;
+
+  //     case 'quarterly':
+  //       $query->selectRaw("
+  //               $extraFields
+  //               YEAR($column) as year,
+  //               QUARTER($column) as quarter,
+  //               $aggSelects
+  //           ");
+
+  //       break;
+
+  //     case 'yearly':
+  //       $query->selectRaw("
+  //               $extraFields
+  //               YEAR($column) as year,
+  //               $aggSelects
+  //           ");
+
+  //       break;
+  //   }
+
+  //   if (!empty($groupByFields)) {
+  //     $query->groupByRaw(implode(', ', $groupByFields));
+  //   }
+  //   $query->groupBy($groupByOrderBy);
+
+  //   foreach ($groupByOrderBy as $col) {
+  //     $query->orderBy($col);
+  //   }
+
+  //   if ($period !== 'weekly') {
+  //     $query->where($column, '>=', $startDate)
+  //       ->where($column, '<', $endDate);
+  //   }
+  //   // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
+
+  //   return $query;
+  // }
+
   public function applyTrendAggregation(
     Builder $query,
     string $period = 'daily',
@@ -41,43 +160,41 @@ trait TrendAggregationTrait
       case 'daily':
         $query->selectRaw("
                 $extraFields
-                Date($column) as day,
+                DATE($column) as day,
                 $aggSelects
             ");
-
         break;
 
       case 'weekly':
-        $query->where(function ($q) use ($column, $workRange) {
-          foreach ($workRange as $range) {
-            $q->orWhere(function ($query) use ($column, $range) {
-              $query->where($column, '>=', $range->startDate)
-                ->where($column, '<', $range->endDate);
-            });
-          };
-        });
+        if (!empty($workRange)) {
+          $query->where(function ($q) use ($column, $workRange) {
+            foreach ($workRange as $range) {
+              $q->orWhere(function ($query) use ($column, $range) {
+                $query->where($column, '>=', $range->startDate)
+                  ->where($column, '<', $range->endDate);
+              });
+            }
+          });
 
-        $case = implode(' ', array_map(function ($range) use ($column) {
-          return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
-        }, $workRange));
+          $case = implode(' ', array_map(function ($range) use ($column) {
+            return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN CONCAT('w', '{$range->workweek}')";
+          }, $workRange));
 
-        $weekCase = implode(' ', array_map(function ($range) use ($column) {
-          return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN '{$range->workweek}'";
-        }, $workRange));
+          $weekCase = implode(' ', array_map(function ($range) use ($column) {
+            return "WHEN $column >= '{$range->startDate}' AND $column < '{$range->endDate}' THEN '{$range->workweek}'";
+          }, $workRange));
+
+          $workweekSelect = "CASE $case ELSE NULL END as workweek,
+                                   CASE $weekCase ELSE NULL END as week,";
+        } else {
+          $workweekSelect = "NULL as workweek, NULL as week,";
+        }
 
         $query->selectRaw("
-              $extraFields
-              CASE 
-                  $case
-                  ELSE NULL
-              END as workweek,
-              CASE 
-                  $weekCase
-                  ELSE NULL
-              END as week,
-              $aggSelects
-          ");
-
+                $extraFields
+                $workweekSelect
+                $aggSelects
+            ");
         break;
 
       case 'monthly':
@@ -87,7 +204,6 @@ trait TrendAggregationTrait
                 MONTH($column) as month,
                 $aggSelects
             ");
-
         break;
 
       case 'quarterly':
@@ -97,7 +213,6 @@ trait TrendAggregationTrait
                 QUARTER($column) as quarter,
                 $aggSelects
             ");
-
         break;
 
       case 'yearly':
@@ -106,7 +221,6 @@ trait TrendAggregationTrait
                 YEAR($column) as year,
                 $aggSelects
             ");
-
         break;
     }
 
@@ -119,11 +233,10 @@ trait TrendAggregationTrait
       $query->orderBy($col);
     }
 
-    if ($period !== 'weekly') {
+    if ($period !== 'weekly' || empty($workRange)) {
       $query->where($column, '>=', $startDate)
         ->where($column, '<', $endDate);
     }
-    // Log::info("sql :D : " . SqlDebugHelper::prettify($query->toSql(), $query->getBindings()));
 
     return $query;
   }
