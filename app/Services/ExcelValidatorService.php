@@ -34,31 +34,49 @@ class ExcelValidatorService
     return preg_match('/\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}/', $value);
   }
 
-  private function scoreHeaderRow(array $row): float
+  // private function scoreHeaderRow(array $row): float
+  // {
+  //   $nonEmpty = 0;
+  //   $stringCells = 0;
+  //   $numericCells = 0;
+
+  //   // Log::info("Row: " . print_r($row, true));
+
+  //   foreach ($row as $cell) {
+  //     if (!is_null($cell) && trim($cell) !== '') {
+  //       $nonEmpty++;
+  //       if (is_numeric($cell) || $this->looksLikeDate($cell)) {
+  //         $numericCells++;
+  //       } else {
+  //         $stringCells++;
+  //       }
+  //     }
+  //   }
+
+  //   if ($nonEmpty === 0) {
+  //     return -1; // empty row, ignore
+  //   }
+
+  //   // Score: prefer rows that are mostly strings
+  //   return $stringCells / $nonEmpty;
+  // }
+
+  private function scoreHeaderRow(array $row, array $aliasMap): float
   {
     $nonEmpty = 0;
-    $stringCells = 0;
-    $numericCells = 0;
-
-    // Log::info("Row: " . print_r($row, true));
+    $scoreSum = 0.0;
 
     foreach ($row as $cell) {
-      if (!is_null($cell) && trim($cell) !== '') {
+      if (!is_null($cell) && trim((string)$cell) !== '') {
         $nonEmpty++;
-        if (is_numeric($cell) || $this->looksLikeDate($cell)) {
-          $numericCells++;
-        } else {
-          $stringCells++;
-        }
+        $normalized = $this->normalize((string)$cell);
+        $scoreSum += $this->matchesAnyAlias($normalized, $aliasMap);
       }
     }
 
-    if ($nonEmpty === 0) {
-      return -1; // empty row, ignore
-    }
+    if ($nonEmpty === 0) return -1;
 
-    // Score: prefer rows that are mostly strings
-    return $stringCells / $nonEmpty;
+    return $scoreSum / $nonEmpty;
   }
 
   private function normalize($value)
@@ -151,6 +169,42 @@ class ExcelValidatorService
     ];
   }
 
+  private function buildAliasMap(array $expectedHeaders): array
+  {
+    $map = [];
+    foreach ($expectedHeaders as $key => $aliases) {
+      foreach ($aliases as $alias) {
+        $map[$this->normalize($alias)] = $key;
+      }
+    }
+    return $map;
+  }
+
+  private function matchesAnyAlias(string $normalized, array $aliasMap): float
+  {
+    if (isset($aliasMap[$normalized])) {
+      return 1.0;
+    }
+
+    $bestPartial = 0.0;
+    foreach ($aliasMap as $alias => $_) {
+      if ($alias === '') continue;
+
+      if (str_contains($normalized, $alias) || str_contains($alias, $normalized)) {
+        $longer = max(strlen($normalized), strlen($alias));
+        $shorter = min(strlen($normalized), strlen($alias));
+        $partial = $shorter / $longer;
+
+        if ($partial > $bestPartial) {
+          $bestPartial = $partial;
+        }
+      }
+    }
+
+    // Only count partial if it's a meaningful overlap (>50%)
+    return $bestPartial >= 0.5 ? $bestPartial * 0.5 : 0.0;
+  }
+
   public function errorOnMultipleSheet(Spreadsheet $spreadsheet)
   {
     if ($spreadsheet->getSheetCount() > 1) {
@@ -194,15 +248,18 @@ class ExcelValidatorService
       ];
     }
 
+    $aliasMap = $this->buildAliasMap($expectedHeaders);
+
     $bestScore = -1;
     $headerRow = null;
     $headerRowIndex = 1;
 
     for ($row = 1; $row <= 10; $row++) {
       $currentRow = $sheet->rangeToArray("A{$row}:{$highestColumn}{$row}", null, true, true, false)[0];
-      $score = $this->scoreHeaderRow($currentRow);
+      // $score = $this->scoreHeaderRow($currentRow);
+      $score = $this->scoreHeaderRow($currentRow, $aliasMap);
 
-      if ($score > $bestScore) {
+      if ($score >= $bestScore) {
         $bestScore = $score;
         $headerRow = $currentRow;
         $headerRowIndex = $row;
@@ -214,6 +271,11 @@ class ExcelValidatorService
     }
 
     $result = $this->processHeaders($headerRow, $expectedHeaders);
+
+    if (($result['status'] ?? null) === 'error') {
+      return $result;
+    }
+
     $result['headerRowIndex'] = $headerRowIndex;
 
     $lastColumnIndex = max($result['map_headers']) + 1; // +1 because columnIndexFromString is 1-based

@@ -72,22 +72,16 @@ class PickUpRepository
       ->where('DATE_CREATED', '>=', $startDate)
       ->where('DATE_CREATED', '<', $endDate);
 
+    $partNames = DB::table(self::PART_NAME_TABLE)
+      ->where('Factory', $factory)
+      ->where('PL', $pl)
+      ->pluck('Partname');
+
     if ($factory === 'F3') {
       $query->join('f3_pickup', 'f3_pickup.ppc_pickup_id', '=', 'pickup.id_pickup');
-    } else {
-      // Get Partnames that match both Factory and PL
-      $partNames = DB::table(self::PART_NAME_TABLE)
-        ->where('Factory', $factory)
-        ->where('PL', $pl)
-        ->pluck('Partname');
-
-      $query->whereIn('pickup.PARTNAME', $partNames);
     }
 
-    if ($factory !== 'F3') {
-      $query->whereIn('pickup.PARTNAME', $partNames);
-    }
-
+    $query->whereIn('pickup.PARTNAME', $partNames);
     return $query->sum('pickup.QTY');
   }
 
@@ -332,8 +326,8 @@ class PickUpRepository
     $result = $this->upsertPickup($data);
 
     $rows = collect($result['inserted'])
-      ->map(fn($id) => [
-        'ppc_pickup_id' => $id,
+      ->map(fn($model) => [
+        'ppc_pickup_id' => $model->getKey(),
       ])
       ->toArray();
 
