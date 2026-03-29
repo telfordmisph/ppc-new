@@ -86,6 +86,6 @@ class SessionMiddleware
     private function redirectToLogin(Request $request)
     {
         $redirectUrl = urlencode($request->fullUrl());
-        return redirect("http://192.168.2.221:8200//login?redirect={$redirectUrl}");
+        return redirect("http://192.168.2.221:8200/login?redirect={$redirectUrl}");
     }
 }
