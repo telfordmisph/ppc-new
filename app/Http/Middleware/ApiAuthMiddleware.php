@@ -20,6 +20,7 @@ class ApiAuthMiddleware
   public function handle(Request $request, Closure $next): Response
   {
     $empData = session('emp_data');
+    Log::info("empdata", array ($empData));
     if (!$empData || !isset($empData['token'])) {
       return response()->json(['error' => 'Unauthenticated', 'message' => $this->sessionTimeOutMessage], 401);
     }

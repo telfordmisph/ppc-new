@@ -24,6 +24,13 @@ class SessionMiddleware
 
         $token = $tokenFromQuery ?? $tokenFromSession ?? $tokenFromCookie;
 
+        Log::info('AuthMiddleware token check', [
+            'query'   => $tokenFromQuery,
+            'cookie'  => $tokenFromCookie,
+            'session' => $tokenFromSession,
+            'used'    => $token,
+        ]);
+
         if (!$token) {
             return $this->redirectToLogin($request);
         }
@@ -50,8 +57,11 @@ class SessionMiddleware
 
         if (!$user) {
             session()->forget('emp_data');
+            setcookie('sso_token', '', time() - 3600, '/');
             return $this->redirectToLogin($request)->withCookie(cookie()->forget('sso_token'));
         }
+
+        Log::info('user', (array) $user);
 
         session(['emp_data' => [
             'token'         => $user->token,
@@ -64,8 +74,6 @@ class SessionMiddleware
             'emp_station'   => $user->emp_station,
             'generated_at'  => $user->generated_at,
         ]]);
-
-        session()->save();
 
         $cookie = cookie('sso_token', $user->token, 60 * 24 * 7, '/', null, false, true);
         $request->setUserResolver(fn() => (object) session('emp_data'));
